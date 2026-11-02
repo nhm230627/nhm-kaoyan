@@ -38,4 +38,4 @@ jobs:
         run: xcodegen generate  # 生成失败会直接报错，通常是因为 yml 缩进或路径写错
 
       - name: 编译  # 核心步骤：只验证代码能不能过编译
-        run: xcodebuild -project FuShiZhuan.xcodeproj -scheme FuShiZhuan -sdk iphonesimulator -configuration Debug -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build  # CODE_SIGNING_ALLOWED=NO 跳过签名，不需要任何证书
+        run: xcodebuild -project FuShiZhuan.xcodeproj -scheme FuShiZhuan -sdk iphonesimulator -configuration Debug -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO SWIFT_COMPILATION_MODE=wholemodule build  # wholemodule 让整个模块一次编译完，所有文件的错误一次全报出来，避免改一批暴露一批；CODE_SIGNING_ALLOWED=NO 跳过签名

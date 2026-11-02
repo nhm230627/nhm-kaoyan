@@ -37,7 +37,7 @@ final class SpeechService {                                         // 语音识
             try session.setCategory(.record, mode: .measurement, options: .duckOthers) // 只录不放，压低其它音
             try session.setActive(true, options: .notifyOthersOnDeactivation) // 激活
         } catch {                                                   // 配置失败
-            error = .speechUnavailable("麦克风被其它应用占用，先关掉正在通话或录音的应用") // 给下一步动作
+            self.error = AppError.speechUnavailable("麦克风被其它应用占用，先关掉正在通话或录音的应用") // 必须写 self，否则被 catch 的隐式 error 遮住
             return                                                  // 退出
         }                                                           // 分支结束
 
@@ -55,7 +55,7 @@ final class SpeechService {                                         // 语音识
             try audio.start()                                       // 开始录
         } catch {                                                   // 启动失败
             input.removeTap(onBus: 0)                               // 清理已装的回调
-            error = .speechUnavailable("录音启动失败，请重试一次")       // 可重试的错误
+            self.error = AppError.speechUnavailable("录音启动失败，请重试一次") // 必须写 self，否则被 catch 的隐式 error 遮住
             return                                                  // 退出
         }                                                           // 分支结束
 
@@ -89,7 +89,7 @@ final class SpeechService {                                         // 语音识
 
     /// 依次申请语音识别与麦克风权限
     private func ensurePermission() async -> Bool {                  // 权限检查
-        let speechStatus = await withCheckedContinuation { (cont: CheckedContinuation<SFSpeechRecognizer.AuthorizationStatus, Never>) in // 包成 async
+        let speechStatus = await withCheckedContinuation { (cont: CheckedContinuation<SFSpeechRecognizerAuthorizationStatus, Never>) in // 包成 async
             SFSpeechRecognizer.requestAuthorization { status in      // 系统弹窗
                 cont.resume(returning: status)                       // 回传结果
             }                                                        // 回调结束
