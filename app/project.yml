@@ -15,7 +15,10 @@ name: FuShiZhuan
 options:
   bundleIdPrefix: com.fushizhuan
   deploymentTarget:
-    iOS: "17.0"
+    iOS: "18.0"     # 3D 伙伴用的 generateCylinder 是 iOS 18 才有的 API；
+                    # iOS 18 与 iOS 17 支持的机型完全相同（iPhone XR / XS 及之后），
+                    # 所以抬高到 18 实际放弃的只是「不愿升级系统的极少数用户」，代价极小。
+                    # 若以后必须回到 iOS 17，就得把 PetSceneView 里的圆柱换成方块近似。
   createIntermediateGroups: true
   groupSortPosition: top
 

@@ -219,7 +219,7 @@ enum PetSceneBuilder {                                            // 宠物建�
         crown.position = [0, 0, 0]                                // 居中
         group.addChild(crown)                                     // 挂上
 
-        let board = ModelEntity(mesh: .generateBox(width: 0.34, height: 0.018, length: 0.34, cornerRadius: 0.004), // 方帽板
+        let board = ModelEntity(mesh: .generateBox(width: 0.34, height: 0.018, depth: 0.34, cornerRadius: 0.004), // 方帽板
                                 materials: [material(PetPalette.cap)]) // 深色
         board.position = [0, 0.045, 0]                            // 帽围上方
         group.addChild(board)                                     // 挂上
