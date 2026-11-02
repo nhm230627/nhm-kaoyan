@@ -11,6 +11,9 @@
 
 # 上游模型密钥，真值只留本机
 server/.key
+# GitHub 推送令牌，本机临时用，绝不进仓库
+.token
+token.txt
 # 环境变量真值
 server/.env
 # 任何位置的 .key 文件
