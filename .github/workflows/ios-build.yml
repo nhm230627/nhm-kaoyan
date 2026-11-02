@@ -1,0 +1,41 @@
+# 免费 iOS 编译通道
+#
+# 为什么存在这个文件：
+#   1) 我们的开发机是 Windows，没有 xcodebuild / swift / xcrun，36 个 Swift 文件从未编译过；
+#   2) GitHub 给 public 仓库的 macOS runner 完全免费、不限分钟；private 仓库 Free 计划
+#      每月 2000 分钟按 10 倍扣，等于 200 分钟 macOS 时间，够编译 25 次以上，且超额只停不扣钱；
+#   3) 这个工作流只做一件事：在真正的 macOS 上编译一遍，把编译错误留在网页日志里。
+#      它不跑模拟器、不截图、不能点按钮——那些仍然需要一台真 Mac。
+
+name: iOS 编译检查  # 流水线名字，会显示在仓库的 Actions 标签页
+
+on:
+  push:
+    branches: [main]  # 推到 main 就自动编译，改完代码不用做别的
+  workflow_dispatch:  # 也支持在网页上手动点 Run workflow，不推代码也能跑一次
+
+jobs:
+  build:  # 唯一的一个任务：编译
+    runs-on: macos-latest  # GitHub 提供的真实 macOS 机器（Apple Silicon）
+
+    defaults:
+      run:
+        working-directory: app  # project.yml 在 app/ 目录下，所有命令都在这层执行
+
+    steps:
+      - uses: actions/checkout@v4  # 把仓库代码拉到这台 macOS 上
+
+      - name: 打印环境信息  # 出错时第一件事就是看这一段，确认 Xcode 版本
+        run: |
+          sw_vers  # 看 macOS 版本，Xcode 26.6 需要 macOS Tahoe 26.x
+          xcodebuild -version  # 看 Xcode 版本，决定了哪些 API 可用
+          xcrun simctl list runtimes  # 看装了哪些模拟器运行时
+
+      - name: 安装 XcodeGen  # 工程文件是 project.yml 生成的，不是手写的
+        run: brew install xcodegen  # runner 有管理员权限，可以直接 brew
+
+      - name: 生成 Xcode 工程  # 把 project.yml 变成 FuShiZhuan.xcodeproj
+        run: xcodegen generate  # 生成失败会直接报错，通常是因为 yml 缩进或路径写错
+
+      - name: 编译  # 核心步骤：只验证代码能不能过编译
+        run: xcodebuild -project FuShiZhuan.xcodeproj -scheme FuShiZhuan -sdk iphonesimulator -configuration Debug -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build  # CODE_SIGNING_ALLOWED=NO 跳过签名，不需要任何证书

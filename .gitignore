@@ -1,0 +1,47 @@
+# 根目录 .gitignore
+#
+# 为什么需要这一份：app/ 下面那份只管得到 app/ 目录，
+# 而真正危险的东西在 server/ 里——server/.key 存的是 DeepSeek 真实密钥。
+# 推送前必须确认 `git status` 里看不到任何 sk- 开头的文件。
+#
+# 注意：.gitignore 不支持行尾注释！下面每一行都必须是纯路径模式，
+#      写成 `server/.key  # 密钥` 会被当成字面文件名而失效，已踩过一次。
+
+# ===== 密钥：一旦提交就等于公开，必须永久排除 =====
+
+# 上游模型密钥，真值只留本机
+server/.key
+# 环境变量真值
+server/.env
+# 任何位置的 .key 文件
+*.key
+# 任何位置的 .env
+.env
+.env.local
+Secrets.plist
+# 签名证书与描述文件
+*.p12
+*.mobileprovision
+*.pem
+
+# ===== 依赖与产物 =====
+
+# 服务端依赖，跑 npm install 就有，不需要进仓库
+node_modules/
+# 构建产物
+build/
+DerivedData/
+# XcodeGen 生成，改了 project.yml 重新生成
+*.xcodeproj/
+*.xcworkspace/
+*.ipa
+*.dSYM.zip
+
+# ===== 本机缓存与工具输出 =====
+
+# Python 检查脚本的缓存
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
+desktop.ini
