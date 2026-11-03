@@ -141,6 +141,64 @@ struct StatTile: View {  // 数字指标块
     }  // body 结束
 }  // StatTile 结束
 
+// MARK: - 环形进度                                                    // 分节：环形进度
+
+struct ProgressRing: View {  // 圆环倒计时，首页蓝卡用
+    let progress: Double  // 0…1，已走过的比例
+    let center: String  // 圆内主文字（天数）
+    let caption: String  // 圆内副文字（天后复试）
+    var size: CGFloat = 96  // 直径
+    var lineWidth: CGFloat = 8  // 环的粗细
+    var tint: Color = .white  // 环颜色
+
+    var body: some View {  // 视图主体
+        ZStack {  // 叠放
+            Circle()  // 底环
+                .stroke(tint.opacity(0.25), lineWidth: lineWidth)  // 半透明底
+            Circle()  // 进度环
+                .trim(from: 0, to: max(0.02, min(1, progress)))  // 至少留一点，避免看不见
+                .stroke(tint, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))  // 圆头描边
+                .rotationEffect(.degrees(-90))  // 从 12 点开始转
+            VStack(spacing: 0) {  // 圆内文字
+                Text(center)  // 天数
+                    .font(.system(size: 30, weight: .bold, design: .rounded))  // 大号圆体
+                    .monospacedDigit()  // 等宽防跳动
+                Text(caption)  // 说明
+                    .font(.system(size: 11, weight: .medium))  // 小字
+                    .opacity(0.9)  // 略淡
+            }  // 文字区结束
+            .foregroundStyle(tint)  // 文字同色
+        }  // 叠放结束
+        .frame(width: size, height: size)  // 固定尺寸
+        .accessibilityElement(children: .ignore)  // 合并为一个元素
+        .accessibilityLabel("\(center) \(caption)")  // 无障碍朗读
+    }  // body 结束
+}  // ProgressRing 结束
+
+// MARK: - 圆形图标按钮                                                // 分节：圆钮
+
+struct CircleIconButton: View {  // 页头右上角的圆钮
+    let systemImage: String  // 图标名
+    var tint: Color = .appBrand  // 图标色
+    var background: Color = .white  // 圆形底
+    var active: Bool = false  // 是否高亮（例如今天已打卡）
+    let action: () -> Void  // 点击回调
+
+    var body: some View {  // 视图主体
+        Button(action: action) {  // 按钮
+            Image(systemName: systemImage)  // 图标
+                .font(.system(size: 15, weight: .semibold))  // 图标大小
+                .foregroundStyle(tint)  // 上色
+                .frame(width: 36, height: 36)  // 圆形尺寸
+                .background(  // 背景
+                    Circle().fill(active ? tint.opacity(0.14) : background)  // 高亮淡底
+                )  // 背景结束
+        }  // 按钮结束
+        .buttonStyle(.plain)  // 去除默认样式
+        .accessibilityLabel(systemImage)  // 无障碍标签
+    }  // body 结束
+}  // CircleIconButton 结束
+
 // MARK: - 五种状态                                                    // 分节：状态视图
 
 struct LoadingState: View {  // 加载态

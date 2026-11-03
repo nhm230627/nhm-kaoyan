@@ -60,8 +60,14 @@ def analyse(path):
     brace = 0  # 大括号差值
     paren = 0  # 小括号差值
     bracket = 0  # 中括号差值
+    in_block = False  # 是否正处在三引号多行字符串里
     for no, raw in enumerate(lines, 1):  # 逐行处理
         s = raw.strip()  # 去掉首尾空白
+        if s == '"""':  # 多行字符串的边界行（LegalView 的条款正文就是这种写法）
+            in_block = not in_block  # 进入或离开块
+            continue  # 边界行本身不计入，它不是代码也不缺注释
+        if in_block:  # 块内的每一行都是产品文案
+            continue  # 文案上加 // 会变成正文，所以整块跳过，括号也不统计
         if not s:  # 空行跳过
             continue  # 不计入
         if s.startswith('//') or s.startswith('*') or s.startswith('/*'):  # 纯注释行跳过

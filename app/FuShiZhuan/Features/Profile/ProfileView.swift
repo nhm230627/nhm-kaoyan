@@ -16,6 +16,7 @@ struct ProfileView: View {  // 我的页
                 growthCard  // 成长来源
                 entitlementCard  // 权益卡
                 settingsCard  // 显示与动效
+                moreCard  // 学习地图 / 隐私协议
                 merchantCard  // 商户入驻（占位）
                 dataCard  // 数据卡
                 aboutCard  // 关于
@@ -101,6 +102,45 @@ struct ProfileView: View {  // 我的页
             }  // 排列结束
         }  // 卡片结束
     }  // growthCard 结束
+
+    private var moreCard: some View {  // 学习地图与法务入口
+        Card {  // 卡片
+            VStack(spacing: Space.m) {  // 纵向排列
+                NavigationLink {  // 学习地图
+                    WorldMapView()  // 地图页
+                } label: {  // 行外观
+                    linkRow(icon: "map", title: "学习地图", detail: "5 座考研岛与岛内地点")  // 行内容
+                }  // 链接结束
+                .buttonStyle(.plain)  // 不用默认高亮
+                Divider()  // 分隔线
+                NavigationLink {  // 隐私与协议
+                    LegalView()  // 隐私政策与用户协议
+                } label: {  // 行外观
+                    linkRow(icon: "hand.raised.fill", title: "隐私与协议", detail: "我们收集什么、数据存在哪")  // 行内容
+                }  // 链接结束
+                .buttonStyle(.plain)  // 不用默认高亮
+            }  // 排列结束
+        }  // 卡片结束
+    }  // moreCard 结束
+
+    private func linkRow(icon: String, title: String, detail: String) -> some View {  // 通用入口行
+        HStack(spacing: Space.m) {  // 横向排列
+            Image(systemName: icon)  // 图标
+                .font(.system(size: 16))  // 图标大小
+                .foregroundStyle(Color.appBrand)  // 品牌色
+                .frame(width: 26)  // 固定宽度对齐
+            VStack(alignment: .leading, spacing: 2) {  // 文字区
+                Text(title).font(AppFont.bodyStrong)  // 标题
+                Text(detail).font(AppFont.caption).foregroundStyle(Color.textSecondary)  // 说明
+            }  // 文字区结束
+            Spacer()  // 撑开
+            Image(systemName: "chevron.right")  // 箭头
+                .font(.system(size: 11, weight: .semibold))  // 小箭头
+                .foregroundStyle(Color.textTertiary)  // 弱化色
+        }  // 排列结束
+        .contentShape(Rectangle())  // 整行可点
+        .accessibilityElement(children: .combine)  // 合并朗读
+    }  // linkRow 结束
 
     private var merchantCard: some View {  // 商户入驻入口（占位）
         Card {  // 卡片

@@ -208,6 +208,14 @@ final class AppState {  // 全局状态类
         scheduleSave()  // 落盘
     }  // 方法结束
 
+    func reopenWrong(questionID: String) {  // 把已掌握的错题放回待攻
+        guard let idx = data.wrongs.firstIndex(where: { $0.questionID == questionID }) else { return }  // 找不到就退出
+        var snap = data  // 拷一份
+        snap.wrongs[idx].resolved = false  // 改回未掌握
+        data = snap  // 写回
+        scheduleSave()  // 落盘
+    }  // 方法结束
+
     // MARK: - 闯关                                                    // 分节：闯关
 
     @discardableResult  // 返回值可忽略

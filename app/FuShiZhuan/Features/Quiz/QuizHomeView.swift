@@ -40,6 +40,7 @@ struct QuizHomeView: View {  // 刷题首页
         ScrollView {  // 可滚动
             VStack(spacing: Space.l) {  // 纵向排列
                 summary  // 顶部统计
+                wrongBookEntry  // 错题本入口
                 ForEach(chapters) { chapter in  // 遍历章节
                     chapterCard(chapter)  // 章节卡
                 }  // 遍历结束
@@ -60,6 +61,35 @@ struct QuizHomeView: View {  // 刷题首页
             }  // 排列结束
         }  // 卡片结束
     }  // summary 结束
+
+    private var wrongBookEntry: some View {  // 错题本入口
+        NavigationLink {  // 进错题本
+            WrongBookView()  // 错题本页面
+        } label: {  // 行外观
+            Card {  // 卡片
+                HStack(spacing: Space.m) {  // 横向排列
+                    Image(systemName: "bandage.fill")  // 创可贴图标
+                        .font(.system(size: 18))  // 图标大小
+                        .foregroundStyle(Color.appErr)  // 红色
+                        .frame(width: 28)  // 固定宽度
+                    VStack(alignment: .leading, spacing: 2) {  // 文字区
+                        Text("错题本").font(AppFont.bodyStrong)  // 标题
+                        Text("答错自动收进来，按板块归类").font(AppFont.caption).foregroundStyle(Color.textSecondary)  // 说明
+                    }  // 文字区结束
+                    Spacer()  // 撑开
+                    Text("\(app.unresolvedWrongs.count)")  // 待攻数量
+                        .font(AppFont.section)  // 区段字号
+                        .foregroundStyle(Color.appErr)  // 红色
+                    Image(systemName: "chevron.right")  // 箭头
+                        .font(.system(size: 11, weight: .semibold))  // 小箭头
+                        .foregroundStyle(Color.textTertiary)  // 弱化色
+                }  // 排列结束
+                .contentShape(Rectangle())  // 整行可点
+            }  // 卡片结束
+        }  // 外观结束
+        .buttonStyle(.plain)  // 不用默认高亮
+        .accessibilityLabel("错题本，待攻 \(app.unresolvedWrongs.count) 题")  // 无障碍标签
+    }  // wrongBookEntry 结束
 
     private var totalStars: Int {  // 累计星数
         app.data.levelResults.reduce(0) { $0 + $1.stars }  // 累加

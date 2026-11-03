@@ -40,6 +40,12 @@ targets:
       - path: FuShiZhuan
         excludes:
           - "**/.DS_Store"
+          # 隐私清单单独声明成资源，先从目录扫描里排除，避免同一文件被收两次
+          - "Resources/PrivacyInfo.xcprivacy"
+      # 苹果要求 PrivacyInfo.xcprivacy 必须位于 App 包根目录，
+      # 显式指定 buildPhase: resources 才能保证它被拷进 Bundle 而不是被按未知类型忽略。
+      - path: FuShiZhuan/Resources/PrivacyInfo.xcprivacy
+        buildPhase: resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fushizhuan.app

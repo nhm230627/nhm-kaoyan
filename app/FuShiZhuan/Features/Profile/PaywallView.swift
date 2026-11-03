@@ -198,7 +198,12 @@ struct PaywallView: View {                                         // 会员页
             Text("· 取消路径：设置 → Apple ID → 订阅 → 选择「复试专」→ 取消订阅。") // 取消
             Text("· 取消后当前周期内仍可使用，到期不再扣款。")               // 到期
             Text("· 退款请走 Apple 官方渠道：reportaproblem.apple.com。") // 退款
-            Text("· 隐私政策与服务条款的正式链接将在上架前补上，这里不放无效链接。") // 不放假链接
+            NavigationLink {                                       // 进法律页
+                LegalView()                                        // 隐私政策与用户协议
+            } label: {                                             // 链接外观
+                Text("· 查看隐私政策与用户协议 →")                        // 入口文案
+                    .foregroundStyle(Color.appBrand)               // 品牌色
+            }                                                      // 链接结束
         }                                                          // 排列结束
         .font(AppFont.caption)                                     // 小字
         .foregroundStyle(Color.textTertiary)                       // 弱化色
