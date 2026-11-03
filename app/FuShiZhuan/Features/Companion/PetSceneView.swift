@@ -378,10 +378,10 @@ enum PetSceneBuilder {  // 猫建模器
     static func lipArc(center: SIMD3<Float>) -> Entity {  // 一撇嘴
         let group = Entity()  // 这一撇整体
         let radius: Float = 0.052  // 样板 TorusGeometry 的半径
-        let steps = 8  // 分八段，足够顺滑
+        let steps = 22  // 分二十二段：小球要重叠成一整条线，段数少了会成锯齿
         for i in 0...steps {  // 沿弧采样
             let theta = Float.pi + Float.pi * Float(i) / Float(steps)  // π→2π 正好是下半圆
-            let bead = sphere(radius: 0.0085, color: CatPalette.mouth)  // 一颗嘴线小球
+            let bead = sphere(radius: 0.0098, color: CatPalette.mouth)  // 一颗嘴线小球（比段距大，保证相连）
             bead.position = center + [cos(theta) * radius, sin(theta) * radius, 0]  // 摆到弧上
             group.addChild(bead)  // 挂上
         }  // 循环结束
