@@ -172,9 +172,8 @@ enum World3DBuilder {  // 浮空岛建模器
         cornice.position = [0, 0.77, 0]  // 与样板一致
         group.addChild(cornice)  // 挂上
 
-        let roof = cone(radius: 0.9, height: 0.2, color: WorldPalette.roof, sides: 4)  // 四坡屋顶
-        roof.position = [0, 0.9, 0]  // 与样板一致
-        roof.orientation = simd_quatf(angle: .pi / 4, axis: [0, 1, 0])  // 与样板 rotation.y 一致
+        let roof = pyramid(radius: 0.92, height: 0.40, color: WorldPalette.roof)  // 四坡屋顶
+        roof.position = [0, 0.9, 0]  // 与样板一致，落在柱廊顶上
         group.addChild(roof)  // 挂上
 
         group.addChild(signPlate(color: WorldPalette.taxBlue, at: [-0.92, 1.12, 0.42]))  // 悬浮税牌
@@ -248,9 +247,8 @@ enum World3DBuilder {  // 浮空岛建模器
             group.addChild(col)  // 挂上
         }  // 循环结束
 
-        let roof = cone(radius: 0.78, height: 0.18, color: WorldPalette.roof, sides: 4)  // 四坡顶
-        roof.position = [0, 0.78, 0]  // 与样板一致
-        roof.orientation = simd_quatf(angle: .pi / 4, axis: [0, 1, 0])  // 转 45° 与样板一致
+        let roof = pyramid(radius: 0.80, height: 0.34, color: WorldPalette.roof)  // 四坡顶
+        roof.position = [0, 0.78, 0]  // 与样板一致，压在五根柱顶上
         group.addChild(roof)  // 挂上
 
         let beam = box(width: 0.5, height: 0.03, depth: 0.03, color: WorldPalette.gold)  // 天平横梁
@@ -376,9 +374,55 @@ enum World3DBuilder {  // 浮空岛建模器
     }  // cylinder 结束
 
     static func cone(radius: Float, height: Float, color: UIColor, sides: Int = 24) -> ModelEntity {  // 圆锥
-        let mesh = MeshResource.generateCone(height: height, radius: radius)  // 造圆锥，分段数由引擎固定
+        let mesh = MeshResource.generateCone(height: height, radius: radius)  // 造圆锥，分段数由引擎固定，sides 仅供参考不生效
         return ModelEntity(mesh: mesh, materials: [material(color)])  // 上材质
     }  // cone 结束
+
+    /// 四棱锥屋顶（四坡顶）
+    /// 样板用 ConeGeometry(半径, 高, 4) 画屋顶，但 RealityKit 的 generateCone 不认分段数，出来是圆锥，
+    /// 叠加后像一顶扁帽子扣在柱廊上。这里手写网格：底面四角 + 顶点，四个坡面 + 底面两个三角形。
+    /// 样板的高只有半径的 0.22 倍，平得像块板；这里抬到 0.45 倍左右，才看得出是坡顶。
+    /// 正反两种绕序各存一遍：RealityKit 的背面剔除策略在不同版本里不一致，双份最稳，代价仅 12 个三角形。
+    static func pyramid(radius: Float, height: Float, color: UIColor) -> ModelEntity {  // 四棱锥
+        let half = radius * 0.70710678  // 半边长 = 外接半径 ÷ √2，四角正好落在正方形角上
+        let corners: [SIMD3<Float>] = [  // 底面四角
+            [half, 0, half],  // 右前
+            [half, 0, -half],  // 右后
+            [-half, 0, -half],  // 左后
+            [-half, 0, half]  // 左前
+        ]  // 数组结束
+        let apex = SIMD3<Float>(0, height, 0)  // 顶点
+
+        var positions: [SIMD3<Float>] = []  // 顶点表
+        var normals: [SIMD3<Float>] = []  // 法线表，逐面平直着色
+        var indices: [UInt32] = []  // 索引表
+
+        func face(_ a: SIMD3<Float>, _ b: SIMD3<Float>, _ c: SIMD3<Float>) {  // 追加一个三角面
+            let n = simd_normalize(simd_cross(b - a, c - a))  // 面朝外的法线
+            let base = UInt32(positions.count)  // 这批顶点的起始下标
+            for v in [a, b, c] {  // 三个顶点各存一份
+                positions.append(v)  // 记位置
+                normals.append(n)  // 记法线
+            }  // 循环结束
+            indices.append(contentsOf: [base, base + 1, base + 2])  // 一种绕序
+            indices.append(contentsOf: [base + 2, base + 1, base])  // 反向绕序，防被剔除
+        }  // face 结束
+
+        for i in 0..<4 {  // 四个坡面
+            face(corners[i], corners[(i + 1) % 4], apex)  // 相邻两角 + 顶点
+        }  // 循环结束
+        face(corners[0], corners[2], corners[1])  // 底面第一半
+        face(corners[0], corners[3], corners[2])  // 底面第二半
+
+        var desc = MeshDescriptor(name: "pyramid")  // 网格描述
+        desc.positions = MeshBuffers.Positions(positions)  // 灌位置
+        desc.normals = MeshBuffers.Normals(normals)  // 灌法线
+        desc.primitives = .triangles(indices)  // 按三角形拼
+        guard let mesh = try? MeshResource.generate(from: [desc]) else {  // 生成网格
+            return box(width: radius, height: height, depth: radius, color: color)  // 万一失败退回方块，功能不丢
+        }  // 生成判断结束
+        return ModelEntity(mesh: mesh, materials: [material(color)])  // 上材质
+    }  // pyramid 结束
 
     static func material(_ color: UIColor) -> SimpleMaterial {  // 统一材质
         SimpleMaterial(color: color, roughness: .float(0.78), isMetallic: false)  // 哑光，像草与土

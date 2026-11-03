@@ -187,12 +187,22 @@ struct RootView: View {  // 根视图
         case .world:  // 3D 浮空岛
             WorldMapView()  // 三座岛，等一两秒让相机与建筑铺开
         case .roam:  // 岛内漫游
-            RoamView(roomID: "lib")  // 默认进图书馆，房间最丰富
+            RoamView(roomID: ShotRoamRoom.current)  // 默认进图书馆，可用启动参数换房间逐间截图
         }  // 分支结束
     }  // shotBody 结束
 }  // RootView 结束
 
 // MARK: - 截图专用宿主                                                 // 分节：截图宿主
+
+private enum ShotRoamRoom {  // 截图时进哪间房
+    static var current: String {  // 读启动参数 -shotRoom
+        let args = ProcessInfo.processInfo.arguments  // 全部启动参数
+        if let i = args.firstIndex(of: "-shotRoom"), i + 1 < args.count {  // 有指定就听它的
+            return args[i + 1]  // lib / diner / market / plaza
+        }  // 判断结束
+        return "lib"  // 默认图书馆，房间最丰富
+    }  // current 结束
+}  // ShotRoamRoom 结束
 
 private struct ShotRunHost: View {  // 等题库就绪再建作答页
     @Environment(AppState.self) private var app  // 观察题库

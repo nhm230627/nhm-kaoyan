@@ -81,6 +81,13 @@ jobs:
             sleep 6  # 等 3D 与列表渲染
             xcrun simctl io "$UDID" screenshot "shots/shot-$PAGE.png" || echo "截图失败：$PAGE"  # 存成 shot-<名字>.png
           done
+          for ROOM in lib diner market plaza; do  # 漫游四间房各来一张，靠 -shotRoom 换场景
+            xcrun simctl terminate "$UDID" com.fushizhuan.app 2>/dev/null || true  # 杀进程保证冷启动
+            echo "== 漫游房间 $ROOM =="  # 日志分隔
+            xcrun simctl launch "$UDID" com.fushizhuan.app -startTab quiz -startShot roam -shotRoom "$ROOM" || echo "启动失败：$ROOM"  # 房间 id 由 ShotRoamRoom 解析
+            sleep 6  # 等 3D 家具铺完
+            xcrun simctl io "$UDID" screenshot "shots/roam-$ROOM.png" || echo "截图失败：$ROOM"  # 存成 roam-<房间>.png
+          done
           echo "== 崩溃日志 =="  # 如果启动即崩，真正的堆栈在这里
           cp ~/Library/Logs/DiagnosticReports/*.ips shots/ 2>/dev/null || echo "没有崩溃日志，说明启动过程没崩"  # 有就一起上传
           ls -la shots/  # 列出来，方便在日志里核对每张图的大小

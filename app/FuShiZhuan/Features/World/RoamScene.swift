@@ -58,14 +58,15 @@ enum RoamBuilder {  // 房间建模器
         return root  // 返回整间房
     }  // build 结束
 
-    /// 装相机：42° / (0,1.6,4.6) / 看向 (0,0.6,-1.6)，与样板一致
+    /// 装相机：样板是 42° / (0,1.6,4.6) / 看向 (0,0.6,-1.6)
+    /// 这里把机位压低一点、往后退一点：手机竖屏里画面更宽，能同时看见服务台与猫的正脸
     static func installCamera(on view: ARView, wall: UIColor) {  // 装相机
         let camera = PerspectiveCamera()  // 相机实体
-        camera.camera.fieldOfViewInDegrees = 42  // 样板 fov 42
+        camera.camera.fieldOfViewInDegrees = 44  // 比样板 42 略广，窄屏才装得下整间房
         camera.camera.near = 0.1  // 样板近平面
         camera.camera.far = 60  // 样板远平面
-        let eye = SIMD3<Float>(0, 1.6, 4.6)  // 样板 camera.position
-        let target = SIMD3<Float>(0, 0.6, -1.6)  // 样板 lookAt
+        let eye = SIMD3<Float>(0, 1.35, 5.0)  // 比样板更低更远
+        let target = SIMD3<Float>(0, 0.72, -1.4)  // 视线略微下压
         let forward = simd_normalize(target - eye)  // 视线方向
         let holder = AnchorEntity(world: eye)  // 相机放在房间里
         holder.addChild(camera)  // 挂上
@@ -100,22 +101,30 @@ enum RoamBuilder {  // 房间建模器
         for (index, x) in ([-2.5, 0.1, 2.5] as [Float]).enumerated() {  // 三组
             let unit = Entity()  // 一组书架
             unit.position = [x, 0, -2.62]  // 与样板一致
-            let body = box(width: 1.32, height: 1.62, depth: 0.3, color: wood)  // 柜体
-            body.position = [0, 0.81, 0]  // 与样板一致
-            unit.addChild(body)  // 挂上
+            let back = box(width: 1.32, height: 1.62, depth: 0.06, color: wood)  // 背板（样板是一整个实心柜体，实心会把书全遮住）
+            back.position = [0, 0.81, -0.12]  // 靠后一档，给书留出可见空间
+            unit.addChild(back)  // 挂上
+            for side in [-0.63, 0.63] as [Float] {  // 两块侧板
+                let panel = box(width: 0.06, height: 1.62, depth: 0.3, color: wood)  // 侧板
+                panel.position = [side, 0.81, 0]  // 与样板柜体同宽
+                unit.addChild(panel)  // 挂上
+            }  // 循环结束
+            let cap = box(width: 1.32, height: 0.06, depth: 0.3, color: wood)  // 顶板
+            cap.position = [0, 1.62, 0]  // 压在最上面
+            unit.addChild(cap)  // 挂上
             for level in 0..<3 {  // 三层
                 let shelfY = 0.38 + Float(level) * 0.44  // 该层高度
                 let plank = box(width: 1.24, height: 0.05, depth: 0.26, color: boardColor)  // 隔板
-                plank.position = [0, shelfY, 0.02]  // 与样板一致
+                plank.position = [0, shelfY, 0]  // 与样板一致
                 unit.addChild(plank)  // 挂上
                 var bx: Float = -0.52  // 书从左边摆起
                 var bookIndex = index * 7 + level * 3  // 用固定序号取色，保证每次一样
                 while bx < 0.5 {  // 一直摆到右边
                     let width = 0.05 + Float(bookIndex % 3) * 0.02  // 书厚按序号变化
                     let height = 0.2 + Float(bookIndex % 2) * 0.08  // 书高按序号变化
-                    let book = box(width: width, height: height, depth: 0.18,  // 一本
+                    let book = box(width: width, height: height, depth: 0.16,  // 一本
                                    color: bookColors[bookIndex % bookColors.count])  // 取色
-                    book.position = [bx + width / 2, shelfY + height / 2 + 0.02, 0.04]  // 与样板一致
+                    book.position = [bx + width / 2, shelfY + height / 2 + 0.02, 0.02]  // 立在隔板前侧，正面看得见
                     unit.addChild(book)  // 挂上
                     bx += width + 0.02  // 往右挪
                     bookIndex += 1  // 换下一本
