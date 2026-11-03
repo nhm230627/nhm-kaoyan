@@ -316,7 +316,8 @@ struct DiyBankView: View {  // 我的题库
             stem: text,  // 题干
             options: opts,  // 选项
             answer: valid.sorted(),  // 答案下标
-            explain: explain.trimmingCharacters(in: .whitespacesAndNewlines)  // 解析可空
+            explain: explain.trimmingCharacters(in: .whitespacesAndNewlines),  // 解析可空
+            source: "我的题库（用户自建）"  // 来源：用户自己在 App 里录入的题
         )  // 组装结束
         app.addDiy(q)  // 写进状态层
         resetForm()  // 清空表单
