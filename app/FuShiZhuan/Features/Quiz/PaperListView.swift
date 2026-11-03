@@ -56,7 +56,7 @@ struct PaperListView: View {  // 试卷列表页
                     Text("「\(app.currentTrack.name)」方向还没有真题卷")  // 标题（带上当前方向，避免误解成整个库都空）
                         .font(AppFont.bodyStrong)  // 加粗正文
                 }  // 排列结束
-                Text("现有的院校真题考点卷覆盖：税务（中南财 2016 / 2019、人大）、金融（复旦 2022、上财 2021）。法律、计算机、医学三个方向还在补。")  // 写清实际覆盖范围
+                Text("现有的院校真题考点卷覆盖：税务（中南财 2016 / 2019、人大）、金融（复旦 2022、上财 2021）。法律、计算机两个方向还在补。")  // 写清实际覆盖范围
                     .font(AppFont.caption)  // 小字
                     .foregroundStyle(Color.textSecondary)  // 次要色
                     .fixedSize(horizontal: false, vertical: true)  // 允许换行

@@ -8,7 +8,6 @@ enum Venue: String, Codable, CaseIterable, Identifiable {  // 备考方向（岛
     case finance  // 金融专硕
     case law  // 法律硕士
     case cs  // 计算机
-    case medicine  // 医学
 
     var id: String { rawValue }  // 可识别 id
 
@@ -18,7 +17,6 @@ enum Venue: String, Codable, CaseIterable, Identifiable {  // 备考方向（岛
         case .finance: "金融考研岛"  // 金融
         case .law: "法硕考研岛"  // 法硕
         case .cs: "计算机考研岛"  // 计算机
-        case .medicine: "医学考研岛"  // 医学
         }  // 分支结束
     }  // title 结束
 
@@ -28,11 +26,10 @@ enum Venue: String, Codable, CaseIterable, Identifiable {  // 备考方向（岛
         case .finance: "金融"  // 金融
         case .law: "法硕"  // 法硕
         case .cs: "计算机"  // 计算机
-        case .medicine: "医学"  // 医学
         }  // 分支结束
     }  // shortTitle 结束
 
-    var isReady: Bool { self == .tax }  // 目前只有税务接入题库
+    var isReady: Bool { true }  // 四个方向的题库都已接入（医学方向按用户要求移除）
 }  // Venue 结束
 
 enum PrepStage: String, Codable, CaseIterable, Identifiable {  // 备考阶段

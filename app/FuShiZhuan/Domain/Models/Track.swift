@@ -18,7 +18,7 @@ struct Track: Identifiable, Hashable {  // 一个考试方向
     let desc: String  // 一句话说明考什么
     let topicIDs: [String]  // 本方向题库包含的知识点 id（空 = 整库都用）
 
-    /// 五个方向，内容与样板 track.js 的 TRACKS 逐条一致。
+    /// 四个方向，内容与样板 track.js 的 TRACKS 对应（医学方向按用户要求移除，不提供）。
     static let all: [Track] = [  // 全部方向
         Track(id: "tax", name: "税务专硕", short: "税务", code: "MT",  // 税务
               degree: "税务硕士（MT）", island: "tax", islandName: "税喵岛",  // 岛信息
@@ -39,11 +39,6 @@ struct Track: Identifiable, Hashable {  // 一个考试方向
               degree: "工学硕士（计算机）", island: "cs", islandName: "计喵岛",  // 岛信息
               people: 1547, room: "计算机复试间",  // 人数与面试间
               desc: "数据结构 · 操作系统 · 网络 · 数据库",  // 说明
-              topicIDs: []),  // 整库都用
-        Track(id: "med", name: "医学", short: "医学", code: "MED",  // 医学
-              degree: "医学硕士", island: "med", islandName: "医喵岛",  // 岛信息
-              people: 329, room: "医学复试间",  // 人数与面试间
-              desc: "生理 · 病理 · 药理 · 诊断",  // 说明
               topicIDs: []),  // 整库都用
     ]  // 方向表结束
 

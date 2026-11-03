@@ -67,7 +67,7 @@ struct Paper: Codable, Identifiable, Hashable {  // 一整套试卷
 
     /// 这套卷属于哪个考试方向，对齐 Track.id。
     /// 为什么需要：StudyDirection 是早期的三方向模型（tax/finance/management），
-    /// 而 Track 有五方向（tax/fin/law/cs/med）。不带这层映射的话，
+    /// 而 Track 有四方向（tax/fin/law/cs）。不带这层映射的话，
     /// 试卷列表会把别的方向的卷也列出来，点进去当前题库里找不到题，成了空卷。
     var trackID: String {  // 映射到 Track.id
         switch direction {  // 按老枚举分支

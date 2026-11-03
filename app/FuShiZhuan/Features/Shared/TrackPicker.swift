@@ -14,8 +14,7 @@ enum TrackStyle {  // 方向的视觉标识（颜色只影响观感，不是业�
         case "fin": "金"  // 金融
         case "law": "法"  // 法硕
         case "cs": "计"  // 计算机
-        case "med": "医"  // 医学
-        default: "考"  // 兜底
+        default: "考"  // 兜底（医学方向已按用户要求移除）
         }  // 分支结束
     }  // iconChar 结束
 
@@ -25,7 +24,6 @@ enum TrackStyle {  // 方向的视觉标识（颜色只影响观感，不是业�
         case "fin": [Color(hex: 0x0F9D58), Color(hex: 0x2BB3A0)]  // 绿
         case "law": [Color(hex: 0x7C4DFF), Color(hex: 0xA175FF)]  // 紫
         case "cs": [Color(hex: 0x0B84A8), Color(hex: 0x4CC4E0)]  // 青
-        case "med": [Color(hex: 0xE2402F), Color(hex: 0xFF7A45)]  // 橙红
         default: [Color(hex: 0x2B54E8), Color(hex: 0x5B7CFF)]  // 兜底蓝
         }  // 分支结束
     }  // gradient 结束
