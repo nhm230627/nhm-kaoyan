@@ -28,6 +28,7 @@ struct AppSnapshot: Codable, Equatable {  // 持久化单位
     var communityPosts: [CommunityPost] = []  // 我在研友论坛发的帖子（有默认值，旧快照能直接解码）
     var communityLikes: [String] = []  // 我点过赞的帖子 id（有默认值，旧快照能直接解码）
     var communitySeedComments: [String: [PostComment]] = [:]  // 种子帖上我加的评论，键是帖子 id
+    var plazaFriends: [String] = []  // 广场里加过的研友昵称（有默认值，旧快照能直接解码）
     var duelGames: Int = 0  // 1V1 已打场次（有默认值，旧快照能直接解码）
     var duelWins: Int = 0  // 1V1 胜场（有默认值，旧快照能直接解码）
 
@@ -224,6 +225,20 @@ final class AppState {  // 全局状态类
         scheduleSave()  // 落盘
         return gain  // 返回本次增量，供结果页展示
     }  // finishDuel 结束
+
+    /// 广场加好友：同一个昵称只加一次，返回是否新增。
+    @discardableResult  // 返回值可忽略
+    func addPlazaFriend(_ name: String) -> Bool {  // 加广场好友
+        let nick = name.trimmingCharacters(in: .whitespacesAndNewlines)  // 去空白
+        guard !nick.isEmpty, !data.plazaFriends.contains(nick) else { return false }  // 空或重复都不加
+        var snap = data  // 拷一份改
+        snap.plazaFriends.append(nick)  // 追加
+        data = snap  // 写回
+        scheduleSave()  // 落盘
+        return true  // 表示新增成功
+    }  // addPlazaFriend 结束
+
+    var plazaFriends: [String] { data.plazaFriends }  // 广场好友（只读）
 
     var duelGames: Int { data.duelGames }  // 已打场次（只读）
 

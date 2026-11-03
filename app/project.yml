@@ -102,18 +102,37 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.fushizhuan.app.tests
         GENERATE_INFOPLIST_FILE: YES   # 测试包不需要自定义 plist，让 Xcode 自己生成
 
+  # UI 测试包：真的在模拟器上点按钮、滑动、点画布。
+  # 为什么要它：本机没有 Xcode，光靠截图只能证明「画出来了」，
+  # 证明不了「点得动、滑得动、不崩」。XCUITest 在 CI 的模拟器里真跑一遍交互。
+  FuShiZhuanUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: FuShiZhuanUITests
+        excludes:
+          - "**/.DS_Store"
+    dependencies:
+      - target: FuShiZhuan          # 依赖主 target，XcodeGen 会自动配好 TEST_TARGET_NAME 与宿主
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fushizhuan.app.uitests
+        GENERATE_INFOPLIST_FILE: YES   # UI 测试包也不需要自定义 plist
+
 schemes:
   FuShiZhuan:
     build:
       targets:
         FuShiZhuan: all
         FuShiZhuanTests: [test]     # 只在跑测试时才编译测试包，正常构建不受影响
+        FuShiZhuanUITests: [test]   # UI 测试包同理
     run:
       config: Debug
     test:
       config: Debug
       targets:
-        - FuShiZhuanTests           # 声明测试目标，xcodebuild test 才知道要跑谁
+        - FuShiZhuanTests           # 单元测试：逻辑对不对
+        - FuShiZhuanUITests         # UI 测试：点得动、滑得动、不崩溃
     profile:
       config: Release
     analyze:

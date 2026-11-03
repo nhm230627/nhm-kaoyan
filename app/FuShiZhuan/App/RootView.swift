@@ -73,6 +73,7 @@ struct RootView: View {  // 根视图
         case room  // 2D 考场（样板 page-room）
         case ritual  // 拨穗礼成（样板 page-ritual）
         case duel  // 1V1 知识竞赛（样板 page-game 的浮层）
+        case plaza  // 广场画布（样板 page-plaza）
 
         var id: String { rawValue }  // 用原始值当 id
     }  // Shot 结束
@@ -179,6 +180,8 @@ struct RootView: View {  // 根视图
             RitualView()  // 直接进证书页（时序动画自己会跑）
         case .duel:  // 1V1 知识竞赛
             DuelView()  // 停在大厅页（截选题量与规则）
+        case .plaza:  // 广场画布
+            PlazaView()  // 多宠物同场，进来就动
         }  // 分支结束
     }  // shotBody 结束
 }  // RootView 结束

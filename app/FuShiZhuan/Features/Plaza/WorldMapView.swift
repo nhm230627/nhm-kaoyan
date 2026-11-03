@@ -108,7 +108,7 @@ struct WorldMapView: View {  // 学习地图
                 detail: "宠物社交",  // 副标题（样板原话）
                 icon: "figure.socialdance",  // 图标
                 available: true,  // 可进入（进去是说明页，社区还没做）
-                destination: AnyView(PlazaPlaceholderView())  // 广场还没做，如实说明
+                destination: AnyView(PlazaView())  // 广场画布
             ),  // 结束
             Spot(  // 集市
                 id: "market",  // id
