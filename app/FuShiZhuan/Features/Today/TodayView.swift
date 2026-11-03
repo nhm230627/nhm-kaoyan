@@ -80,9 +80,9 @@ struct TodayView: View {  // 首页
             )  // 圆环结束
 
             VStack(alignment: .leading, spacing: Space.xs) {  // 右侧文字区
-                Text(app.profile.venue.title)  // 备考方向
+                Text(app.currentTrack.name)  // 备考方向（跟考试方向走，样板 applyTrack 就是改这里）
                     .font(.system(size: 19, weight: .bold, design: .rounded))  // 大号圆体
-                Text(verbatim: "\(examYear) 届 · \(app.profile.stage.title)")  // 届数与阶段（verbatim 防止 2027 被格式化成 2,027）
+                Text(verbatim: "\(examYear) 届 · 复试冲刺")  // 届数与阶段（样板写的就是「复试冲刺」，verbatim 防千位逗号）
                     .font(AppFont.caption)  // 小字
                     .opacity(0.85)  // 略淡
                 HStack(spacing: Space.xxs) {  // 连续登录徽章
@@ -166,7 +166,7 @@ struct TodayView: View {  // 首页
                 VStack(spacing: Space.m) {  // 纵向排列
                     taskRow(  // 任务一：刷题
                         icon: "checklist",  // 图标
-                        title: "刷一组题",  // 标题
+                        title: "完成 1 组刷题",  // 标题（样板原话）
                         detail: app.bank == nil ? "题库加载中…" : "已完成 \(app.todayAnswered) 题",  // 详情
                         status: app.todayAnswered > 0 ? "已完成" : "未完成",  // 右侧状态
                         done: app.todayAnswered > 0  // 是否完成
@@ -176,7 +176,7 @@ struct TodayView: View {  // 首页
                     Divider()  // 分隔线
                     taskRow(  // 任务二：模拟面试
                         icon: "person.2.wave.2",  // 图标
-                        title: "做一次模拟面试",  // 标题
+                        title: "完成 1 场模拟面试",  // 标题（样板原话）
                         detail: "今日剩 \(app.entitlement.remaining(.interviewDaily) ?? 0) 场",  // 剩余场次
                         status: "\(todayInterviewCount)/1",  // 今天完成的场次
                         done: todayInterviewCount > 0  // 是否完成
@@ -184,14 +184,14 @@ struct TodayView: View {  // 首页
                         InterviewHomeView()  // 面试设置页
                     }  // 任务二结束
                     Divider()  // 分隔线
-                    taskRow(  // 任务三：喂伙伴
+                    taskRow(  // 任务三：伙伴打卡（样板第三行就是打卡，不是投喂）
                         icon: "pawprint",  // 图标
-                        title: "喂一次伙伴",  // 标题
-                        detail: app.pet.food > 0 ? "口粮 \(app.pet.food) 颗" : "没有口粮，先去闯关",  // 详情
-                        status: app.pet.energy >= Pet.maxEnergy ? "已吃饱" : "待投喂",  // 右侧状态
-                        done: app.pet.energy >= Pet.maxEnergy  // 是否吃饱
+                        title: "学习伙伴打卡",  // 标题（样板原话）
+                        detail: checkedInToday ? "连续 \(app.data.streakDays) 天" : "去伙伴页点「打卡陪伴」",  // 详情
+                        status: checkedInToday ? "已打卡" : "未打卡",  // 右侧状态（样板原话）
+                        done: checkedInToday  // 今天打过就算完成
                     ) {  // 点击目的地
-                        CompanionHomeView()  // 伙伴页，在那里投喂
+                        CompanionHomeView()  // 伙伴页，在那里打卡
                     }  // 任务三结束
                 }  // 排列结束
             }  // 卡片结束

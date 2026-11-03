@@ -253,63 +253,64 @@ struct CompanionHomeView: View {  // 伙伴页
         .padding(.bottom, 10)  // 下间距
     }  // foodBar 结束
 
-    private var actions: some View {  // 三个按钮（照样板 .pet-actions）
-        HStack(spacing: 8) {  // 横排
-            Button {  // 打卡陪伴
-                if app.checkIn() {  // 打卡成功
+    private var actions: some View {  // 三个按钮（照样板 .pet-actions 的 1.4 : 1 : 1）
+        GeometryReader { geo in  // 拿整行宽度自己分配，避免 layoutPriority 把后两个压成 0
+            let gap: CGFloat = 8  // 按钮间距（样板 gap 8）
+            let usable = geo.size.width - gap * 2  // 减掉两个间距
+            let mainW = usable * (1.4 / 3.4)  // 主按钮占 1.4 份
+            let sideW = usable * (1.0 / 3.4)  // 次按钮各占 1 份
+
+            HStack(spacing: gap) {  // 横排
+                Button {  // 打卡陪伴
+                    if app.checkIn() {  // 打卡成功
+                        jumpToken += 1  // 跳一下
+                        show("打卡成功 · 连续 \(app.data.streakDays) 天")  // 提示
+                    } else {  // 今天已经打过
+                        show("今天已经陪过了")  // 提示
+                    }  // 分支结束
+                } label: {  // 主按钮外观
+                    Text("打卡陪伴")  // 文案（样板原话）
+                        .font(.system(size: 13, weight: .semibold))  // 13 号
+                        .foregroundStyle(.white)  // 白字
+                        .frame(width: mainW, height: 40)  // 固定宽高
+                        .background(RoundedRectangle(cornerRadius: 14, style: .continuous)  // 圆角 14
+                            .fill(LinearGradient(colors: [Color.appBrand, Color(hex: 0x4A72F5)],  // 品牌蓝渐变
+                                                 startPoint: .topLeading, endPoint: .bottomTrailing)))  // 对角
+                }  // 按钮结束
+                .buttonStyle(.plain)  // 去掉系统样式
+
+                Button {  // 投喂
+                    handleFeed()  // 走唯一写入口
+                } label: {  // 按钮外观
+                    Text("投喂 · 1 份")  // 文案（样板原话）
+                        .font(.system(size: 13, weight: .semibold))  // 13 号
+                        .foregroundStyle(app.pet.food > 0 ? Color.appBrand : Color.textTertiary)  // 没口粮变灰
+                        .frame(width: sideW, height: 40)  // 固定宽高
+                        .background(RoundedRectangle(cornerRadius: 14, style: .continuous)  // 圆角 14
+                            .fill(Color.appCard))  // 白底
+                        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)  // 描边
+                            .strokeBorder(Color.separator, lineWidth: 1))  // 细线
+                }  // 按钮结束
+                .buttonStyle(.plain)  // 去掉系统样式
+
+                Button {  // 逗一下
                     jumpToken += 1  // 跳一下
-                    show("打卡成功 · 连续 \(app.data.streakDays) 天")  // 提示
-                } else {  // 今天已经打过
-                    show("今天已经陪过了")  // 提示
-                }  // 分支结束
-            } label: {  // 按钮外观
-                Text("打卡陪伴")  // 文案（样板原话）
-                    .font(.system(size: 13, weight: .semibold))  // 13 号
-                    .foregroundStyle(.white)  // 白字
-                    .frame(maxWidth: .infinity)  // 撑满
-                    .frame(height: 40)  // 高 40
-                    .background(RoundedRectangle(cornerRadius: 14, style: .continuous)  // 圆角 14
-                        .fill(LinearGradient(colors: [Color.appBrand, Color(hex: 0x4A72F5)],  // 品牌蓝渐变
-                                             startPoint: .topLeading, endPoint: .bottomTrailing)))  // 对角
-            }  // 按钮结束
-            .buttonStyle(.plain)  // 去掉系统样式
-            .frame(maxWidth: .infinity)  // 占 1.4 份中的一份
-            .layoutPriority(1.4)  // 主按钮更宽（样板 1.4fr）
-
-            Button {  // 投喂
-                handleFeed()  // 走唯一写入口
-            } label: {  // 按钮外观
-                Text("投喂 · 1 份")  // 文案（样板原话）
-                    .font(.system(size: 13, weight: .semibold))  // 13 号
-                    .foregroundStyle(app.pet.food > 0 ? Color.appBrand : Color.textTertiary)  // 没口粮变灰
-                    .frame(maxWidth: .infinity)  // 撑满
-                    .frame(height: 40)  // 高 40
-                    .background(RoundedRectangle(cornerRadius: 14, style: .continuous)  // 圆角 14
-                        .fill(Color.appCard))  // 白底
-                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)  // 描边
-                        .strokeBorder(Color.separator, lineWidth: 1))  // 细线
-            }  // 按钮结束
-            .buttonStyle(.plain)  // 去掉系统样式
-            .frame(maxWidth: .infinity)  // 等宽
-
-            Button {  // 逗一下
-                jumpToken += 1  // 跳一下
-                show("它跳了一下")  // 提示
-            } label: {  // 按钮外观
-                Text("逗一下")  // 文案（样板原话）
-                    .font(.system(size: 13, weight: .semibold))  // 13 号
-                    .foregroundStyle(Color.appBrand)  // 品牌蓝
-                    .frame(maxWidth: .infinity)  // 撑满
-                    .frame(height: 40)  // 高 40
-                    .background(RoundedRectangle(cornerRadius: 14, style: .continuous)  // 圆角 14
-                        .fill(Color.appCard))  // 白底
-                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)  // 描边
-                        .strokeBorder(Color.separator, lineWidth: 1))  // 细线
-            }  // 按钮结束
-            .buttonStyle(.plain)  // 去掉系统样式
-            .frame(maxWidth: .infinity)  // 等宽
-        }  // 横排结束
-        .padding(.vertical, 2)  // 上下微调（样板 margin 12 0 10）
+                    show("它跳了一下")  // 提示
+                } label: {  // 按钮外观
+                    Text("逗一下")  // 文案（样板原话）
+                        .font(.system(size: 13, weight: .semibold))  // 13 号
+                        .foregroundStyle(Color.appBrand)  // 品牌蓝
+                        .frame(width: sideW, height: 40)  // 固定宽高
+                        .background(RoundedRectangle(cornerRadius: 14, style: .continuous)  // 圆角 14
+                            .fill(Color.appCard))  // 白底
+                        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)  // 描边
+                            .strokeBorder(Color.separator, lineWidth: 1))  // 细线
+                }  // 按钮结束
+                .buttonStyle(.plain)  // 去掉系统样式
+            }  // 横排结束
+            .padding(.vertical, 2)  // 上下微调
+        }  // 几何读取结束
+        .frame(height: 44)  // 整行高度
     }  // actions 结束
 
     private func entryRow(icon: String, title: String, subtitle: String,  // 入口行

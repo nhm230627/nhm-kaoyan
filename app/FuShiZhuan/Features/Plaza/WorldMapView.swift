@@ -60,47 +60,63 @@ struct WorldMapView: View {  // 学习地图
         }  // 排列结束
     }  // islandSection 结束
 
-    private var spots: [Spot] {  // 地点列表
+    private var spots: [Spot] {  // 地点列表（七个，与样板 map-grid 一一对应）
         [  // 数组开始
+            Spot(  // 图书馆
+                id: "library",  // id
+                name: "图书馆",  // 名字（样板原话）
+                detail: "刷题 / 错题",  // 副标题（样板原话）
+                icon: "books.vertical",  // 图标
+                available: true,  // 可进入
+                destination: AnyView(QuizHomeView())  // 跳刷题首页
+            ),  // 结束
+            Spot(  // 副本战场
+                id: "game",  // id
+                name: "副本战场",  // 名字（样板原话）
+                detail: "闯关赚口粮",  // 副标题（样板原话）
+                icon: "flame",  // 图标
+                available: true,  // 可进入
+                destination: AnyView(LevelMapView())  // 跳关卡地图
+            ),  // 结束
+            Spot(  // 食堂
+                id: "diner",  // id
+                name: "食堂",  // 名字（样板原话）
+                detail: "投喂宠物",  // 副标题（样板原话）
+                icon: "fork.knife",  // 图标
+                available: true,  // 可进入
+                destination: AnyView(CompanionHomeView())  // 跳伙伴页投喂
+            ),  // 结束
             Spot(  // 面试间
                 id: "interview",  // id
-                name: "面试间",  // 名字
-                detail: "5 位导师、5 个环节、20 分钟一场",  // 说明
+                name: "面试间",  // 名字（样板原话）
+                detail: "5 位导师",  // 副标题（样板原话）
                 icon: "person.2.wave.2",  // 图标
                 available: true,  // 可进入
                 destination: AnyView(InterviewHomeView())  // 跳面试页
             ),  // 结束
-            Spot(  // 图书馆
-                id: "library",  // id
-                name: "图书馆",  // 名字
-                detail: "课程与资料库，尚未排期",  // 说明
-                icon: "books.vertical",  // 图标
-                available: false,  // 未开放
-                destination: nil  // 无目标
-            ),  // 结束
-            Spot(  // 食堂
-                id: "canteen",  // id
-                name: "食堂",  // 名字
-                detail: "用学习时长换口粮，阶段 5 接入",  // 说明
-                icon: "fork.knife",  // 图标
-                available: false,  // 未开放
-                destination: nil  // 无目标
-            ),  // 结束
-            Spot(  // 广场
-                id: "plaza",  // id
-                name: "广场",  // 名字
-                detail: "3D 学习社区与他人伙伴，阶段 6 接入",  // 说明
-                icon: "figure.socialdance",  // 图标
-                available: false,  // 未开放
-                destination: nil  // 无目标
-            ),  // 结束
-            Spot(  // 模考区
+            Spot(  // 模考广场
                 id: "exam",  // id
-                name: "模考广场",  // 名字（样板地图 POI 原话）
-                detail: "通用卷 + 48 所院校卷",  // 说明（照样板 POI 副标题）
+                name: "模考广场",  // 名字（样板原话）
+                detail: "48 所院校卷",  // 副标题（样板原话）
                 icon: "chart.bar.xaxis",  // 图标
                 available: true,  // 可进入
                 destination: AnyView(MockExamView())  // 跳院校模考页
+            ),  // 结束
+            Spot(  // 公共广场
+                id: "plaza",  // id
+                name: "公共广场",  // 名字（样板原话）
+                detail: "宠物社交",  // 副标题（样板原话）
+                icon: "figure.socialdance",  // 图标
+                available: true,  // 可进入（进去是说明页，社区还没做）
+                destination: AnyView(PlazaPlaceholderView())  // 广场还没做，如实说明
+            ),  // 结束
+            Spot(  // 集市
+                id: "market",  // id
+                name: "集市",  // 名字（样板原话）
+                detail: "备考好物",  // 副标题（样板原话）
+                icon: "bag",  // 图标
+                available: true,  // 可进入（进去是说明页，商店还没做）
+                destination: AnyView(ShopPlaceholderView())  // 商店还没做，如实说明
             )  // 结束
         ]  // 数组结束
     }  // spots 结束

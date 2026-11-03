@@ -22,6 +22,7 @@ struct QuizRunView: View {  // 练习作答页
     @State private var submitted = false  // 是否已交卷
     @State private var seconds = 0  // 交卷时定格的用时
     @State private var unanswered = 0  // 交卷时未答数
+    @State private var hint: String?  // 底部轻提示（AI 讲题等未接功能的说明）
 
     init(pool: [Question], size: Int, revealEach: Bool,  // 练习用构造器
          title: String = "", fixed: Bool = false) {  // 模考可传卷名与固定题序
@@ -61,6 +62,20 @@ struct QuizRunView: View {  // 练习作答页
                 }  // 分支结束
             }  // 工具栏项结束
         }  // 工具栏结束
+        .overlay(alignment: .bottom) {  // 底部轻提示
+            if let hint {  // 有文案才显示
+                Text(hint)  // 提示内容
+                    .font(.system(size: 12))  // 12 号
+                    .foregroundStyle(.white)  // 白字
+                    .multilineTextAlignment(.center)  // 多行居中
+                    .padding(.horizontal, 14)  // 左右
+                    .padding(.vertical, 9)  // 上下
+                    .background(RoundedRectangle(cornerRadius: 12, style: .continuous)  // 圆角 12
+                        .fill(Color.black.opacity(0.78)))  // 深色底
+                    .padding(.horizontal, 24)  // 与屏幕边留白
+                    .padding(.bottom, 28)  // 离底边
+            }  // 分支结束
+        }  // 浮层结束
     }  // body 结束
 
     private var runBody: some View {  // 作答界面
@@ -169,6 +184,7 @@ struct QuizRunView: View {  // 练习作答页
 
                     if revealEach, let picked = answers[q.id], !picked.isEmpty {  // 每题即时看
                         explainBlock(q, picked: picked)  // 立刻给对错与解析
+                        aiExplainButton  // 样板题卡下方的「让 AI 讲讲这道题」
                     }  // 分支结束
                 }  // 排列结束
                 .frame(maxWidth: .infinity, alignment: .leading)  // 撑满左对齐
@@ -263,6 +279,40 @@ struct QuizRunView: View {  // 练习作答页
     }  // explainBlock 结束
 
     // MARK: - 导航与答题卡                                            // 分节：导航
+
+    /// 样板的「让 AI 讲讲这道题」（.ai-explain-btn）。
+    /// BFF 目前只有 interview / coach 两组接口，没有讲题接口，所以点下去如实提示，
+    /// 不假装能讲、也不偷偷调 coach 去糊一个答案。
+    private var aiExplainButton: some View {  // AI 讲解按钮
+        Button {  // 点击
+            showHint("AI 讲题接口还没接，先把上面的解析看明白；接上就换成真的讲题。")  // 如实提示
+        } label: {  // 按钮外观
+            HStack(spacing: 7) {  // 小圆点 + 文字
+                Circle().fill(Color.appViolet)  // 紫色小点（样板 .ai-dot）
+                    .frame(width: 7, height: 7)  // 7 直径
+                Text("让 AI 讲讲这道题")  // 文案（样板原话）
+                    .font(.system(size: 12.5, weight: .semibold))  // 12.5 号
+                    .foregroundStyle(Color(hex: 0x5B45D6))  // 样板紫字
+            }  // 横排结束
+            .frame(maxWidth: .infinity)  // 撑满
+            .frame(height: 38)  // 38 高（样板同）
+            .background(RoundedRectangle(cornerRadius: 11, style: .continuous)  // 圆角 11
+                .fill(LinearGradient(colors: [Color(hex: 0xF3F0FF), Color(hex: 0xEEF4FF)],  // 淡紫到淡蓝
+                                     startPoint: .leading, endPoint: .trailing)))  // 左到右
+            .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous)  // 内描边
+                .strokeBorder(Color(hex: 0xE4E0FB), lineWidth: 1))  // 淡紫边
+        }  // 按钮结束
+        .buttonStyle(.plain)  // 去掉系统样式
+        .padding(.top, 10)  // 与解析隔开（样板 margin-top 10）
+    }  // aiExplainButton 结束
+
+    private func showHint(_ text: String) {  // 底部轻提示
+        hint = text  // 设文案
+        Task {  // 异步清掉
+            try? await Task.sleep(nanoseconds: 2_200_000_000)  // 2.2 秒
+            hint = nil  // 清空
+        }  // 任务结束
+    }  // showHint 结束
 
     private var runNav: some View {  // 上一题 / 下一题（样板 .run-nav 栅格 1:1.4，此处等分近似）
         HStack(spacing: 9) {  // 横向排列
