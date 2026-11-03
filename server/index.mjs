@@ -189,6 +189,24 @@ function buildSummaryPrompt({ turns, mode }) {  // 拼总结提示词
   ].join('\n')  // 拼成一段
 }  // buildSummaryPrompt 结束
 
+// AI 学伴：首页那块「今天该练什么」的建议
+function buildCoachPrompt({ question, context }) {  // 拼学伴提示词
+  return [  // 提示词数组
+    SYSTEM_BASE,  // 系统约束
+    '',  // 空行
+    '你的角色是备考学伴，不是面试官，也不是老师。',  // 角色
+    `用户问：${question}`,  // 用户问题
+    context ? `用户当前学习状态（真实数据，只能引用这里出现过的数字）：${context}` : '用户当前学习状态：未提供，禁止编造任何数字。',  // 上下文
+    '',  // 空行
+    '要求：',  // 要求列表
+    '1. 回答不超过 120 字，直接给建议，不要寒暄，不要复述问题。',  // 长度
+    '2. 只能引用上面给出的数字；没有给数字就不许说「你已经答了 N 题」这类话。',  // 禁止编造
+    '3. 不预测录取结果，不承诺提分幅度。',  // 不做承诺
+    '4. actions 给 1-2 条：用户点一下就能去做的事，必须对应 App 内已有功能（刷题、闯关、错题本、模拟面试）。',  // 动作
+    '5. 输出格式：{"reply":"...","actions":[{"title":"...","detail":"..."}],"confidence":"high|medium|low"}',  // 输出结构
+  ].join('\n')  // 拼成一段
+}  // buildCoachPrompt 结束
+
 // ---------- 调上游 ----------
 
 // 调 DeepSeek，返回解析后的对象；失败抛结构化错误
@@ -270,7 +288,8 @@ async function handle(req, res) {  // 主路由
 
   if (path !== '/v1/interview/turn' &&  // 非出题
       path !== '/v1/interview/evaluate' &&  // 非评分
-      path !== '/v1/interview/summary') {  // 非总结
+      path !== '/v1/interview/summary' &&  // 非总结
+      path !== '/v1/coach') {  // 非学伴
     return sendJSON(res, 404, { code: 'notFound', message: '接口不存在' })  // 404
   }  // 404 分支结束
 
@@ -290,6 +309,24 @@ async function handle(req, res) {  // 主路由
 
   const sessionId = String(body.sessionId || '')  // 场次 id
   const turnIndex = Number(body.turnIndex || 0)  // 轮次号
+
+  // AI 学伴：一次性问答，没有「场次」概念，所以不走幂等缓存，直接出结果
+  if (path === '/v1/coach') {  // 学伴分支
+    const question = String(body.question || '').trim().slice(0, 200)  // 用户问题，限长
+    if (!question) {  // 空问题没有意义
+      return sendJSON(res, 400, { code: 'badRequest', message: 'question 不能为空' })  // 400
+    }  // 分支结束
+    const context = String(body.context || '').slice(0, 500)  // 学习状态摘要，限长防注入
+    const prompt = buildCoachPrompt({ question, context })  // 拼提示词
+    const out = await callModel(prompt, { temperature: 0.5 })  // 温度低一点，建议更稳
+    return sendJSON(res, 200, {  // 返回
+      requestId: randomUUID(),  // 请求 id
+      reply: String(out.reply || '').slice(0, 600),  // 建议正文
+      actions: Array.isArray(out.actions) ? out.actions.slice(0, 2) : [],  // 最多两条动作
+      confidence: out.confidence || 'low',  // 置信度
+    })  // 返回结束
+  }  // 学伴分支结束
+
   const cacheKey = `${path}:${sessionId}:${turnIndex}`  // 幂等键
   const cached = idempotentGet(cacheKey)  // 查缓存
   if (cached) return sendJSON(res, 200, { ...cached, cached: true })  // 命中直接返回

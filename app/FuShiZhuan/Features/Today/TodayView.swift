@@ -19,6 +19,7 @@ struct TodayView: View {  // 首页
                 } else {  // 正常
                     heroCard  // 蓝色渐变主卡
                     statsRow  // 四格统计
+                    coachCard  // AI 学伴（本地建议免费，点「问问」才联网）
                     petCard  // 宠物卡
                     todayTasks  // 今日任务
                     weakTopics  // 薄弱点
@@ -75,13 +76,13 @@ struct TodayView: View {  // 首页
             VStack(alignment: .leading, spacing: Space.xs) {  // 右侧文字区
                 Text(app.profile.venue.title)  // 备考方向
                     .font(.system(size: 19, weight: .bold, design: .rounded))  // 大号圆体
-                Text("\(examYear) 届 · \(app.profile.stage.title)")  // 届数与阶段
+                Text(verbatim: "\(examYear) 届 · \(app.profile.stage.title)")  // 届数与阶段（verbatim 防止 2027 被格式化成 2,027）
                     .font(AppFont.caption)  // 小字
                     .opacity(0.85)  // 略淡
                 HStack(spacing: Space.xxs) {  // 连续登录徽章
                     Image(systemName: "flame.fill")  // 火苗图标
                         .font(.system(size: 11))  // 小图标
-                    Text("连续登录 \(app.data.streakDays) 天")  // 连签天数
+                    Text(verbatim: "连续登录 \(app.data.streakDays) 天")  // 连签天数（verbatim 同上，避免四位数带逗号）
                         .font(AppFont.captionStrong)  // 小字加粗
                 }  // 徽章内容结束
                 .padding(.horizontal, Space.s)  // 左右内边距
@@ -140,6 +141,13 @@ struct TodayView: View {  // 首页
         if acc >= 0.6 { return .appWarn }  // 60% 以上橙
         return .appErr  // 低于 60% 红
     }  // 属性结束
+
+    // MARK: - AI 学伴                                                  // 分节：学伴
+
+    private var coachCard: some View {  // 学伴卡片外壳
+        CoachCard()  // 卡片自身只管内容
+            .padding(.horizontal, Metrics.pagePadding)  // 与其它卡片对齐左右边距
+    }  // coachCard 结束
 
     // MARK: - 宠物卡                                                    // 分节：宠物
 

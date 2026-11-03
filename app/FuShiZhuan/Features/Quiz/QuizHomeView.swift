@@ -143,7 +143,7 @@ struct QuizHomeView: View {  // 刷题首页
             VStack(spacing: 2) {  // 纵向排列
                 Text("\(index)")  // 关卡序号
                     .font(AppFont.bodyStrong)  // 加粗
-                    .foregroundStyle(stars == nil ? Color.textSecondary : Color.appBrand)  // 未过灰，过了品牌色
+                    .foregroundStyle(Color.appBrand)  // 一律品牌色：灰字会让人以为点不动
                 HStack(spacing: 1) {  // 三颗小星
                     ForEach(0..<3, id: \.self) { s in  // 遍历三颗
                         Image(systemName: s < (stars ?? 0) ? "star.fill" : "star")  // 实心或空心
@@ -154,9 +154,13 @@ struct QuizHomeView: View {  // 刷题首页
             }  // 排列结束
             .frame(width: 56, height: 56)  // 固定方块
             .background(  // 背景
-                (stars == nil ? Color.appBG : Color.appBrand.opacity(0.08)),  // 未过灰底已过淡蓝
+                (stars == nil ? Color.appBrand.opacity(0.06) : Color.appBrand.opacity(0.14)),  // 未过关淡底，过关稍深
                 in: RoundedRectangle(cornerRadius: Radius.chip, style: .continuous)  // 圆角
             )  // 背景结束
+            .overlay(  // 描边
+                RoundedRectangle(cornerRadius: Radius.chip, style: .continuous)  // 同圆角
+                    .stroke(Color.appBrand.opacity(stars == nil ? 0.30 : 0), lineWidth: 1)  // 未过关才有边框
+            )  // 描边结束
         }  // 外观结束
         .buttonStyle(.plain)  // 去掉默认样式
         .disabled(questions.isEmpty)  // 没题不能点
