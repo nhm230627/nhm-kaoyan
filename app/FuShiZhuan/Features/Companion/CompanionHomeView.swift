@@ -39,7 +39,7 @@ struct CompanionHomeView: View {  // 伙伴页
         Card {  // 卡片
             VStack(spacing: Space.m) {  // 纵向排列
                 ZStack(alignment: .bottom) {  // 叠放：3D 宠物 + 阶段标签
-                    PetSceneView(stage: app.stage, jumpToken: jumpToken, flipToken: flipToken)  // 3D 形象
+                    PetSceneView(stage: app.stage, outfit: app.outfit, jumpToken: jumpToken, flipToken: flipToken)  // 3D 形象（带当前穿戴）
                         .frame(height: 200)  // 固定高度，别撑满整页
                         .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))  // 圆角裁切
                     Text(app.stage.title)  // 阶段名
@@ -78,6 +78,12 @@ struct CompanionHomeView: View {  // 伙伴页
         return .appOK  // 正常绿
     }  // 属性结束
 
+    private var outfitText: String {  // 当前穿戴摘要
+        let hatID = app.outfit.id(for: .hat) ?? ""  // 头顶那件
+        let hat = OutfitCatalog.shared.item(id: hatID)?.name ?? "不戴"  // 配件名
+        return hat == "不戴" ? "去挑一身" : "现在戴「\(hat)」"  // 没戴就引导一下
+    }  // 属性结束
+
     private var actionCard: some View {  // 操作卡
         Card {  // 卡片
             VStack(spacing: Space.s) {  // 纵向排列
@@ -114,6 +120,28 @@ struct CompanionHomeView: View {  // 伙伴页
                         show("拨穗完成 · 从右拨到左")  // 提示
                     }  // 按钮结束
                 }  // 分支结束
+
+                NavigationLink {  // 进换装工坊
+                    AvatarStudioView()  // 换装页
+                } label: {  // 入口外观
+                    HStack(spacing: Space.xs) {  // 横向排列
+                        Image(systemName: "tshirt.fill")  // 衣服图标
+                            .font(.system(size: 14))  // 图标大小
+                        Text(verbatim: "换装工坊 · \(outfitText)")  // 说明当前穿戴
+                            .font(AppFont.captionStrong)  // 小字加粗
+                        Spacer()  // 撑开
+                        Image(systemName: "chevron.right")  // 箭头
+                            .font(.system(size: 11, weight: .semibold))  // 小箭头
+                    }  // 排列结束
+                    .foregroundStyle(Color.appBrand)  // 品牌色
+                    .padding(.horizontal, Space.m)  // 左右内边距
+                    .padding(.vertical, Space.s)  // 上下内边距
+                    .background(  // 淡底
+                        RoundedRectangle(cornerRadius: Radius.chip, style: .continuous)  // 圆角
+                            .fill(Color.appBrand.opacity(0.10))  // 淡品牌色
+                    )  // 背景结束
+                }  // 链接结束
+                .buttonStyle(.plain)  // 不用默认高亮
             }  // 排列结束
         }  // 卡片结束
     }  // actionCard 结束

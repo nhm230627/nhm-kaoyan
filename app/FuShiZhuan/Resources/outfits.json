@@ -1,0 +1,202 @@
+{
+  "meta": {
+    "version": "1.0",
+    "note": "猫的换装配件表。加新配件只改本文件，不改 Swift 代码；几何形状按 slot 复用。minGrowth 是解锁所需成长值。"
+  },
+  "items": [
+    {
+      "id": "fur.cream",
+      "slot": "fur",
+      "name": "奶白",
+      "detail": "最常见的家猫配色，肚皮是浅奶油色",
+      "hex": "F7EDE2",
+      "accentHex": "FFFBF5",
+      "minGrowth": 0
+    },
+    {
+      "id": "fur.silver",
+      "slot": "fur",
+      "name": "银灰",
+      "detail": "灰底白肚，像阴天的云",
+      "hex": "C8CDD6",
+      "accentHex": "F2F4F7",
+      "minGrowth": 0
+    },
+    {
+      "id": "fur.orange",
+      "slot": "fur",
+      "name": "橘猫",
+      "detail": "橘底白肚，最上镜的一只",
+      "hex": "F2A65A",
+      "accentHex": "FFF1E0",
+      "minGrowth": 100
+    },
+    {
+      "id": "fur.tuxedo",
+      "slot": "fur",
+      "name": "奶牛",
+      "detail": "黑白分明，像穿着燕尾服",
+      "hex": "3B3F49",
+      "accentHex": "FFFFFF",
+      "minGrowth": 200
+    },
+    {
+      "id": "fur.tabby",
+      "slot": "fur",
+      "name": "狸花",
+      "detail": "虎斑纹，中国本土猫的经典花色",
+      "hex": "A98456",
+      "accentHex": "EFE0CC",
+      "minGrowth": 400
+    },
+    {
+      "id": "fur.ragdoll",
+      "slot": "fur",
+      "name": "布偶",
+      "detail": "浅色身体配深色重点色，蓝眼睛",
+      "hex": "EFE7DF",
+      "accentHex": "C9D7E6",
+      "minGrowth": 800
+    },
+    {
+      "id": "hat.none",
+      "slot": "hat",
+      "name": "不戴",
+      "detail": "露出猫耳朵",
+      "hex": "FFFFFF",
+      "minGrowth": 0
+    },
+    {
+      "id": "hat.graduate",
+      "slot": "hat",
+      "name": "学士帽",
+      "detail": "帽板加流苏，拨穗之后就算毕业",
+      "hex": "23252B",
+      "accentHex": "FFC93C",
+      "minGrowth": 0
+    },
+    {
+      "id": "hat.beanie",
+      "slot": "hat",
+      "name": "毛线帽",
+      "detail": "顶上有个绒球，冬天自习必备",
+      "hex": "4C7CF3",
+      "accentHex": "FFFFFF",
+      "minGrowth": 150
+    },
+    {
+      "id": "hat.crown",
+      "slot": "hat",
+      "name": "小皇冠",
+      "detail": "连续打卡换来的，脾气也会变大",
+      "hex": "FFC93C",
+      "accentHex": "FF6B6B",
+      "minGrowth": 600
+    },
+    {
+      "id": "hat.headphones",
+      "slot": "hat",
+      "name": "耳机",
+      "detail": "练听力时戴上，猫也会跟着听",
+      "hex": "2E3440",
+      "accentHex": "7C5CFF",
+      "minGrowth": 300
+    },
+    {
+      "id": "face.none",
+      "slot": "face",
+      "name": "不戴",
+      "detail": "露出原本的眼睛",
+      "hex": "FFFFFF",
+      "minGrowth": 0
+    },
+    {
+      "id": "face.round",
+      "slot": "face",
+      "name": "圆框眼镜",
+      "detail": "书卷气，配上猫脸意外合适",
+      "hex": "5A6270",
+      "accentHex": "AFC7E8",
+      "minGrowth": 120
+    },
+    {
+      "id": "face.star",
+      "slot": "face",
+      "name": "星星墨镜",
+      "detail": "面试前就别戴了，导师看不清你的眼睛",
+      "hex": "1F2430",
+      "accentHex": "FFC93C",
+      "minGrowth": 500
+    },
+    {
+      "id": "neck.none",
+      "slot": "neck",
+      "name": "不戴",
+      "detail": "露脖子",
+      "hex": "FFFFFF",
+      "minGrowth": 0
+    },
+    {
+      "id": "neck.scarf.red",
+      "slot": "neck",
+      "name": "红围巾",
+      "detail": "冬天在图书馆门口等开门时戴的",
+      "hex": "D94B4B",
+      "accentHex": "F2E8DC",
+      "minGrowth": 100
+    },
+    {
+      "id": "neck.scarf.blue",
+      "slot": "neck",
+      "name": "蓝围巾",
+      "detail": "和主色更搭的一条",
+      "hex": "3C6FE0",
+      "accentHex": "E8F1FF",
+      "minGrowth": 200
+    },
+    {
+      "id": "neck.bell",
+      "slot": "neck",
+      "name": "铃铛项圈",
+      "detail": "走一步响一下，想偷懒就会被发现",
+      "hex": "D94B4B",
+      "accentHex": "FFC93C",
+      "minGrowth": 250
+    },
+    {
+      "id": "neck.bowtie",
+      "slot": "neck",
+      "name": "领结",
+      "detail": "模拟面试时戴，像那么回事",
+      "hex": "2E3440",
+      "accentHex": "FF6B6B",
+      "minGrowth": 400
+    },
+    {
+      "id": "back.none",
+      "slot": "back",
+      "name": "不背",
+      "detail": "轻装上阵",
+      "hex": "FFFFFF",
+      "minGrowth": 0
+    },
+    {
+      "id": "back.backpack",
+      "slot": "back",
+      "name": "小书包",
+      "detail": "装着真题和错题本",
+      "hex": "4C7CF3",
+      "accentHex": "F2E8DC",
+      "minGrowth": 350
+    },
+    {
+      "id": "back.cape",
+      "slot": "back",
+      "name": "披风",
+      "detail": "复试通过那天可以披一下",
+      "hex": "7C5CFF",
+      "accentHex": "FFC93C",
+      "minGrowth": 1200
+    }
+  ]
+}

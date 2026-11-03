@@ -20,6 +20,7 @@ struct AppSnapshot: Codable, Equatable {  // 持久化单位
     var entitlement: Entitlement  // 权益状态
     var lastCheckInDate: Date?  // 最后打卡时间
     var streakDays: Int  // 连续打卡天数
+    var outfit: CatOutfit = .default  // 猫当前穿戴（有默认值，旧快照能直接解码）
 
     static let currentVersion = 1  // 当前结构版本
 
@@ -52,6 +53,7 @@ struct AppSnapshot: Codable, Equatable {  // 持久化单位
         entitlement = try c.decodeIfPresent(Entitlement.self, forKey: .entitlement) ?? .default  // 缺省免费
         lastCheckInDate = try c.decodeIfPresent(Date.self, forKey: .lastCheckInDate)  // 可为空
         streakDays = try c.decodeIfPresent(Int.self, forKey: .streakDays) ?? 0  // 缺省 0
+        outfit = try c.decodeIfPresent(CatOutfit.self, forKey: .outfit) ?? .default  // 缺省默认穿戴
     }  // 解码结束
 
     init(  // 全参构造器
@@ -108,6 +110,20 @@ final class AppState {  // 全局状态类
     var growth: Int { data.growth }  // 成长值快捷方式
     var entitlement: Entitlement { data.entitlement }  // 权益快捷方式
     var stage: PetStage { PetStage.stage(for: data.growth) }  // 由成长值推阶段
+    var outfit: CatOutfit { data.outfit }  // 猫当前穿戴快捷方式
+
+    func isUnlocked(_ item: OutfitItem) -> Bool {  // 配件是否已解锁
+        data.growth >= item.minGrowth  // 只看成长值，不搞抽卡、不搞概率掉落
+    }  // 方法结束
+
+    func equip(_ itemID: String, slot: OutfitSlot) {  // 换上一件配件
+        guard let item = OutfitCatalog.shared.item(id: itemID) else { return }  // 配件必须在表里
+        guard isUnlocked(item) else { return }  // 没解锁不给穿
+        var snap = data  // 拷贝一份再改
+        snap.outfit.set(itemID, for: slot)  // 写入该槽位
+        data = snap  // 一次性替换，页面自动刷新
+        scheduleSave()  // 落盘，重进 App 还是这身
+    }  // 方法结束
 
     var todayAnswered: Int {  // 今日已答题数
         let cal = Calendar.current  // 取日历
