@@ -48,3 +48,12 @@ __pycache__/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# ===== 可再生文件：不进仓库，避免仓库越来越大 =====
+#
+# docs/shots/ 是 CI 截图拉到本机后的落地目录，每次跑 CI 都会换一批，
+# 单批约 4 MB。留在仓库里会几个月后把仓库撑到几百 MB，而它随时可以用
+# python tools/pull_shots.py 重新抓回来，所以不提交。
+docs/shots/
+# 看板是生成物，跑 python tools/dashboard.py 就能重建
+docs/dashboard.html
