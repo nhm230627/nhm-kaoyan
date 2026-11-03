@@ -2,22 +2,11 @@
 //  所有数字都能溯源到今天做了什么，不出现无来源的分数                   // 页面约束
 
 import SwiftUI  // 界面框架
-import UniformTypeIdentifiers  // 导出文件要声明类型
-
-struct ExportDocument: Transferable {  // 可分享的数据文件
-    let data: Data  // 文件内容
-
-    static var transferRepresentation: some TransferRepresentation {  // 告诉系统怎么分享
-        DataRepresentation(exportedContentType: .json) { item in  // 按 JSON 类型导出
-            item.data  // 内容原样给出去
-        }  // 导出定义结束
-        .suggestedFileName("fushizhuan-data.json")  // 默认文件名
-    }  // 传输定义结束
-}  // ExportDocument 结束
 
 struct ProfileView: View {  // 我的页
     @Environment(AppState.self) private var app  // 全局状态
     @State private var showResetConfirm = false  // 是否弹重置确认
+    @State private var exportURL: URL?  // 导出的临时文件地址
     @AppStorage("app.pet.static3D") private var static3D = false  // 与伙伴页共用同一个键
 
     var body: some View {  // 视图主体
@@ -38,6 +27,9 @@ struct ProfileView: View {  // 我的页
         }  // 滚动结束
         .background(Color.appBG)  // 底色
         .navigationTitle("我的")  // 标题
+        .task(id: app.data.attempts.count) {  // 进页面或答题数变化时刷新导出文件
+            exportURL = makeExportFile()  // 写一份当前数据的快照
+        }  // 任务结束
         .confirmationDialog(  // 二次确认弹窗
             "重置本地数据？",  // 标题
             isPresented: $showResetConfirm,  // 是否显示
@@ -238,8 +230,8 @@ struct ProfileView: View {  // 我的页
                 Text("学习记录只存在这台设备上（appstate.json），不上传服务器。")  // 隐私说明
                     .font(AppFont.caption)  // 小字
                     .foregroundStyle(Color.textSecondary)  // 次要色
-                if let doc = exportPayload {  // 有数据才给导出入口
-                    ShareLink(item: doc) {  // 系统分享面板
+                if let url = exportURL {  // 有文件才给导出入口
+                    ShareLink(item: url) {  // 系统分享面板，分享的是 JSON 文件
                         HStack(spacing: Space.xs) {  // 横向排列
                             Image(systemName: "square.and.arrow.up")  // 导出图标
                                 .font(.system(size: 13))  // 图标大小
@@ -257,10 +249,17 @@ struct ProfileView: View {  // 我的页
         }  // 卡片结束
     }  // dataCard 结束
 
-    private var exportPayload: ExportDocument? {  // 打包成可分享文件
-        guard let data = app.exportJSON() else { return nil }  // 编码失败就不显示入口
-        return ExportDocument(data: data)  // 交给 ShareLink
-    }  // 属性结束
+    private func makeExportFile() -> URL? {  // 把当前数据写成一个临时 JSON 文件
+        guard let data = app.exportJSON() else { return nil }  // 编码失败就不给入口
+        let url = FileManager.default.temporaryDirectory  // 用临时目录
+            .appendingPathComponent("fushizhuan-data.json")  // 固定文件名
+        do {  // 尝试写入
+            try data.write(to: url, options: .atomic)  // 原子写，避免半截文件
+            return url  // 写成功返回地址
+        } catch {  // 写失败
+            return nil  // 不给入口，也不弹错误
+        }  // 分支结束
+    }  // 方法结束
 
     private var aboutCard: some View {  // 关于区
         VStack(alignment: .leading, spacing: Space.xxs) {  // 纵向排列
