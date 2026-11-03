@@ -7,6 +7,7 @@
 #   2) 截图 —— 从 docs/shots/ 里读 CI 下载回来的 PNG。
 # 产出 docs/dashboard.html，双击就能看，可以随时重跑。
 
+import base64  # 把截图内嵌成单文件 HTML 用
 import glob  # 找文件
 import os  # 路径处理
 import re  # 解析 markdown
@@ -17,6 +18,10 @@ ROOT = r"D:\APP"  # 项目根目录
 DOC = os.path.join(ROOT, "docs", "01-开发清单.md")  # 清单文档
 SHOTS = os.path.join(ROOT, "docs", "shots")  # 截图目录
 OUT = os.path.join(ROOT, "docs", "dashboard.html")  # 输出文件
+OUT_SINGLE = os.path.join(ROOT, "docs", "dashboard-standalone.html")  # 图片内嵌的单文件版，方便发给别人或跨设备打开
+# 发布目录：只放一个自包含 index.html，避免把整个 docs（含项目文档）都传到公网
+PUB_DIR = os.path.join(ROOT, "publish")  # 发布用目录
+PUB_INDEX = os.path.join(PUB_DIR, "index.html")  # 发布入口
 
 TAB_CN = {"today": "今日", "quiz": "刷题", "interview": "面试", "companion": "伙伴", "profile": "我的"}  # Tab 英文名转中文
 TAB_DESC = {  # 每张图看什么
@@ -27,8 +32,51 @@ TAB_DESC = {  # 每张图看什么
     "profile": "统计 / 成长溯源 / 重置",
 }
 
+# 样板（Web 原型）18 个页面 → iOS 实况对照表
+# 说明：这张表是人工建立的「一一对应关系」，但每行的状态由脚本去检查文件是否存在，
+# 不是手填的。文件不在就显示「没做」，所以看板不会骗人。
+# 字段：(样板页面 id, 样板页名, 对应的 iOS 文件相对 app/FuShiZhuan 的路径 或 None, 备注)
+PAGES = [
+    ("page-home", "今日首页", "Features/Today/TodayView.swift", "倒计时 / 任务 / 宠物卡"),
+    ("page-quiz", "刷题首页", "Features/Quiz/QuizHomeView.swift", "章节与关卡星级"),
+    ("page-run", "答题过程", "Features/Quiz/LevelPlayView.swift", "闯关答题 + 即时解析"),
+    ("page-result", "交卷结果", "Features/Quiz/LevelPlayView.swift", "结果页在该文件内"),
+    ("page-game", "闯关模式", "Features/Quiz/LevelPlayView.swift", "3 心 / 连击 / 星级"),
+    ("page-wrong", "错题本", None, "数据模型已有（WrongItem），页面未做"),
+    ("page-diy", "换装 DIY", None, "缺美术资产"),
+    ("page-shop", "商店", None, "未定商品规则"),
+    ("page-interview", "面试设置", "Features/Interview/InterviewHomeView.swift", "考官构成 / 近期场次"),
+    ("page-room", "面试考场", "Features/Interview/InterviewRoomView.swift", "5 席 / 提问 / 作答"),
+    ("page-review", "面试复盘", "Features/Interview/InterviewReviewView.swift", "五维评分 / 逐题点评"),
+    ("page-mock", "模考大厅", "Features/MockExam/MockExamHomeView.swift", "单机模拟版"),
+    ("page-pet", "伙伴主页", "Features/Companion/CompanionHomeView.swift", "3D 宠物 / 投喂"),
+    ("page-ritual", "拨穗仪式", "Features/Companion/PetSceneView.swift", "流苏绕竖轴转半圈"),
+    ("page-map", "学习地图", "Features/Plaza/WorldMapView.swift", "5 座考研岛"),
+    ("page-plaza", "广场", None, "样板是 NPC，iOS 未做"),
+    ("page-community", "社区", None, "UGC，受苹果审核 1.2 约束"),
+    ("page-post", "发帖", None, "同上"),
+]
+
+# iOS 有、样板没有的页面（不是缺口，是超出样板的部分）
+EXTRA = [
+    ("我的", "Features/Profile/ProfileView.swift", "统计 / 成长溯源 / 重置 / 导出"),
+    ("付费墙", "Features/Profile/PaywallView.swift", "StoreKit 2 订阅"),
+    ("错题本", "Features/Quiz/WrongBookView.swift", "待攻 / 已掌握 + 板块归类"),
+    ("AI 学伴", "Features/Today/CoachCard.swift", "先本地建议，点「问问」才联网"),
+    ("隐私与协议", "Features/Profile/LegalView.swift", "隐私政策 / 用户协议双 Tab"),
+    ("商户入驻", "Features/Profile/MerchantEntryView.swift", "占位页"),
+]
+
+# 哪个样板页面能对上某个 Tab 的截图（只有 5 个 Tab 有图）
+PAGE_SHOT = {
+    "page-home": "today",
+    "page-quiz": "quiz",
+    "page-interview": "interview",
+    "page-pet": "companion",
+}
+
 STAGE_CN = {  # 阶段名，与清单保持一致
-    0: "环境与工程骨架",
+    0: "环境与骨架",
     1: "设计系统与导航",
     2: "数据层（单一来源）",
     3: "学习模块",
@@ -181,6 +229,59 @@ MARK_COLOR = {"✅": "#1f9d55", "🔄": "#c98a00", "⬜": "#8a94a6", "?": "#8a94
 MARK_WIDTH = {"✅": 100, "🔄": 55, "⬜": 8, "?": 8}  # 进度条长度是状态示意，不是精确百分比
 
 
+def compare_html(shots, run_id):  # 生成「样板 18 页 vs iOS 实况」对照表
+    app_dir = os.path.join(ROOT, "app", "FuShiZhuan")  # iOS 源码根
+    by_tab = {}  # Tab 名 → 图片文件名
+    for path in shots:  # 逐张截图
+        by_tab[os.path.splitext(os.path.basename(path))[0]] = os.path.basename(path)  # 记录
+    base = "shots/%s" % run_id if run_id else ""  # 相对 docs/ 的图片目录
+
+    rows = []  # 表格行
+    done = 0  # 有代码的样板页数
+    shot_count = 0  # 有截图的数量
+    for pid, name, rel, note in PAGES:  # 逐条样板页
+        exists = bool(rel) and os.path.isfile(os.path.join(app_dir, rel))  # 文件真实存在才算做了
+        tab = PAGE_SHOT.get(pid)  # 该页有没有对应截图
+        shot_file = by_tab.get(tab) if tab else None  # 取图片名
+        if exists:  # 有代码
+            done += 1  # 计数
+        if exists and shot_file:  # 有代码且有图
+            mark, color, label = "✅", "#1f9d55", "已实现·已截图"  # 绿
+            img = '<a href="%s/%s" target="_blank"><img class="thumb" src="%s/%s" alt="%s"></a>' % (base, shot_file, base, shot_file, name)  # 缩略图
+            shot_count += 1  # 计数
+        elif exists:  # 有代码但没截过图
+            mark, color, label = "🟡", "#c98a00", "已实现·未截图"  # 琥珀
+            img = '<span class="nosshot">—</span>'  # 没有图
+        else:  # 没做
+            mark, color, label = "❌", "#c2410c", "未做"  # 橙红
+            img = '<span class="nosshot">—</span>'  # 没有图
+        impl = ('<code>%s</code>' % rel.split("/")[-1]) if rel else '<span class="nosshot">%s</span>' % note  # 实现文件或缺失原因
+        if exists and rel:  # 已实现的补一句说明
+            impl += '<div class="sub2">%s</div>' % note  # 备注
+        rows.append(  # 一行
+            '<div class="cmp-row"><div class="cmp-name">%s</div>'
+            '<div><span class="cmp-dot" style="background:%s"></span>%s</div>'
+            '<div class="cmp-impl">%s</div><div>%s</div></div>' % (
+                name, color, label, impl, img)
+        )  # 行结束
+
+    extra_rows = []  # iOS 独有页面
+    for name, rel, note in EXTRA:  # 逐条
+        if os.path.isfile(os.path.join(app_dir, rel)):  # 存在才列
+            extra_rows.append(  # 一行
+                '<div class="cmp-row extra"><div class="cmp-name">%s</div>'
+                '<div><span class="cmp-dot" style="background:#2b54e8"></span>iOS 独有</div>'
+                '<div class="cmp-impl"><code>%s</code><div class="sub2">%s</div></div><div>—</div></div>' % (
+                    name, rel.split("/")[-1], note)
+            )  # 行结束
+
+    head = ('<div class="cmp-head"><span>样板页</span><span>iOS 状态</span>'
+            '<span>实现位置 / 缺失原因</span><span>截图</span></div>')  # 表头
+    summary = ('<div class="cmp-sum"><b>%d / %d</b> 页已实现（其中 %d 页有真机截图），'
+               '<b>%d</b> 页未做</div>' % (done, len(PAGES), shot_count, len(PAGES) - done))  # 一句话结论
+    return '<div class="cmp">%s%s%s%s</div>' % (summary, head, "".join(rows), "".join(extra_rows))  # 拼起来
+
+
 def build_html(items, notes, stats, shots, run_id, progress):  # 拼 HTML
     summary = stage_summary(items)  # 阶段汇总
     total_all = len(items)  # 条目总数
@@ -200,6 +301,8 @@ def build_html(items, notes, stats, shots, run_id, progress):  # 拼 HTML
         '<div class="kpi"><div class="kpi-v">%s</div><div class="kpi-k">%s</div><div class="kpi-d">%s</div></div>' % (v, k, d)
         for k, v, d in kpi
     )
+
+    cmp_block = compare_html(shots, run_id)  # 样板与 iOS 的对照表
 
     stage_rows = []  # 阶段表行
     for no in sorted(summary):  # 按阶段号
@@ -262,6 +365,18 @@ h1{font-size:24px;margin:0 0 6px}
 .kpi-k{font-size:13px;color:var(--t2);margin-top:2px}
 .kpi-d{font-size:12px;color:var(--t3);margin-top:6px}
 .cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px}
+.cmp-panel{margin-bottom:22px}
+.cmp-sum{font-size:13px;color:var(--t2);margin-bottom:8px}
+.cmp-sum b{color:var(--t1);font-size:15px}
+.cmp-head,.cmp-row{display:grid;grid-template-columns:132px 138px minmax(0,1fr) 64px;gap:12px;align-items:center;padding:9px 0;border-top:1px solid var(--line);font-size:13px}
+.cmp-head{border-top:0;color:var(--t3);font-size:11.5px;padding:0 0 6px}
+.cmp-name{font-weight:600}
+.cmp-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.cmp-impl code{font-size:12px}
+.sub2{font-size:11.5px;color:var(--t3);margin-top:2px}
+.thumb{width:56px;border:1px solid var(--line);border-radius:8px;display:block;aspect-ratio:9/19.5;object-fit:cover;object-position:top}
+.nosshot{color:var(--t3);font-size:12px}
+.cmp-row.extra{background:#f7f9ff}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
 .panel h2{font-size:15px;margin:0 0 4px}
 .panel .hint{font-size:12px;color:var(--t3);margin-bottom:16px}
@@ -288,6 +403,9 @@ code{background:#eef0f4;padding:1px 5px;border-radius:4px;font-size:12px}
 <h1>复试专 · 项目看板</h1>
 <div class="sub">生成于 __TIME__ ｜ 对应提交 __HEAD__ ｜ 截图来源 __RUN__</div>
 <div class="kpis">__KPI__</div>
+<div class="panel cmp-panel"><h2>样板 18 页 → iOS 实况</h2>
+<div class="hint">左边是 Web 样板（完整预想形态，能点）／右边是 iOS 真 App。状态由脚本检查源文件是否真实存在得出，不是手填；有截图的可以点开看真机画面</div>
+__COMPARE__</div>
 <div class="cols">
   <div class="panel"><h2>做到哪了</h2><div class="hint">状态从 docs/01-开发清单.md 解析，非手填；橙色"差"是清单里仍标 ⬜ 的条目</div>__STAGES__</div>
   <div class="panel"><h2>长什么样</h2><div class="hint">CI 在 iPhone 模拟器上真机启动后截的图，点开看大图</div><div class="shots">__SHOTS__</div></div>
@@ -297,9 +415,24 @@ code{background:#eef0f4;padding:1px 5px;border-radius:4px;font-size:12px}
     html = html.replace("__HEAD__", git_head())  # 提交号
     html = html.replace("__RUN__", run_text)  # 截图来源
     html = html.replace("__KPI__", kpi_html)  # KPI
+    html = html.replace("__COMPARE__", cmp_block)  # 对照表
     html = html.replace("__STAGES__", "".join(stage_rows))  # 阶段
     html = html.replace("__SHOTS__", shot_html)  # 截图
     return html  # 返回
+
+
+def inline_shots(html):  # 把 <img src="shots/..."> 换成内嵌的 base64
+    # 为什么需要：本地看板引用的是相对路径，单独拷走一个 HTML 图片会全丢；
+    # 内嵌之后整个看板就是一个文件，微信传、拷 U 盘、放到别的电脑都能直接看。
+    def repl(match):  # 单个替换
+        rel = match.group(1)  # 形如 shots/41560012360/today.png
+        path = os.path.join(ROOT, "docs", rel.replace("/", os.sep))  # 换成真实路径
+        if not os.path.isfile(path):  # 图不存在
+            return match.group(0)  # 原样保留，宁可缺图也不要生成坏 base64
+        with open(path, "rb") as f:  # 读原始字节
+            b64 = base64.b64encode(f.read()).decode("ascii")  # 转 base64
+        return 'src="data:image/png;base64,%s"' % b64  # 换成内嵌地址
+    return re.sub(r'src="(shots/[^"]+\.png)"', repl, html)  # 只替换 img 的 src，不动 a 的 href
 
 
 def main():  # 主流程
@@ -312,6 +445,12 @@ def main():  # 主流程
     html = build_html(items, notes, stats, shots, run_id, progress)  # 生成
     with open(OUT, "w", encoding="utf-8") as f:  # 写文件
         f.write(html)  # 写入
+    single = inline_shots(html)  # 生成图片内嵌版本
+    with open(OUT_SINGLE, "w", encoding="utf-8") as f:  # 写单文件版
+        f.write(single)  # 写入
+    os.makedirs(PUB_DIR, exist_ok=True)  # 发布目录不存在就建
+    with open(PUB_INDEX, "w", encoding="utf-8") as f:  # 写发布入口
+        f.write(single)  # 同样的自包含内容，放到 index.html 供公网访问
     print("看板已生成：%s" % OUT)  # 提示路径
     print("  条目 %d 条（明确未完成 %d），阶段 %d 个，截图 %d 张（来源 %s）" % (
         len(items), sum(len(s["open"]) for s in stage_summary(items).values()), len(progress), len(shots), run_id or "无"))  # 概况
