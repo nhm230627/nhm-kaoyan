@@ -12,8 +12,8 @@ struct PaperListView: View {  // 试卷列表页
         _kind = State(initialValue: initialKind)  // 初始化分段选中
     }  // 构造结束
 
-    private var papers: [Paper] {  // 当前分类的试卷
-        PaperCatalog.shared.papers(kind: kind)  // 按种类筛
+    private var papers: [Paper] {  // 当前分类的试卷（只看当前考试方向）
+        PaperCatalog.shared.papers(kind: kind, track: app.currentTrack.id)  // 按种类 + 方向筛
     }  // 属性结束
 
     var body: some View {  // 视图主体
@@ -53,13 +53,14 @@ struct PaperListView: View {  // 试卷列表页
                 HStack(spacing: Space.xs) {  // 标题行
                     Image(systemName: "exclamationmark.circle.fill")  // 提示图标
                         .foregroundStyle(Color.appWarn)  // 橙色
-                    Text("这里还没有历年真题").font(AppFont.bodyStrong)  // 标题
+                    Text("「\(app.currentTrack.name)」方向还没有真题卷")  // 标题（带上当前方向，避免误解成整个库都空）
+                        .font(AppFont.bodyStrong)  // 加粗正文
                 }  // 排列结束
-                Text("真正的原因：官方不公开近年真题，市面上流传的都是机构整理的「考生回忆版」，需要付费或登录才能下载，内容也有版权，不能直接内置到 App 里。")  // 说明原因（原话保留，去掉不实承诺）
+                Text("现有的院校真题考点卷覆盖：税务（中南财 2016 / 2019、人大）、金融（复旦 2022、上财 2021）。法律、计算机、医学三个方向还在补。")  // 写清实际覆盖范围
                     .font(AppFont.caption)  // 小字
                     .foregroundStyle(Color.textSecondary)  // 次要色
                     .fixedSize(horizontal: false, vertical: true)  // 允许换行
-                Text("现在的状态：App 还没有「导入文件」这个功能，所以真题暂时进不来。要加真题，得把题目按格式写进 papers.json 与 questions.json 一起打包。")  // 如实说明当前能力（旧文案承诺了不存在的导入功能，已改）
+                Text("要说清的是：这些卷不是原题。官方不公开复试真题，市面上流传的都是机构整理的考生回忆版，没有标准答案；我们只取它的考点，题目与解析按现行法条重写，每张卷卡的说明里都写明了来源。")  // 如实说明真题卷的口径
                     .font(AppFont.caption)  // 小字
                     .foregroundStyle(Color.textSecondary)  // 次要色
                     .fixedSize(horizontal: false, vertical: true)  // 允许换行

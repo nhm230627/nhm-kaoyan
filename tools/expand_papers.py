@@ -1,0 +1,197 @@
+# -*- coding: utf-8 -*-
+"""扩充试卷：院校真题考点卷 + 模拟卷，并清掉不存在方向的卷。
+
+口径（与 S3.13 一条一致，不冒充真题）：
+- 卷名写「…复试真题考点卷」，不写「…真题原卷」。
+- sourceNote 必须写清三件事：考点来自哪份公开回忆版、题目由本工程重写、不是原题。
+- 每题都指向 questions.json / banks.json 里真实存在的题号，脚本会校验。
+
+运行：python tools/expand_papers.py
+"""
+
+import io
+import json
+import os
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PAPERS = os.path.join(ROOT, 'app', 'FuShiZhuan', 'Resources', 'papers.json')
+QUESTIONS = os.path.join(ROOT, 'app', 'FuShiZhuan', 'Resources', 'questions.json')
+BANKS = os.path.join(ROOT, 'app', 'FuShiZhuan', 'Resources', 'banks.json')
+
+NEW_PAPERS = [
+    {
+        'id': 'paper.tax.real.znufe2019',
+        'title': '中南财经政法大学 2019 复试真题考点卷',
+        'kind': 'real',
+        'direction': 'tax',
+        'year': 2019,
+        'subject': '税务专硕复试 · 专业综合',
+        'minutes': 25,
+        'totalScore': 100,
+        'sourceNote': '考点出自网络公开的中南财经政法大学 2019 年税务专硕复试回忆版：增值税两次大改革、BEPS、税收保全实施条件、拉弗曲线与供给侧减税、个税局限、视同销售。题目与解析由本工程按现行税法条文重写，不是原题；回忆版本身无标准答案，正确性以现行法条为准。',
+        'sections': [
+            {'title': '一、增值税与征管', 'questionIDs': ['q96', 'q91', 'q89', 'q90']},
+            {'title': '二、税制理论与反避税', 'questionIDs': ['q79', 'q104', 'q78', 'q01']},
+            {'title': '三、所得税与征管程序', 'questionIDs': ['q101', 'q108', 'q111', 'q113']},
+        ],
+    },
+    {
+        'id': 'paper.tax.real.znufe2016',
+        'title': '中南财经政法大学 2016 复试真题考点卷',
+        'kind': 'real',
+        'direction': 'tax',
+        'year': 2016,
+        'subject': '税务专硕复试 · 专业综合',
+        'minutes': 25,
+        'totalScore': 100,
+        'sourceNote': '考点出自网络公开的中南财经政法大学 2016 年税务专硕复试回忆版：税会差异、免征额与扣除标准的区别、反避税方法、进项抵扣、业务招待费与公益性捐赠限额。题目与解析由本工程按现行税法条文重写，不是原题。',
+        'sections': [
+            {'title': '一、企业所得税', 'questionIDs': ['q101', 'q112', 'q24', 'q23']},
+            {'title': '二、增值税与关联交易', 'questionIDs': ['q12', 'q103', 'q111', 'q102']},
+            {'title': '三、征管与处罚', 'questionIDs': ['q30', 'q119', 'q116', 'q105']},
+        ],
+    },
+    {
+        'id': 'paper.tax.real.ruc',
+        'title': '中国人民大学 复试真题考点卷',
+        'kind': 'real',
+        'direction': 'tax',
+        'year': 2022,
+        'subject': '税务专硕复试 · 税收理论与制度',
+        'minutes': 25,
+        'totalScore': 100,
+        'sourceNote': '考点出自网络公开的中国人民大学税务专硕复试面试题整理：税收法定原则的内涵与立法实践、税收三性、销项与进项的区别、消费税纳税环节、税收收入与非税收入的区别。题目与解析由本工程按现行税法条文重写，不是原题。',
+        'sections': [
+            {'title': '一、税收原则与基本理论', 'questionIDs': ['q77', 'q02', 'q87', 'q88']},
+            {'title': '二、税制结构与负担', 'questionIDs': ['q80', 'q81', 'q86', 'q85']},
+            {'title': '三、税收与财政', 'questionIDs': ['q82', 'q83', 'q05', 'q91']},
+        ],
+    },
+    {
+        'id': 'paper.tax.real.highfreq',
+        'title': '税务专硕复试高频考点综合卷',
+        'kind': 'real',
+        'direction': 'tax',
+        'year': 2026,
+        'subject': '税务专硕复试 · 多校共性考点',
+        'minutes': 25,
+        'totalScore': 100,
+        'sourceNote': '考点按多所院校税务专硕复试回忆版的共性高频项整理（增值税预缴与免抵退、消费型增值税、差额计税、纳税义务发生时间、一次性扣除、经营所得与股权转让、税收优先权与强制执行）。不指向某一所院校；题目与解析由本工程重写。',
+        'sections': [
+            {'title': '一、增值税计算与征管', 'questionIDs': ['q93', 'q94', 'q95', 'q97']},
+            {'title': '二、增值税征收管理', 'questionIDs': ['q98', 'q99', 'q100', 'q92']},
+            {'title': '三、所得税与强制执行', 'questionIDs': ['q106', 'q109', 'q110', 'q117']},
+        ],
+    },
+    {
+        'id': 'paper.fin.real.fudan2022',
+        'title': '复旦大学 2022 复试真题考点卷',
+        'kind': 'real',
+        'direction': 'finance',
+        'year': 2022,
+        'subject': '金融专硕复试 · 货币银行与公司金融',
+        'minutes': 25,
+        'totalScore': 100,
+        'sourceNote': '考点出自网络公开的复旦大学 2022 年金融专硕复试面试回忆版：购买力平价、美联储加息与美元汇率、货币政策工具与中介目标、杜邦恒等式、久期与债券定价、行为金融与市场有效性。题目与解析由本工程重写，不是原题。',
+        'sections': [
+            {'title': '一、国际金融与货币理论', 'questionIDs': ['fin06', 'fin04', 'fin01', 'q39']},
+            {'title': '二、货币政策与银行', 'questionIDs': ['q43', 'q46', 'q45', 'q40']},
+            {'title': '三、投资学与公司金融', 'questionIDs': ['fin03', 'fin05', 'q52', 'q51']},
+        ],
+    },
+    {
+        'id': 'paper.fin.real.sufe2021',
+        'title': '上海财经大学 2021 复试真题考点卷',
+        'kind': 'real',
+        'direction': 'finance',
+        'year': 2021,
+        'subject': '金融专硕复试 · 货币银行与公司理财',
+        'minutes': 25,
+        'totalScore': 100,
+        'sourceNote': '考点出自网络公开的上海财经大学 2021 年金融专硕复试题目整理：货币供应量的决定因素、货币政策中介目标、公开市场操作、MM 定理与股利政策、资本预算方法。题目与解析由本工程重写，不是原题。',
+        'sections': [
+            {'title': '一、货币与银行', 'questionIDs': ['q41', 'q42', 'q44', 'q38']},
+            {'title': '二、公司理财', 'questionIDs': ['q47', 'q48', 'q49', 'q50']},
+            {'title': '三、资本预算与现金流', 'questionIDs': ['q53', 'q54', 'q56', 'q55']},
+        ],
+    },
+    {
+        'id': 'paper.tax.mockB',
+        'title': '税务专项 · 自编模拟卷 B',
+        'kind': 'mock',
+        'direction': 'tax',
+        'year': 2026,
+        'subject': '税法（一）（二）综合',
+        'minutes': 40,
+        'totalScore': 100,
+        'sourceNote': '按考试大纲与现行税法原理自编，非官方真题；重点覆盖征管程序、税收保全与强制执行、税收优先权、纳税信用与申报，不涉及易变的具体税率与减免比例。',
+        'sections': [
+            {'title': '一、税收征管程序', 'questionIDs': ['q28', 'q29', 'q34', 'q35', 'q122']},
+            {'title': '二、保全与强制执行', 'questionIDs': ['q30', 'q113', 'q120', 'q123', 'q117']},
+            {'title': '三、处罚、复议与信用', 'questionIDs': ['q31', 'q32', 'q33', 'q114', 'q121']},
+        ],
+    },
+    {
+        'id': 'paper.fin.mockB',
+        'title': '金融专项 · 自编模拟卷 B',
+        'kind': 'mock',
+        'direction': 'finance',
+        'year': 2026,
+        'subject': '货币银行学 · 公司金融',
+        'minutes': 30,
+        'totalScore': 100,
+        'sourceNote': '按 431 金融学综合考纲自编，非官方真题；覆盖货币供求、货币政策工具、商业银行经营、资本成本与资本结构，不涉及具体市场行情数据。',
+        'sections': [
+            {'title': '一、货币银行', 'questionIDs': ['q37', 'q38', 'q39', 'q40', 'q41', 'q42']},
+            {'title': '二、公司金融', 'questionIDs': ['q47', 'q48', 'q49', 'q50', 'q51', 'q52']},
+        ],
+    },
+]
+
+
+def main():
+    with io.open(PAPERS, encoding='utf-8') as f:
+        data = json.load(f)
+    with io.open(QUESTIONS, encoding='utf-8') as f:
+        tax_ids = {q['id'] for q in json.load(f)['questions']}
+    with io.open(BANKS, encoding='utf-8') as f:
+        banks = json.load(f)
+    other_ids = set()
+    for key in ('fin', 'law', 'cs', 'med'):
+        other_ids.update(q['id'] for q in banks[key]['questions'])
+
+    # 1) 清掉方向不存在的卷（management 在 Track 里没有对应方向，永远打不开）
+    kept = [p for p in data['papers'] if p['direction'] != 'management']
+
+    # 2) 追加新卷，并逐题校验题号真实存在
+    by_id = {p['id'] for p in kept}
+    for paper in NEW_PAPERS:
+        if paper['id'] in by_id:
+            continue
+        pool = tax_ids if paper['direction'] == 'tax' else other_ids
+        missing = [qid for sec in paper['sections'] for qid in sec['questionIDs'] if qid not in pool]
+        if missing:
+            raise SystemExit('题号不存在：%s -> %s' % (paper['id'], missing))
+        kept.append(paper)
+
+    data['papers'] = kept
+    data['meta']['version'] = '1.1.0'
+    data['meta']['note'] = (
+        'kind=real 为「院校真题考点卷」：考点取自公开的院校复试回忆版，题目与解析由本工程按现行法条重写，'
+        '不是原题，回忆版本身无标准答案。kind=mock 为按考纲自编的模拟卷。'
+        '每套卷的 sourceNote 写明考点来源与重写说明。'
+    )
+
+    with io.open(PAPERS, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=1)
+
+    from collections import Counter
+    kinds = Counter(p['kind'] for p in data['papers'])
+    dirs = Counter(p['direction'] for p in data['papers'])
+    print('试卷总数：', len(data['papers']), '| 种类：', dict(kinds), '| 方向：', dict(dirs))
+    for p in data['papers']:
+        print('  ', p['kind'], p['direction'], p['id'], '题数', sum(len(s['questionIDs']) for s in p['sections']))
+
+
+if __name__ == '__main__':
+    main()

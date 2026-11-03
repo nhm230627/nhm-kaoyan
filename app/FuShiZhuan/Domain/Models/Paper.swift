@@ -64,6 +64,18 @@ struct Paper: Codable, Identifiable, Hashable {  // 一整套试卷
     var questionCount: Int {  // 全卷题量
         questionIDs.count  // 数一下
     }  // 属性结束
+
+    /// 这套卷属于哪个考试方向，对齐 Track.id。
+    /// 为什么需要：StudyDirection 是早期的三方向模型（tax/finance/management），
+    /// 而 Track 有五方向（tax/fin/law/cs/med）。不带这层映射的话，
+    /// 试卷列表会把别的方向的卷也列出来，点进去当前题库里找不到题，成了空卷。
+    var trackID: String {  // 映射到 Track.id
+        switch direction {  // 按老枚举分支
+        case .tax: "tax"  // 税务
+        case .finance: "fin"  // 金融
+        case .management: "mgmt"  // 经管（Track 里暂无此方向，仅兼容旧数据）
+        }  // 分支结束
+    }  // trackID 结束
 }  // Paper 结束
 
 struct PaperCatalog: Codable {  // 试卷总表
@@ -87,8 +99,12 @@ struct PaperCatalog: Codable {  // 试卷总表
         return catalog  // 读成功就用它
     }  // load 结束
 
-    func papers(kind: PaperKind) -> [Paper] {  // 按种类筛
-        papers.filter { $0.kind == kind }  // 真题或模拟卷
+    func papers(kind: PaperKind, track: String? = nil) -> [Paper] {  // 按种类筛（可再按考试方向筛）
+        papers.filter { paper in  // 逐套判断
+            guard paper.kind == kind else { return false }  // 种类不符
+            guard let track else { return true }  // 没指定方向就全给
+            return paper.trackID == track  // 方向必须一致，否则题号在当前题库里找不到
+        }  // 过滤结束
     }  // 方法结束
 
     func paper(id: String) -> Paper? {  // 按 id 找

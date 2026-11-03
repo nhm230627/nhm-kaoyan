@@ -15,6 +15,9 @@ struct QuizHomeView: View {  // 刷题首页
     @State private var run: RunConfig?  // 组好的练习（走样板 page-run 链路）
     @State private var hint: String?  // 轻提示
 
+    private let comprehensionPaperCount = 12  // 综合训练里「院校真题卷」抽几题
+    private let comprehensionTopicCount = 8  // 综合训练里「知识点题库」抽几题
+
     private var topics: [Topic] { app.bank?.topics ?? [] }  // 全部知识点
 
     var body: some View {  // 视图主体
@@ -36,7 +39,8 @@ struct QuizHomeView: View {  // 刷题首页
         }  // 工具栏结束
         .fullScreenCover(item: $run) { cfg in  // 开始练习
             NavigationStack {  // 套导航栈才有标题栏
-                QuizRunView(pool: cfg.pool, size: cfg.size, revealEach: cfg.revealEach)  // 样板 page-run
+                QuizRunView(pool: cfg.pool, size: cfg.size, revealEach: cfg.revealEach,  // 样板 page-run
+                            title: cfg.title, fixed: cfg.fixed)  // 卷名与固定题序（综合训练用）
             }  // 栈结束
         }  // 覆盖层结束
         .overlay(alignment: .bottom) {  // 底部提示
@@ -263,6 +267,38 @@ struct QuizHomeView: View {  // 刷题首页
         run = RunConfig(pool: filtered, size: size, revealEach: revealEach)  // 交给作答页自己抽题
     }  // beginQuiz 结束
 
+    /// 综合训练：一部分题从当前方向的「院校真题考点卷」里抽，一部分从知识点题库里抽。
+    /// 为什么要两者混合：只做真题卷会漏掉没被回忆版覆盖的知识点，只做知识点题又脱离了真实考法。
+    private func startComprehensive() {  // 综合训练组卷
+        guard let bank = app.bank, !bank.questions.isEmpty else {  // 题库还没加载
+            show("题库还没加载好，稍后再试")  // 如实说
+            return  // 停在这
+        }  // 分支结束
+        let byID = Dictionary(uniqueKeysWithValues: bank.questions.map { ($0.id, $0) })  // 题号索引
+        var paperIDs: [String] = []  // 真题卷用到的题号
+        var used = Set<String>()  // 去重集合
+        for paper in PaperCatalog.shared.papers(kind: .real, track: app.currentTrack.id) {  // 当前方向的真题考点卷
+            for qid in paper.questionIDs where !used.contains(qid) && byID[qid] != nil {  // 题在库里且没重复
+                used.insert(qid)  // 记下
+                paperIDs.append(qid)  // 收集
+            }  // 内层循环结束
+        }  // 外层循环结束
+
+        let paperPool = paperIDs.compactMap { byID[$0] }.shuffled()  // 真题池打乱
+        let topicPool = bank.questions.filter { !used.contains($0.id) }.shuffled()  // 知识点池：排除真题卷已用的
+        let paperPart = Array(paperPool.prefix(comprehensionPaperCount))  // 取真题部分
+        let topicPart = Array(topicPool.prefix(comprehensionTopicCount))  // 取知识点部分
+        let mixed = paperPart + topicPart  // 合并成一套
+
+        guard mixed.count >= 5 else {  // 凑不出像样的量
+            show("真题卷与题库还没准备好，先做一组普通练习")  // 如实说
+            return  // 停在这
+        }  // 分支结束
+        show("综合训练：真题 \(paperPart.count) 题 + 知识点 \(topicPart.count) 题")  // 说清构成
+        run = RunConfig(pool: mixed, size: mixed.count, revealEach: revealEach,  // 题量与混合结果一致
+                        title: "综合训练", fixed: true)  // 题序已混好，不再二次打乱
+    }  // startComprehensive 结束
+
     private func smartPaper() {  // AI 智能组卷（样板 quiz.js smartPaper：按错题知识点频次抽题，纯本地算法）
         let bank = app.bank?.questions ?? []  // 全库题目
         let wrongs = app.data.wrongs  // 错题本
@@ -319,8 +355,16 @@ struct QuizHomeView: View {  // 刷题首页
                         PaperListView(initialKind: .real)  // 试卷列表
                     } label: {  // 行外观
                         toolRow(icon: "doc.text.fill", title: "历年真题训练",  // 图标与标题
-                                trailing: "\(PaperCatalog.shared.papers(kind: .real).count) 套")  // 右侧显示套数
+                                trailing: "\(PaperCatalog.shared.papers(kind: .real, track: app.currentTrack.id).count) 套")  // 右侧显示当前方向的真题考点卷套数
                     }  // 链接结束
+                    .buttonStyle(.plain)  // 不用默认高亮
+                    Divider().padding(.leading, 44)  // 分隔线
+                    Button {  // 综合训练（用户点名的第三个板块；样板工具区没有这一行，属用户现场产品指令）
+                        startComprehensive()  // 真题 + 知识点混合组卷
+                    } label: {  // 行外观
+                        toolRow(icon: "square.stack.3d.up.fill", title: "综合训练",  // 图标与标题
+                                trailing: "真题 \(comprehensionPaperCount) + 知识点 \(comprehensionTopicCount)")  // 右侧说明真实构成
+                    }  // 按钮结束
                     .buttonStyle(.plain)  // 不用默认高亮
                     Divider().padding(.leading, 44)  // 分隔线
                     NavigationLink {  // 错题本
@@ -403,4 +447,6 @@ struct RunConfig: Identifiable {  // 一次练习的配置（交给 QuizRunView 
     let pool: [Question]  // 按筛选条件得到的题池
     let size: Int  // 每组题量
     let revealEach: Bool  // 作答模式：每题即时看还是交卷后统一看
+    var title: String = ""  // 卷名（综合训练用，普通练习留空）
+    var fixed: Bool = false  // 是否固定题序（综合训练已经混好序，不再二次打乱）
 }  // RunConfig 结束
