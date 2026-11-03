@@ -198,6 +198,16 @@ final class AppState {  // 全局状态类
         scheduleSave()  // 落盘
     }  // addCompanion 结束
 
+    /// 亲密度直接加值：拨穗礼成「收下证书」+8 等仪式回报走这里。
+    /// 仍是单一状态源，封顶 100、下限 0，页面不许自己改 pet.affinity。
+    func addAffinity(_ n: Int) {  // 加亲密度
+        guard n != 0 else { return }  // 0 不处理
+        var snap = data  // 拷一份改
+        snap.pet.affinity = min(100, max(0, snap.pet.affinity + n))  // 加值夹到 0 到 100
+        data = snap  // 写回
+        scheduleSave()  // 落盘
+    }  // addAffinity 结束
+
     static func dayKey(_ date: Date) -> String {  // 日期转 yyyy-MM-dd
         let f = DateFormatter()  // 构造格式化器
         f.locale = Locale(identifier: "zh_CN")  // 固定中文区，避免跟着系统变

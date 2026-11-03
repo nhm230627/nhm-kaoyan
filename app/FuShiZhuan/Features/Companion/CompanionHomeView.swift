@@ -12,6 +12,7 @@ struct CompanionHomeView: View {  // 伙伴页
     @State private var toast: String?  // 轻提示文案
     @State private var jumpToken = 0  // 每 +1 让宠物跳一下
     @State private var flipToken = 0  // 每 +1 拨一次穗
+    @State private var showRitual = false  // 是否打开礼成证书页
     @State private var enteredAt = Date()  // 进入本页的时间（算今日陪伴）
 
     var body: some View {  // 视图主体
@@ -38,6 +39,10 @@ struct CompanionHomeView: View {  // 伙伴页
         }  // 浮层结束
         .onAppear { enteredAt = Date() }  // 进来记时间
         .onDisappear { app.addCompanion(minutes: minutesSinceEnter) }  // 离开时把停留时长记进今日
+        .fullScreenCover(isPresented: $showRitual) {  // 礼成证书页全屏
+            RitualView()  // 拨穗礼成
+                .environment(app)  // 传全局状态
+        }  // 全屏结束
     }  // body 结束
 
     // MARK: - 3D 舞台                                                  // 分节：舞台
@@ -133,8 +138,8 @@ struct CompanionHomeView: View {  // 伙伴页
 
             Button {  // 拨穗入口
                 if app.stage == .master {  // 到硕士了才能拨
-                    flipToken += 1  // 流苏转半圈
-                    show("拨穗完成 · 从右拨到左")  // 提示
+                    flipToken += 1  // 3D 流苏也转半圈
+                    showRitual = true  // 打开礼成证书页
                 } else {  // 还没到
                     show("到「硕士」阶段才能拨穗，现在差 \(max(0, PetStage.master.threshold - app.growth)) 成长值")  // 如实说明
                 }  // 分支结束
