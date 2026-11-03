@@ -8,6 +8,8 @@ import SwiftUI  // 界面框架
 struct DiyBankView: View {  // 我的题库
     @Environment(AppState.self) private var app  // 读写自建题
 
+    var startWithForm = false  // 进来就展开表单（截图用，正常入口是收起）
+
     @State private var showingForm = false  // 表单是否展开
     @State private var stem = ""  // 题干
     @State private var type: QuestionType = .single  // 题型
@@ -45,6 +47,7 @@ struct DiyBankView: View {  // 我的题库
         .background(Color.appBG)  // 底色
         .navigationTitle("我的题库")  // 标题
         .navigationBarTitleDisplayMode(.inline)  // 内联
+        .onAppear { if startWithForm { showingForm = true } }  // 截图时直接展开表单
         .overlay(alignment: .bottom) {  // 轻提示
             if let hint {  // 有提示才显示
                 Text(hint)  // 文案

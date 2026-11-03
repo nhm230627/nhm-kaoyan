@@ -147,7 +147,7 @@ struct RootView: View {  // 根视图
         case .sortmap:  // 关卡地图
             LevelMapView()  // 四章十二关
         case .diy:  // 我的题库
-            DiyBankView()  // 录题页
+            DiyBankView(startWithForm: true)  // 录题页（截图时展开表单）
         case .sortplay:  // 分拣关卡
             if let level = SortCatalog.level(SortCatalog.order.first ?? "") {  // 第一关
                 SortGameView(level: level)  // 直接开玩
