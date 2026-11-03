@@ -74,6 +74,13 @@ jobs:
             sleep 6  # 等首帧渲染完，3D 页面尤其慢
             xcrun simctl io "$UDID" screenshot "shots/$TAB.png" || echo "截图失败：$TAB"  # 截当前屏幕
           done
+          for PAGE in avatar papers paper wrongbook; do  # 子页面各来一张：这些页面点不进去，只能靠 -startShot 直接弹开
+            xcrun simctl terminate "$UDID" com.fushizhuan.app 2>/dev/null || true  # 杀进程保证冷启动
+            echo "== 子页面 $PAGE =="  # 日志分隔
+            xcrun simctl launch "$UDID" com.fushizhuan.app -startTab quiz -startShot "$PAGE" || echo "启动失败：$PAGE"  # RootView.initialShot 解析
+            sleep 6  # 等 3D 与列表渲染
+            xcrun simctl io "$UDID" screenshot "shots/shot-$PAGE.png" || echo "截图失败：$PAGE"  # 存成 shot-<名字>.png
+          done
           echo "== 崩溃日志 =="  # 如果启动即崩，真正的堆栈在这里
           cp ~/Library/Logs/DiagnosticReports/*.ips shots/ 2>/dev/null || echo "没有崩溃日志，说明启动过程没崩"  # 有就一起上传
           ls -la shots/  # 列出来，方便在日志里核对每张图的大小

@@ -37,6 +37,7 @@ enum AppTab: String, CaseIterable, Identifiable {  // Tab 枚举
 struct RootView: View {  // 根视图
     @Environment(AppState.self) private var app  // 注入全局状态
     @State private var tab: AppTab = RootView.initialTab  // 当前 Tab（可用启动参数指定，见下）
+    @State private var shot: Shot? = RootView.initialShot  // 截图用：启动即弹开的子页面
     @State private var didTick = false  // 冷启动只结算一次
 
     /// 截图用：允许 CI 通过启动参数直接落到某个 Tab。
@@ -52,6 +53,23 @@ struct RootView: View {  // 根视图
         }  // 分支结束
         return .today  // 默认落在今日页
     }  // initialTab 结束
+
+    /// 截图用：直接弹出某个子页面，因为子页面藏得深，截图脚本点不进去。
+    /// 只在带 `-startShot <名字>` 启动时生效，正常启动为 nil，不影响任何线上行为。
+    enum Shot: String, Identifiable {  // 可截图的子页面
+        case avatar  // 换装工坊
+        case papers  // 试卷列表
+        case paper  // 整套试卷作答
+        case wrongbook  // 错题本
+
+        var id: String { rawValue }  // 用原始值当 id
+    }  // Shot 结束
+
+    static var initialShot: Shot? {  // 解析启动参数
+        let args = ProcessInfo.processInfo.arguments  // 命令行参数
+        guard let i = args.firstIndex(of: "-startShot"), args.count > i + 1 else { return nil }  // 没带参数
+        return Shot(rawValue: args[i + 1])  // 有就解析
+    }  // initialShot 结束
 
     var body: some View {  // 视图主体
         TabView(selection: $tab) {  // 五 Tab 容器
@@ -86,6 +104,11 @@ struct RootView: View {  // 根视图
             .tag(AppTab.profile)  // 绑定值
         }  // TabView 结束
         .tint(Color.appBrand)  // 选中色
+        .fullScreenCover(item: $shot) { target in  // 截图专用：直接盖到某个子页面
+            NavigationStack {  // 套一层导航栈，才有标题栏
+                shotBody(target)  // 按名字给页面
+            }  // 栈结束
+        }  // 覆盖层结束
         .task {  // 首次出现执行
             app.loadBank()  // 加载题库
             guard !didTick else { return }  // 已结算就跳过
@@ -96,4 +119,22 @@ struct RootView: View {  // 根视图
             app.flush()  // 立刻落盘防丢
         }  // 监听结束
     }  // body 结束
+
+    @ViewBuilder  // 按名字返回对应子页面
+    private func shotBody(_ target: Shot) -> some View {  // 截图用页面分发
+        switch target {  // 按名字分支
+        case .avatar:  // 换装工坊
+            AvatarStudioView()  // 换装页
+        case .papers:  // 试卷列表
+            PaperListView(initialKind: .mock)  // 默认停在自编模拟卷，免得截到空态
+        case .paper:  // 整套试卷
+            if let paper = PaperCatalog.shared.papers(kind: .mock).first {  // 取第一套
+                PaperPlayView(paper: paper)  // 直接开始作答
+            } else {  // 没有试卷
+                EmptyState(icon: "doc.text", title: "暂无试卷", message: "papers.json 里没有可用的模拟卷。")  // 空态
+            }  // 分支结束
+        case .wrongbook:  // 错题本
+            WrongBookView()  // 错题本页
+        }  // 分支结束
+    }  // shotBody 结束
 }  // RootView 结束
