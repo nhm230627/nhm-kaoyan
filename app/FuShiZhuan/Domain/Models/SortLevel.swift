@@ -18,13 +18,20 @@ struct SortCard: Codable, Hashable, Identifiable {  // 一张待分拣卡片
     let note: String  // 放错时给出的依据
 }  // SortCard 结束
 
-struct SortLevel: Codable, Identifiable {  // 一关
+struct SortLevel: Identifiable {  // 一关（id 来自 json 字典的 key，不在对象里）
     let id: String  // 关卡 id，如 tax-system-1
     let title: String  // 关卡名，如「税种归位」
     let hint: String  // 一句话玩法提示
     let slots: [SortSlot]  // 三个分类槽
     let cards: [SortCard]  // 八张卡片
 }  // SortLevel 结束
+
+private struct SortLevelBody: Decodable {  // json 里关卡对象本身没有 id，先按 body 解
+    let title: String  // 关卡名
+    let hint: String  // 玩法提示
+    let slots: [SortSlot]  // 分类槽
+    let cards: [SortCard]  // 卡片
+}  // SortLevelBody 结束
 
 struct SortChapter: Identifiable {  // 一章 = 一座知识岛
     let id: String  // 章 id
@@ -64,7 +71,13 @@ enum SortCatalog {  // 关卡表
     private static func load() -> [String: SortLevel] {  // 读内置 json
         guard let url = Bundle.main.url(forResource: "sort-levels", withExtension: "json") else { return [:] }  // 找不到就空
         guard let data = try? Data(contentsOf: url) else { return [:] }  // 读不出来就空
-        struct File: Decodable { let levels: [String: SortLevel] }  // 只关心 levels 字段
-        return (try? JSONDecoder().decode(File.self, from: data))?.levels ?? [:]  // 解析失败也给空表
+        struct File: Decodable { let levels: [String: SortLevelBody] }  // 只关心 levels 字段
+        guard let file = try? JSONDecoder().decode(File.self, from: data) else { return [:] }  // 解析失败给空表
+        var out: [String: SortLevel] = [:]  // 结果容器
+        for (key, body) in file.levels {  // 逐个关卡
+            out[key] = SortLevel(id: key, title: body.title, hint: body.hint,  // 用字典 key 当 id
+                                 slots: body.slots, cards: body.cards)  // 其余原样搬
+        }  // 循环结束
+        return out  // 返回关卡表
     }  // load 结束
 }  // SortCatalog 结束
