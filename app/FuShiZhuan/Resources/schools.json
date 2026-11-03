@@ -1,0 +1,1126 @@
+{
+ "meta": {
+  "note": "院校清单与卷别为样板演示数据，正式版按各校研究生院公布的招生目录与真题接入。",
+  "updated": "2026-10"
+ },
+ "schools": [
+  {
+   "id": "ruc",
+   "name": "中国人民大学",
+   "city": "北京",
+   "tags": [
+    "985",
+    "211",
+    "双一流"
+   ],
+   "focus": "balanced",
+   "tier": "985",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": true
+  },
+  {
+   "id": "pku",
+   "name": "北京大学",
+   "city": "北京",
+   "tags": [
+    "985",
+    "211",
+    "双一流"
+   ],
+   "focus": "balanced",
+   "tier": "985",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": true
+  },
+  {
+   "id": "cufe",
+   "name": "中央财经大学",
+   "city": "北京",
+   "tags": [
+    "211",
+    "双一流",
+    "财经"
+   ],
+   "focus": "vat",
+   "tier": "211",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": true
+  },
+  {
+   "id": "uibe",
+   "name": "对外经济贸易大学",
+   "city": "北京",
+   "tags": [
+    "211",
+    "双一流",
+    "财经"
+   ],
+   "focus": "income",
+   "tier": "211",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": true
+  },
+  {
+   "id": "cueb",
+   "name": "首都经济贸易大学",
+   "city": "北京",
+   "tags": [
+    "财经"
+   ],
+   "focus": "admin",
+   "tier": "财经",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": true
+  },
+  {
+   "id": "btbu",
+   "name": "北京工商大学",
+   "city": "北京",
+   "tags": [],
+   "focus": "vat",
+   "tier": "普通",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": true
+  },
+  {
+   "id": "ucass",
+   "name": "中国社会科学院大学",
+   "city": "北京",
+   "tags": [
+    "双一流"
+   ],
+   "focus": "income",
+   "tier": "双一流",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": true
+  },
+  {
+   "id": "nankai",
+   "name": "南开大学",
+   "city": "天津",
+   "tags": [
+    "985",
+    "211",
+    "双一流"
+   ],
+   "focus": "balanced",
+   "tier": "985",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": true
+  },
+  {
+   "id": "tjufe",
+   "name": "天津财经大学",
+   "city": "天津",
+   "tags": [
+    "财经"
+   ],
+   "focus": "vat",
+   "tier": "财经",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": true
+  },
+  {
+   "id": "hueb",
+   "name": "河北经贸大学",
+   "city": "石家庄",
+   "tags": [],
+   "focus": "admin",
+   "tier": "普通",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": true
+  },
+  {
+   "id": "sxufe",
+   "name": "山西财经大学",
+   "city": "太原",
+   "tags": [
+    "财经"
+   ],
+   "focus": "vat",
+   "tier": "财经",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": true
+  },
+  {
+   "id": "imfec",
+   "name": "内蒙古财经大学",
+   "city": "呼和浩特",
+   "tags": [],
+   "focus": "admin",
+   "tier": "普通",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": true
+  },
+  {
+   "id": "dufe",
+   "name": "东北财经大学",
+   "city": "大连",
+   "tags": [
+    "财经"
+   ],
+   "focus": "vat",
+   "tier": "财经",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": false
+  },
+  {
+   "id": "lnu",
+   "name": "辽宁大学",
+   "city": "沈阳",
+   "tags": [
+    "211",
+    "双一流"
+   ],
+   "focus": "balanced",
+   "tier": "211",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": false
+  },
+  {
+   "id": "jlufe",
+   "name": "吉林财经大学",
+   "city": "长春",
+   "tags": [],
+   "focus": "tax-system",
+   "tier": "普通",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": false
+  },
+  {
+   "id": "hrbcu",
+   "name": "哈尔滨商业大学",
+   "city": "哈尔滨",
+   "tags": [],
+   "focus": "admin",
+   "tier": "普通",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": false
+  },
+  {
+   "id": "sufe",
+   "name": "上海财经大学",
+   "city": "上海",
+   "tags": [
+    "211",
+    "双一流",
+    "财经"
+   ],
+   "focus": "vat",
+   "tier": "211",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": false
+  },
+  {
+   "id": "shcc",
+   "name": "上海海关学院",
+   "city": "上海",
+   "tags": [],
+   "focus": "admin",
+   "tier": "普通",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": false
+  },
+  {
+   "id": "fudan",
+   "name": "复旦大学",
+   "city": "上海",
+   "tags": [
+    "985",
+    "211",
+    "双一流"
+   ],
+   "focus": "balanced",
+   "tier": "985",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": false
+  },
+  {
+   "id": "nju",
+   "name": "南京大学",
+   "city": "南京",
+   "tags": [
+    "985",
+    "211",
+    "双一流"
+   ],
+   "focus": "balanced",
+   "tier": "985",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": false
+  },
+  {
+   "id": "nufe",
+   "name": "南京财经大学",
+   "city": "南京",
+   "tags": [
+    "财经"
+   ],
+   "focus": "vat",
+   "tier": "财经",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": false
+  },
+  {
+   "id": "suda",
+   "name": "苏州大学",
+   "city": "苏州",
+   "tags": [
+    "211",
+    "双一流"
+   ],
+   "focus": "balanced",
+   "tier": "211",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": false
+  },
+  {
+   "id": "zjsu",
+   "name": "浙江工商大学",
+   "city": "杭州",
+   "tags": [
+    "财经"
+   ],
+   "focus": "income",
+   "tier": "财经",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": false
+  },
+  {
+   "id": "zufe",
+   "name": "浙江财经大学",
+   "city": "杭州",
+   "tags": [
+    "财经"
+   ],
+   "focus": "vat",
+   "tier": "财经",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": false
+  },
+  {
+   "id": "aufe",
+   "name": "安徽财经大学",
+   "city": "蚌埠",
+   "tags": [
+    "财经"
+   ],
+   "focus": "tax-system",
+   "tier": "财经",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": false
+  },
+  {
+   "id": "xmu",
+   "name": "厦门大学",
+   "city": "厦门",
+   "tags": [
+    "985",
+    "211",
+    "双一流"
+   ],
+   "focus": "balanced",
+   "tier": "985",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": false
+  },
+  {
+   "id": "jmu",
+   "name": "集美大学",
+   "city": "厦门",
+   "tags": [],
+   "focus": "admin",
+   "tier": "普通",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": false
+  },
+  {
+   "id": "jxufe",
+   "name": "江西财经大学",
+   "city": "南昌",
+   "tags": [
+    "财经"
+   ],
+   "focus": "vat",
+   "tier": "财经",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": false
+  },
+  {
+   "id": "sdu",
+   "name": "山东大学",
+   "city": "济南",
+   "tags": [
+    "985",
+    "211",
+    "双一流"
+   ],
+   "focus": "balanced",
+   "tier": "985",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": false
+  },
+  {
+   "id": "sdufe",
+   "name": "山东财经大学",
+   "city": "济南",
+   "tags": [
+    "财经"
+   ],
+   "focus": "vat",
+   "tier": "财经",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": false
+  },
+  {
+   "id": "hnufe",
+   "name": "河南财经政法大学",
+   "city": "郑州",
+   "tags": [],
+   "focus": "income",
+   "tier": "普通",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": false
+  },
+  {
+   "id": "whu",
+   "name": "武汉大学",
+   "city": "武汉",
+   "tags": [
+    "985",
+    "211",
+    "双一流"
+   ],
+   "focus": "balanced",
+   "tier": "985",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": false
+  },
+  {
+   "id": "zuel",
+   "name": "中南财经政法大学",
+   "city": "武汉",
+   "tags": [
+    "211",
+    "双一流",
+    "财经"
+   ],
+   "focus": "vat",
+   "tier": "211",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": false
+  },
+  {
+   "id": "hnu",
+   "name": "湖南大学",
+   "city": "长沙",
+   "tags": [
+    "985",
+    "211",
+    "双一流"
+   ],
+   "focus": "balanced",
+   "tier": "985",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": false
+  },
+  {
+   "id": "hutb",
+   "name": "湖南工商大学",
+   "city": "长沙",
+   "tags": [],
+   "focus": "admin",
+   "tier": "普通",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": false
+  },
+  {
+   "id": "jnu",
+   "name": "暨南大学",
+   "city": "广州",
+   "tags": [
+    "211",
+    "双一流"
+   ],
+   "focus": "income",
+   "tier": "211",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": false
+  },
+  {
+   "id": "gdufe",
+   "name": "广东财经大学",
+   "city": "广州",
+   "tags": [
+    "财经"
+   ],
+   "focus": "vat",
+   "tier": "财经",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": false
+  },
+  {
+   "id": "gxufe",
+   "name": "广西财经学院",
+   "city": "南宁",
+   "tags": [],
+   "focus": "tax-system",
+   "tier": "普通",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": false
+  },
+  {
+   "id": "swufe",
+   "name": "西南财经大学",
+   "city": "成都",
+   "tags": [
+    "211",
+    "双一流",
+    "财经"
+   ],
+   "focus": "vat",
+   "tier": "211",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": false
+  },
+  {
+   "id": "scu",
+   "name": "四川大学",
+   "city": "成都",
+   "tags": [
+    "985",
+    "211",
+    "双一流"
+   ],
+   "focus": "balanced",
+   "tier": "985",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": false
+  },
+  {
+   "id": "swupl",
+   "name": "西南政法大学",
+   "city": "重庆",
+   "tags": [
+    "双一流"
+   ],
+   "focus": "tax-system",
+   "tier": "双一流",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": false
+  },
+  {
+   "id": "ctbu",
+   "name": "重庆工商大学",
+   "city": "重庆",
+   "tags": [],
+   "focus": "admin",
+   "tier": "普通",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": false
+  },
+  {
+   "id": "ynufe",
+   "name": "云南财经大学",
+   "city": "昆明",
+   "tags": [
+    "财经"
+   ],
+   "focus": "vat",
+   "tier": "财经",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": false
+  },
+  {
+   "id": "gufe",
+   "name": "贵州财经大学",
+   "city": "贵阳",
+   "tags": [
+    "财经"
+   ],
+   "focus": "tax-system",
+   "tier": "财经",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": false
+  },
+  {
+   "id": "xjtu",
+   "name": "西安交通大学",
+   "city": "西安",
+   "tags": [
+    "985",
+    "211",
+    "双一流"
+   ],
+   "focus": "balanced",
+   "tier": "985",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": false
+  },
+  {
+   "id": "nwu",
+   "name": "西北大学",
+   "city": "西安",
+   "tags": [
+    "211",
+    "双一流"
+   ],
+   "focus": "balanced",
+   "tier": "211",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": false
+  },
+  {
+   "id": "lzufe",
+   "name": "兰州财经大学",
+   "city": "兰州",
+   "tags": [
+    "财经"
+   ],
+   "focus": "vat",
+   "tier": "财经",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": false
+  },
+  {
+   "id": "xjufe",
+   "name": "新疆财经大学",
+   "city": "乌鲁木齐",
+   "tags": [
+    "财经"
+   ],
+   "focus": "admin",
+   "tier": "财经",
+   "papers": {
+    "initial": [
+     "初试仿真卷 A",
+     "初试仿真卷 B"
+    ],
+    "written": [
+     "复试笔试仿真卷"
+    ],
+    "interview": [
+     "院校复试面试"
+    ]
+   },
+   "hot": false
+  }
+ ]
+}
