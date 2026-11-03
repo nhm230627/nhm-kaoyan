@@ -59,8 +59,7 @@ struct SortGameView: View {  // 分拣关卡页
             }  // 分支结束
         }  // 叠放结束
         .background(Color.appBG)  // 底色
-        .navigationTitle(level.title)  // 标题
-        .navigationBarTitleDisplayMode(.inline)  // 内联标题
+        .toolbar(.hidden, for: .navigationBar)  // 隐藏系统导航栏：样板顶部只有「✕ + 标题 + 命」这一行，避免双标题
         .navigationBarBackButtonHidden(true)  // 用自定义退出键
         .onAppear(perform: reset)  // 进来就洗牌开局
     }  // body 结束
@@ -96,7 +95,8 @@ struct SortGameView: View {  // 分拣关卡页
             }  // 排列结束
         }  // 排列结束
         .padding(.horizontal, Metrics.pagePadding)  // 左右内边距
-        .padding(.vertical, Space.s)  // 上下内边距
+        .padding(.top, Space.s)  // 上边距
+        .padding(.bottom, Space.s)  // 下边距
     }  // topBar 结束
 
     private var slotsSection: some View {  // 三个分类槽（样板 .sg-slots 竖排）
