@@ -403,11 +403,11 @@ struct StarMap3DView: UIViewRepresentable {  // 星海
 
             for c in crystals {  // 逐颗水晶
                 c.group.position.y = c.baseY + sin(t * 1.25 + c.phase) * 0.055  // 上下浮动，同样板幅度
-                let spin = c.state == .passed ? 1.5 : 0.85  // 通关的转得快
+                let spin: Float = c.state == .passed ? 1.5 : 0.85  // 通关的转得快；必须显式写 Float，否则被推断成 Double
                 c.gem.orientation = simd_quatf(angle: t * spin + c.phase, axis: [0, 1, 0])  // 自转
                 let tilt = sin(t * 0.7 + c.phase) * 0.12  // 轻微点头
                 c.gem.orientation = simd_quatf(angle: tilt, axis: [1, 0, 0]) * c.gem.orientation  // 叠加上去
-                let ringSpin = c.state == .locked ? 0.15 : 0.8  // 锁定的转得慢
+                let ringSpin: Float = c.state == .locked ? 0.15 : 0.8  // 锁定的转得慢；同样必须显式 Float
                 c.ring.orientation = simd_quatf(angle: -t * ringSpin + c.phase, axis: [0, 0, 1])  // 能量环自转
                 if c.state == .open {  // 可打的关卡加一点呼吸感
                     let pulse = 1 + sin(t * 2.6 + c.phase) * 0.07  // 样板 pulse 幅度

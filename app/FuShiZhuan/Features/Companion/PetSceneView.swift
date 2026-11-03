@@ -609,7 +609,8 @@ enum PetSceneBuilder {  // 猫建模器
         for (i, dx) in offsets.enumerated() {  // 五根穗子
             let strand = ModelEntity(mesh: .generateCylinder(height: 0.28, radius: 0.017),  // 一根穗
                                      materials: [material(CatPalette.cordDeep)])  // 暗红
-            strand.position = [0.52 + dx, -0.78, 0.32 + (i % 2 == 0 ? -0.022 : 0.022)]  // 与样板一致
+            let dz: Float = i % 2 == 0 ? -0.022 : 0.022  // 前后错开一点；不显式标 Float 会被推断成 Double
+            strand.position = [0.52 + dx, -0.78, 0.32 + dz]  // 与样板一致
             strand.orientation = simd_quatf(angle: dx * 2.2, axis: [0, 0, 1])  // 微微散开
             tassel.addChild(strand)  // 挂上
         }  // 循环结束

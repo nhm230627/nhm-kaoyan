@@ -252,7 +252,8 @@ enum RoamBuilder {  // 房间建模器
         let spots: [(Float, Float)] = [(-3.3, 2.0), (-3.3, 1.2), (3.3, 2.1)]  // 位置
         for (index, spot) in spots.enumerated() {  // 逐个
             let crate = box(width: 0.5, height: 0.5, depth: 0.5, color: UIColor(hex: "C79A68"))  // 箱子
-            crate.position = [spot.0, 0.25 + (index == 1 ? 0.5 : 0), spot.1]  // 第二个摞上去
+            let lift: Float = index == 1 ? 0.5 : 0  // 第二个摞上去；不显式标 Float 会被推断成 Double
+            crate.position = [spot.0, 0.25 + lift, spot.1]  // 与样板一致
             group.addChild(crate)  // 挂上
         }  // 循环结束
         return group  // 返回
