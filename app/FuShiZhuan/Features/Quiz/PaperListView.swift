@@ -55,11 +55,11 @@ struct PaperListView: View {  // 试卷列表页
                         .foregroundStyle(Color.appWarn)  // 橙色
                     Text("这里还没有历年真题").font(AppFont.bodyStrong)  // 标题
                 }  // 排列结束
-                Text("原因很实在：官方不公开近年真题，市面上流传的都是机构整理的「考生回忆版」，需要付费或登录才能下载，内容也有版权，不能直接内置到 App 里。")  // 说明原因
+                Text("真正的原因：官方不公开近年真题，市面上流传的都是机构整理的「考生回忆版」，需要付费或登录才能下载，内容也有版权，不能直接内置到 App 里。")  // 说明原因（原话保留，去掉不实承诺）
                     .font(AppFont.caption)  // 小字
                     .foregroundStyle(Color.textSecondary)  // 次要色
                     .fixedSize(horizontal: false, vertical: true)  // 允许换行
-                Text("你可以怎么做：把手上的真题 PDF 导入进来，导入后会自动按大题拆成可作答的试卷。")  // 给出路
+                Text("现在的状态：App 还没有「导入文件」这个功能，所以真题暂时进不来。要加真题，得把题目按格式写进 papers.json 与 questions.json 一起打包。")  // 如实说明当前能力（旧文案承诺了不存在的导入功能，已改）
                     .font(AppFont.caption)  // 小字
                     .foregroundStyle(Color.textSecondary)  // 次要色
                     .fixedSize(horizontal: false, vertical: true)  // 允许换行
