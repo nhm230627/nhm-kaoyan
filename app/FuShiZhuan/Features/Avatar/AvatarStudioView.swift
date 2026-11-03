@@ -152,7 +152,7 @@ struct AvatarStudioView: View {  // 换装页
                 }  // 叠放结束
                 .overlay(  // 描边
                     RoundedRectangle(cornerRadius: Radius.chip, style: .continuous)  // 同形
-                        .stroke(selected ? Color.appBrand : Color.clear, lineWidth: 2)  // 选中亮边
+                        .stroke(selected ? Color.appBrand : Color.separator, lineWidth: selected ? 2 : 1)  // 选中亮边，未选中细边（白色块才不会隐形）
                 )  // 描边结束
                 Text(item.name)  // 名称
                     .font(AppFont.caption)  // 小字
