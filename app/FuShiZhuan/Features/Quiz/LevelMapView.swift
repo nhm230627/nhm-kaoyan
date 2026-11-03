@@ -10,6 +10,7 @@ import SwiftUI  // 界面框架
 struct LevelMapView: View {  // 关卡地图（列表形态）
     @Environment(AppState.self) private var app  // 读成绩
     @State private var activeLevel: SortLevel?  // 正在玩的关卡
+    @State private var showDuel = false  // 1V1 竞赛是否打开
 
     private var starsByLevel: [String: Int] {  // 各关星数
         Dictionary(uniqueKeysWithValues: app.data.levelResults.map { ($0.id, $0.stars) })  // 成绩转字典
@@ -31,7 +32,7 @@ struct LevelMapView: View {  // 关卡地图（列表形态）
         ScrollView {  // 可滚动
             VStack(spacing: Space.l) {  // 纵向排列
                 hud  // 三格战绩
-                duelNotice  // 1V1 竞赛：如实说明没接
+                duelEntry  // 1V1 知识竞赛入口
                 ForEach(SortCatalog.chapters) { chapter in  // 逐章
                     chapterBlock(chapter)  // 一章一块
                 }  // 遍历结束
@@ -52,6 +53,10 @@ struct LevelMapView: View {  // 关卡地图（列表形态）
                     .id(level.id)  // 换关时强制重建状态
             }  // 栈结束
         }  // 覆盖层结束
+        .fullScreenCover(isPresented: $showDuel) {  // 1V1 竞赛铺满整屏
+            DuelView()  // 照样板的浮层形态
+                .environment(app)  // 显式传状态源，不依赖继承
+        }  // 覆盖层结束
     }  // body 结束
 
     private var hud: some View {  // 三格战绩（样板 .gm-hud）
@@ -62,26 +67,45 @@ struct LevelMapView: View {  // 关卡地图（列表形态）
         }  // 排列结束
     }  // hud 结束
 
-    private var duelNotice: some View {  // 1V1 竞赛的缺口说明
-        // 样板 page-game 右下角有一个「1V1 竞赛」按钮，它靠 /api/duel/* 配对两个
-        // 同时在等的人（duel.js 注释原话：「和真人打这件事必须有服务端」）。
-        // 本工程 BFF 还没有这组接口，所以这里不放一个点了没反应的按钮，
-        // 而是把缺口摆在明面上，等接口接上再把按钮换成真的。
-        HStack(spacing: Space.s) {  // 横向排列
-            Image(systemName: "person.2.slash")  // 双人划掉的图标
-                .font(.system(size: 13, weight: .semibold))  // 图标大小
-                .foregroundStyle(Color.textTertiary)  // 弱化色
-            Text("1V1 知识竞赛需要配对服务（两个真人同题对决），服务端接口尚未接入")  // 如实说明
-                .font(.system(size: 11))  // 11 号
-                .foregroundStyle(Color.textTertiary)  // 弱化色
-                .fixedSize(horizontal: false, vertical: true)  // 允许多行
-            Spacer(minLength: 0)  // 撑开
-        }  // 横排结束
-        .padding(.horizontal, Space.m)  // 左右
-        .padding(.vertical, Space.s)  // 上下
-        .background(RoundedRectangle(cornerRadius: Radius.chip, style: .continuous)  // 圆角胶囊卡
-            .fill(Color(hex: 0xF4F5F9)))  // 浅灰底
-    }  // duelNotice 结束
+    private var duelEntry: some View {  // 1V1 竞赛入口
+        // 样板 page-game 右下角的「1V1 竞赛」是浮层。这里做成同样的浮层，
+        // 配对走 BFF 的 /api/duel/*（已实测：两人同种子同题，9 秒配不上转 AI 陪练）。
+        Button {  // 点开竞赛
+            showDuel = true  // 铺满整屏
+        } label: {  // 外观
+            HStack(spacing: Space.s) {  // 横排
+                Image(systemName: "bolt.horizontal.circle.fill")  // 对战图标
+                    .font(.system(size: 17))  // 图标大小
+                    .foregroundStyle(.white)  // 白图标
+                    .frame(width: 34, height: 34)  // 34 方块
+                    .background(Circle().fill(Color.appBrand))  // 品牌蓝圆底
+                VStack(alignment: .leading, spacing: 1) {  // 文字区
+                    Text("1V1 知识竞赛").font(.system(size: 13, weight: .semibold))  // 主标题
+                        .foregroundStyle(Color.textPrimary)  // 主色
+                    Text(verbatim: duelSubtitle)  // 战绩或说明
+                        .font(.system(size: 10.5))  // 小字
+                        .foregroundStyle(Color.textSecondary)  // 次要色
+                }  // 排列结束
+                Spacer(minLength: 0)  // 撑开
+                Image(systemName: "chevron.right")  // 箭头
+                    .font(.system(size: 12, weight: .semibold))  // 图标
+                    .foregroundStyle(Color.textTertiary)  // 弱化色
+            }  // 横排结束
+            .padding(.horizontal, Space.m)  // 左右内边距
+            .padding(.vertical, Space.s)  // 上下内边距
+            .background(RoundedRectangle(cornerRadius: Radius.chip, style: .continuous)  // 圆角卡
+                .fill(Color.appCard))  // 白卡
+        }  // 外观结束
+        .buttonStyle(.plain)  // 去掉系统高亮
+        .accessibilityLabel("1V1 知识竞赛，同题抢答")  // 无障碍
+    }  // duelEntry 结束
+
+    private var duelSubtitle: String {  // 入口副标题
+        if app.duelGames > 0 {  // 打过就报战绩
+            return "同题抢答 · 已打 \(app.duelGames) 场，胜 \(app.duelWins) 场"  // 真实战绩
+        }  // 分支结束
+        return "同题抢答 · 真人对战，配不上自动上 AI 陪练"  // 没打过
+    }  // duelSubtitle 结束
 
     private func hudCell(value: String, title: String) -> some View {  // 一格战绩
         VStack(spacing: 3) {  // 上数字下标题

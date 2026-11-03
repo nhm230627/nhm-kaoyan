@@ -28,6 +28,8 @@ struct AppSnapshot: Codable, Equatable {  // 持久化单位
     var communityPosts: [CommunityPost] = []  // 我在研友论坛发的帖子（有默认值，旧快照能直接解码）
     var communityLikes: [String] = []  // 我点过赞的帖子 id（有默认值，旧快照能直接解码）
     var communitySeedComments: [String: [PostComment]] = [:]  // 种子帖上我加的评论，键是帖子 id
+    var duelGames: Int = 0  // 1V1 已打场次（有默认值，旧快照能直接解码）
+    var duelWins: Int = 0  // 1V1 胜场（有默认值，旧快照能直接解码）
 
     static let currentVersion = 1  // 当前结构版本
 
@@ -207,6 +209,25 @@ final class AppState {  // 全局状态类
         data = snap  // 写回
         scheduleSave()  // 落盘
     }  // addAffinity 结束
+
+    /// 1V1 结算：成长值增量 + 场次 + 亲密度，全部走这里。
+    /// 分值照样板 duel.js：胜 +20、平 +8、负 +5；亲密度固定 +2。
+    /// 错题与答题记录在每题作答时已由 recordAnswer 写入，这里不重复记。
+    func finishDuel(win: Bool, draw: Bool) -> Int {  // 结算一场 1V1，返回本次成长值
+        let gain = draw ? 8 : (win ? 20 : 5)  // 照样板的三档分值
+        var snap = data  // 拷一份改
+        snap.growth += gain  // 加成长值
+        snap.duelGames += 1  // 场次加一
+        if win && !draw { snap.duelWins += 1 }  // 胜场加一
+        snap.pet.affinity = min(100, max(0, snap.pet.affinity + 2))  // 亲密度 +2，封顶 100
+        data = snap  // 写回状态
+        scheduleSave()  // 落盘
+        return gain  // 返回本次增量，供结果页展示
+    }  // finishDuel 结束
+
+    var duelGames: Int { data.duelGames }  // 已打场次（只读）
+
+    var duelWins: Int { data.duelWins }  // 胜场（只读）
 
     static func dayKey(_ date: Date) -> String {  // 日期转 yyyy-MM-dd
         let f = DateFormatter()  // 构造格式化器

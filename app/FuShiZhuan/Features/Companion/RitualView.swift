@@ -184,7 +184,7 @@ struct RitualView: View {  // 拨穗礼成证书页
                         .font(.system(size: 26, weight: .heavy))  // 26 号加粗
                         .foregroundStyle(LinearGradient(colors: [Color(hex: 0xB06A12), Color(hex: 0xE2402F), Color(hex: 0x7C4DFF)],  // 渐变字
                                                         startPoint: .leading, endPoint: .trailing))  // 左到右
-                    Text(swept ? "\(examYear) 届 · \(app.currentTrack.name)" : "流苏自右拨至左，寓意学有所成")  // 副标题
+                    Text(verbatim: swept ? "\(examYear) 届 · \(app.currentTrack.name)" : "流苏自右拨至左，寓意学有所成")  // 副标题（verbatim 防年份被加千分位）
                         .font(.system(size: 11.5))  // 小字
                         .foregroundStyle(Color(hex: 0x8A7A63))  // 暖灰
                 }  // 标题区结束
@@ -208,7 +208,7 @@ struct RitualView: View {  // 拨穗礼成证书页
     private var certCard: some View {  // 礼成证书卡
         ZStack(alignment: .topTrailing) {  // 叠放印章
             VStack(alignment: .leading, spacing: 0) {  // 正文
-                Text("\(examYear) 年全国硕士研究生招生考试")  // 抬头顶行
+                Text(verbatim: "\(examYear) 年全国硕士研究生招生考试")  // 抬头顶行（verbatim 防年份被加千分位）
                     .font(.system(size: 9.5))  // 很小
                     .tracking(1.2)  // 字距
                     .foregroundStyle(Color(hex: 0xA98A5C))  // 金棕
@@ -219,6 +219,7 @@ struct RitualView: View {  // 拨穗礼成证书页
                     .padding(.bottom, 4)  // 下距
                 certLine  // 授予学位行
                     .lineSpacing(2)  // 行距
+                    .padding(.trailing, 56)  // 右侧给印章让位，否则文字被印章压住
                 HStack {  // 编号与日期
                     Text("证书编号 \(certNo)")  // 编号
                     Spacer()  // 撑开

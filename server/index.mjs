@@ -70,6 +70,148 @@ function idempotentSet(key, payload) {  // 写幂等缓存
   }  // 遍历结束
 }  // idempotentSet 结束
 
+// ---------- 1V1 配对（纯内存，题目不出服务器） ----------
+// 与 AI 接口完全解耦：不调模型、不扣额度，所以鉴权也放在 AI 那套之外。
+// 协议照样板 /api/duel/*：join → poll → progress → state。
+// 挑战题不进服务端：双方拿同一个 seed，各自用本地题库出同样的题。
+
+const duelWaiting = new Map()  // pid -> 排队项
+const duelGames = new Map()  // duelId -> 对局
+const DUEL_WAIT_MS = 9000  // 等 9 秒配不上就回 timeout，客户端上 AI 陪练
+const DUEL_TTL_MS = 30 * 60 * 1000  // 对局保留 30 分钟，够客户端取完结果
+
+// 清掉过期条目，避免内存无限增长
+function pruneDuel() {  // 清理过期
+  const now = Date.now()  // 当前时间
+  for (const [pid, item] of duelWaiting) {  // 遍历排队
+    if (now - item.at > 60000) duelWaiting.delete(pid)  // 排队超 1 分钟作废
+  }  // 遍历结束
+  for (const [id, game] of duelGames) {  // 遍历对局
+    if (now - game.at > DUEL_TTL_MS) duelGames.delete(id)  // 超 30 分钟作废
+  }  // 遍历结束
+}  // pruneDuel 结束
+
+// 取对手的实时进度，客户端拿它画进度条
+function duelFoe(game, pid) {  // 对手状态
+  const side = game.pids[pid]  // 我在哪一边
+  if (!side) return null  // 不在这场里
+  const other = side === 'a' ? game.sides.b : game.sides.a  // 对面那一边
+  return { answered: other.answered, correct: other.correct, done: other.done, ms: other.ms }  // 对手数据
+}  // duelFoe 结束
+
+// 配对服务路由：全部走内存，重启即清空
+async function handleDuel(req, res, path, url) {  // 配对路由
+  pruneDuel()  // 先清理过期条目
+
+  if (path === '/api/duel/online' && req.method === 'GET') {  // 在线人数
+    const waiting = duelWaiting.size  // 排队中的人数
+    const duels = duelGames.size  // 进行中的对局数
+    return sendJSON(res, 200, { waiting, duels, online: waiting + duels * 2 })  // 照样板口径返回
+  }  // 在线分支结束
+
+  if (path === '/api/duel/join' && req.method === 'POST') {  // 报名匹配
+    let body  // 请求体
+    try {  // 读请求体
+      body = await readBody(req)  // 解析
+    } catch (e) {  // 体不合法
+      return sendJSON(res, 400, { code: 'badRequest', message: String(e.message) })  // 400
+    }  // 分支结束
+    const count = Math.max(3, Math.min(50, Number(body.count) || 5))  // 题量 3 到 50
+    const track = String(body.track || 'tax').slice(0, 16)  // 考试方向：不同方向题不一样，不能配
+    const nick = String(body.nick || '研友').slice(0, 20)  // 昵称
+    const school = String(body.school || '').slice(0, 30)  // 院校，可空
+    const myPid = randomUUID()  // 本次报名标识
+
+    for (const [pid, item] of duelWaiting) {  // 找一个在等的人
+      if (item.count !== count || item.track !== track) continue  // 题量或方向不同就不配
+      duelWaiting.delete(pid)  // 配对成功，把我俩都从队列摘掉
+      const duelId = randomUUID()  // 对局 id
+      const seed = Math.floor(Math.random() * 1e9)  // 出题种子，双方各自用它出题
+      duelGames.set(duelId, {  // 建对局
+        id: duelId,  // 对局 id
+        seed,  // 出题种子
+        count,  // 题量
+        at: Date.now(),  // 建立时间
+        pids: { [pid]: 'a', [myPid]: 'b' },  // pid 到左右边
+        sides: {  // 双方进度
+          a: { pid, nick: item.nick, school: item.school, answered: 0, correct: 0, done: false, ms: 0 },  // 先到的人
+          b: { pid: myPid, nick, school, answered: 0, correct: 0, done: false, ms: 0 },  // 后到的人
+        },  // 双方进度结束
+      })  // 建对局结束
+      return sendJSON(res, 200, {  // 直接告诉后到的人配上了
+        status: 'matched',  // 已配对
+        pid: myPid,  // 我的标识
+        duelId,  // 对局 id
+        seed,  // 出题种子
+        count,  // 题量
+        foe: { nick: item.nick, school: item.school },  // 对手信息
+      })  // 返回结束
+    }  // 遍历结束
+
+    duelWaiting.set(myPid, { pid: myPid, nick, school, count, track, at: Date.now() })  // 没人等就自己排队
+    return sendJSON(res, 200, { status: 'waiting', pid: myPid })  // 告诉客户端去轮询
+  }  // 报名分支结束
+
+  if (path === '/api/duel/poll' && req.method === 'GET') {  // 轮询是否配上
+    const pid = url.searchParams.get('pid') || ''  // 我的标识
+    for (const game of duelGames.values()) {  // 先看自己是否已被别人配上
+      if (!game.pids[pid]) continue  // 不是我这一场
+      const foe = game.pids[pid] === 'a' ? game.sides.b : game.sides.a  // 对手
+      duelWaiting.delete(pid)  // 清掉可能残留的排队项
+      return sendJSON(res, 200, {  // 回报配对成功
+        status: 'matched',  // 已配对
+        pid,  // 我的标识
+        duelId: game.id,  // 对局 id
+        seed: game.seed,  // 出题种子
+        count: game.count,  // 题量
+        foe: { nick: foe.nick, school: foe.school },  // 对手信息
+      })  // 返回结束
+    }  // 遍历结束
+    const wait = duelWaiting.get(pid)  // 取排队项
+    if (!wait) return sendJSON(res, 200, { status: 'expired' })  // 排队没了，让客户端重来
+    if (Date.now() - wait.at >= DUEL_WAIT_MS) {  // 等超时
+      duelWaiting.delete(pid)  // 摘掉排队
+      return sendJSON(res, 200, { status: 'timeout' })  // 回 timeout，客户端上 AI 陪练
+    }  // 超时分支结束
+    return sendJSON(res, 200, { status: 'waiting' })  // 继续等
+  }  // 轮询分支结束
+
+  if (path === '/api/duel/progress' && req.method === 'POST') {  // 上报我的进度
+    let body  // 请求体
+    try {  // 读请求体
+      body = await readBody(req)  // 解析
+    } catch (e) {  // 体不合法
+      return sendJSON(res, 400, { code: 'badRequest', message: String(e.message) })  // 400
+    }  // 分支结束
+    const pid = String(body.pid || '')  // 我的标识
+    if (String(body.duelId || '') === '__cancel__') {  // 取消匹配的约定值
+      duelWaiting.delete(pid)  // 把排队项清掉，别让别人配到已经走的人
+      return sendJSON(res, 200, { ok: true })  // 回执
+    }  // 取消分支结束
+    const game = duelGames.get(String(body.duelId || ''))  // 取对局
+    if (!game) return sendJSON(res, 404, { code: 'notFound', message: '对局不存在或已过期' })  // 404
+    const side = game.pids[pid]  // 我在哪一边
+    if (!side) return sendJSON(res, 403, { code: 'forbidden', message: '你不在这一场里' })  // 403
+    const mine = game.sides[side]  // 我这一边
+    mine.answered = Math.max(0, Number(body.answered) || 0)  // 已答数
+    mine.correct = Math.max(0, Number(body.correct) || 0)  // 答对数
+    mine.done = Boolean(body.done)  // 是否交卷
+    mine.ms = Math.max(0, Number(body.ms) || 0)  // 总用时
+    return sendJSON(res, 200, { ok: true, foe: duelFoe(game, pid) })  // 顺手把对手进度带回去
+  }  // 上报分支结束
+
+  if (path === '/api/duel/state' && req.method === 'GET') {  // 只读对手进度
+    const pid = url.searchParams.get('pid') || ''  // 我的标识
+    const game = duelGames.get(url.searchParams.get('duelId') || '')  // 取对局
+    if (!game) return sendJSON(res, 404, { code: 'notFound', message: '对局不存在或已过期' })  // 404
+    const foe = duelFoe(game, pid)  // 对手进度
+    if (!foe) return sendJSON(res, 403, { code: 'forbidden', message: '你不在这一场里' })  // 403
+    return sendJSON(res, 200, { ok: true, foe })  // 返回
+  }  // 读取分支结束
+
+  return sendJSON(res, 404, { code: 'notFound', message: '接口不存在' })  // 其余路径 404
+}  // handleDuel 结束
+
 // ---------- HTTP 小工具 ----------
 
 // 统一 JSON 响应，带 CORS 头（本地调试方便，上线可收紧）
@@ -285,6 +427,9 @@ async function handle(req, res) {  // 主路由
       dailyLimit: DAILY_LIMIT,  // 每日额度
     })  // 响应结束
   }  // 分支结束
+
+  // 1V1 配对：不调模型、不烧额度，所以放在 AI 鉴权之前处理
+  if (path.startsWith('/api/duel/')) return handleDuel(req, res, path, url)  // 交给配对逻辑
 
   if (path !== '/v1/interview/turn' &&  // 非出题
       path !== '/v1/interview/evaluate' &&  // 非评分
