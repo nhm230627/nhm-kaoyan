@@ -43,7 +43,12 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fushizhuan.app
-        PRODUCT_NAME: 复试专
+        # 产物名（.app 包名与可执行文件名）保持 ASCII。
+        # 之前写成「复试专」，导致生成的包是 复试专.app，而 XcodeGen 给测试 target 配的
+        # TEST_HOST 是按 target 名拼的 FuShiZhuan.app/FuShiZhuan，路径对不上就跑不了测试。
+        # 非 ASCII 的产物名对签名脚本、CI 打包也是隐患，所以这里一律用 FuShiZhuan。
+        # 用户看到的名字由下面 info.properties 里的 CFBundleDisplayName 决定，仍是「复试专」。
+        PRODUCT_NAME: FuShiZhuan
         MARKETING_VERSION: "0.1.0"
         CURRENT_PROJECT_VERSION: "1"
         TARGETED_DEVICE_FAMILY: "1"       # 仅 iPhone，先把手机做透

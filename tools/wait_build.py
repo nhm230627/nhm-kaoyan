@@ -11,8 +11,8 @@ import time  # 轮询间隔
 
 ROOT = r"D:\APP"  # 项目根目录
 API = "https://api.github.com/repos/nhm230627/nhm-kaoyan"  # 仓库 API 基地址
-MAX_WAIT = 40  # 最多轮询 40 次
-INTERVAL = 15  # 每次间隔 15 秒，合计 10 分钟
+MAX_WAIT = 56  # 最多轮询 56 次
+INTERVAL = 15  # 每次间隔 15 秒，合计 14 分钟（跑测试比只编译慢）
 
 
 def load_token():  # 从 token.txt 里抽出 Token，容忍记事本留下的多余文字
