@@ -1,8 +1,9 @@
 //  PetSceneView.swift —— 伙伴形象：一只直立的猫（程序化几何体）          // 文件说明
-//  姿态：直立站姿（用户 2026-11-03 明确要求），两臂垂在身侧、两腿站立、尾巴在身后上翘
-//  视觉细节对齐 Web 样板 pet.js：橘猫配色、腮部白毛、ω 嘴、额头三道橘纹、分段流苏、尾尖白
-//  颜色与配件来自 outfits.json；形状由代码给，换装只换数据不换形状                  // 数据约定
-//  只用 generateSphere / generateCylinder / generateBox 三种网格，避免未验证 API    // 实现约束
+//  坐标全部照抄 Web 样板 public/js/pet.js 的 buildPet()，单位与原版一致：
+//    +X 向右、+Y 向上、+Z 朝向相机；整只缩放 0.8，根节点抬高 0.02          // 坐标系约定
+//  样板本来就是「人形站姿的猫」，所以 iOS 端不做二次设计，只做忠实移植       // 移植原则
+//  只用 generateSphere / generateCone / generateCylinder / generateBox     // 网格约束
+//  （RealityKit 没有 generateTorus，样板的半环 ω 嘴改用小球沿弧线串成）     // 替代方案
 
 import RealityKit  // 3D 引擎
 import SwiftUI  // 界面框架
@@ -13,29 +14,27 @@ import UIKit  // UIColor
 enum CatPalette {  // 猫的固定用色（毛色不在这里，来自配件表）
     static let eye = UIColor(hex: "2B3040")  // 眼睛：样板的深灰蓝
     static let eyeShine = UIColor(hex: "FFFFFF")  // 眼里的高光点
-    static let pink = UIColor(hex: "FFA8BD")  // 鼻头与内耳：样板粉
-    static let paw = UIColor(hex: "FFA8BD")  // 肉垫
-    static let whisker = UIColor(hex: "E8E8EE")  // 胡须：近白
+    static let pink = UIColor(hex: "FFA8BD")  // 鼻头、内耳、腮红：样板粉
+    static let whisker = UIColor(hex: "F2F2F6")  // 胡须：近白
     static let mouth = UIColor(hex: "2B3040")  // 嘴：深灰
-    static let ground = UIColor(hex: "C9D0DC")  // 地台：浅灰
-    static let cord = UIColor(hex: "EF3B30")  // 流苏红
-    static let gold = UIColor(hex: "FFC93C")  // 流苏金环
+    static let cord = UIColor(hex: "EF3B30")  // 流苏红绳
+    static let cordDeep = UIColor(hex: "C4241C")  // 流苏穗子：暗一档的红
+    static let gold = UIColor(hex: "FFC93C")  // 流苏金扣与金环
+    static let shadow = UIColor(hex: "E3E7F0")  // 地台投影：比卡片底色深一点点
 }  // CatPalette 结束
 
-enum CatMetrics {  // 尺寸（直立姿态基准）
-    static let petScale: Float = 0.76  // 整只缩放
-    static let bodyRadius: Float = 0.26  // 身体半径
-    static let headRadius: Float = 0.255  // 头半径
-    static let headY: Float = 0.92  // 头心高度（直立后比坐姿高一截）
-    static let topY: Float = 1.175  // 头顶，帽子放这里
-    static let tailName = "cat.tail"  // 尾巴节点名，动画按名字找
+enum CatMetrics {  // 尺寸与节点名（全部为样板原始单位）
+    static let petScale: Float = 0.8  // 整只缩放，与样板 PET_SCALE 一致
+    static let rootY: Float = 0.02  // 根节点抬高，与样板 g.position.y 一致
+    static let headY: Float = 0.6  // 头组高度，与样板 H.position.y 一致
+    static let tailName = "cat.tail"  // 尾巴节点名，摆尾动画按名字找
 }  // CatMetrics 结束
 
 // MARK: - 视图入口                                                    // 分节：入口
 
 /// 3D 伙伴（直立的猫）。jumpToken / flipToken / wagToken 每加 1 播一次动作
 struct PetSceneView: UIViewRepresentable {  // 3D 视图
-    let stage: PetStage  // 成长阶段，决定体型与帽子大小
+    let stage: PetStage  // 成长阶段，决定帽子大小
     var outfit: CatOutfit = .default  // 当前穿戴
     var jumpToken: Int = 0  // 投喂时 +1
     var flipToken: Int = 0  // 拨穗时 +1
@@ -109,7 +108,7 @@ struct PetSceneView: UIViewRepresentable {  // 3D 视图
 
         func rebuild(stage: PetStage, outfit: CatOutfit) {  // 重建猫
             guard let pet = pet, let parent = pet.parent else { return }  // 没节点就不动
-            let base = pet.transform  // 记住当前位置（起伏动画改过它）
+            let base = pet.transform  // 记住当前姿态（起伏动画改过它）
             pet.removeFromParent()  // 移除旧的
             let fresh = PetSceneBuilder.build(stage: stage, outfit: outfit)  // 建新的
             fresh.transform = base  // 回到同一姿态
@@ -124,7 +123,7 @@ struct PetSceneView: UIViewRepresentable {  // 3D 视图
             guard !animationsOff else { return }  // 关掉动效就不播
             guard let pet = pet else { return }  // 没节点就退出
             var up = pet.transform  // 上升姿态
-            up.translation.y += 0.025  // 抬 2.5 厘米
+            up.translation.y += 0.02  // 抬 2 厘米（按 0.8 缩放后的观感）
             let move = FromToByAnimation<Transform>(from: pet.transform,  // 起点
                                                     to: up,  // 终点
                                                     duration: 1.8,  // 单程时长
@@ -190,11 +189,13 @@ enum PetSceneBuilder {  // 猫建模器
     static let tasselName = "cat.tassel"  // 流苏节点名
     static let catalog = OutfitCatalog.shared  // 配件表全局共用
 
-    /// 放一台固定相机：略高于猫、正前方 1.6 米（直立后要抬眼看）
+    /// 放一台固定相机：位置与视角照抄样板（camera 38° / (0,0.55,4.6) / 看向 (0,0.05,0)）
     static func installCamera(on view: ARView) {  // 装相机
         let camera = PerspectiveCamera()  // 相机实体
-        camera.camera.fieldOfViewInDegrees = 44  // 视角
-        let holder = AnchorEntity(world: [0, 0.72, 1.62])  // 相机位置
+        camera.camera.fieldOfViewInDegrees = 38  // 与样板 PerspectiveCamera(38,...) 一致
+        camera.camera.near = 0.1  // 与样板一致
+        camera.camera.far = 100  // 与样板一致
+        let holder = AnchorEntity(world: [0, 0.55, 4.6])  // 与样板 camera.position 一致
         holder.addChild(camera)  // 挂上相机
         view.scene.addAnchor(holder)  // 加入场景
     }  // installCamera 结束
@@ -206,175 +207,232 @@ enum PetSceneBuilder {  // 猫建模器
         let fur = furColor(outfit: outfit, accent: false)  // 毛色
         let cream = furColor(outfit: outfit, accent: true)  // 肚皮与腮的浅色
 
-        root.addChild(torso(fur: fur, cream: cream))  // 躯干
-        root.addChild(arms(fur: fur, cream: cream))  // 两臂
-        root.addChild(legs(fur: fur, cream: cream))  // 两腿
-        root.addChild(head(fur: fur, cream: cream))  // 头与五官
-        root.addChild(tail(fur: fur, cream: cream))  // 尾巴
-        root.addChild(wearables(stage: stage, outfit: outfit))  // 可换配件
+        root.addChild(shadowDisc())  // 脚下投影
+        root.addChild(legs(fur: fur, cream: cream))  // 两条腿与脚掌
+        root.addChild(bodyBlock(fur: fur, cream: cream))  // 身体与白肚皮
+        root.addChild(arms(fur: fur, cream: cream))  // 两臂垂在身侧
 
-        let ground = ModelEntity(mesh: .generateCylinder(height: 0.012, radius: 0.34),  // 地台
-                                 materials: [material(CatPalette.ground)])  // 灰色
-        ground.position = [0, 0.006, 0]  // 贴地
-        root.addChild(ground)  // 挂上
+        let headBlock = head(fur: fur, cream: cream)  // 头（含五官与额纹）
+        headBlock.addChild(headWear(stage: stage, outfit: outfit))  // 帽子眼镜挂头上，与样板一致
+        root.addChild(headBlock)  // 挂上头
 
-        root.scale = [CatMetrics.petScale, CatMetrics.petScale, CatMetrics.petScale]  // 整体缩放
+        root.addChild(tail(fur: fur, cream: cream))  // 尾巴从后腰翘起
+        root.addChild(bodyWear(outfit: outfit))  // 围巾与背包
+
+        root.position = [0, CatMetrics.rootY, 0]  // 与样板 g.position.y = 0.02 一致
+        root.scale = [CatMetrics.petScale, CatMetrics.petScale, CatMetrics.petScale]  // 与样板 PET_SCALE 一致
         return root  // 返回整只
     }  // build 结束
 
-    // MARK: - 躯干与四肢                                            // 分节：身体
+    // MARK: - 腿与身体                                              // 分节：身体
 
-    static func torso(fur: UIColor, cream: UIColor) -> Entity {  // 躯干
-        let group = Entity()  // 躯干整体
-        let body = sphere(radius: CatMetrics.bodyRadius, color: fur)  // 身体
-        body.position = [0, 0.42, 0]  // 站在地上
-        body.scale = [0.92, 1.18, 0.88]  // 竖起来，不是圆球
-        group.addChild(body)  // 挂上
-
-        let chest = sphere(radius: 0.185, color: cream)  // 胸前浅色毛
-        chest.position = [0, 0.45, 0.135]  // 胸口偏前
-        chest.scale = [1, 1.15, 0.55]  // 压成片
-        group.addChild(chest)  // 挂上
-        return group  // 返回躯干
-    }  // torso 结束
-
-    static func arms(fur: UIColor, cream: UIColor) -> Entity {  // 两臂与手
-        let group = Entity()  // 手臂整体
-        for side in [-1.0, 1.0] {  // 左右各一
-            let arm = sphere(radius: 0.062, color: fur)  // 上臂
-            arm.position = [Float(side) * 0.225, 0.44, 0.02]  // 垂在身侧
-            arm.scale = [0.85, 2.1, 0.85]  // 拉长成手臂
-            group.addChild(arm)  // 挂上
-
-            let hand = sphere(radius: 0.068, color: cream)  // 手（白手套）
-            hand.position = [Float(side) * 0.238, 0.235, 0.045]  // 手臂末端
-            group.addChild(hand)  // 挂上
-        }  // 循环结束
-        return group  // 返回手臂
-    }  // arms 结束
-
-    static func legs(fur: UIColor, cream: UIColor) -> Entity {  // 两腿与脚
+    static func legs(fur: UIColor, cream: UIColor) -> Entity {  // 两条短粗腿
         let group = Entity()  // 腿整体
         for side in [-1.0, 1.0] {  // 左右各一
-            let leg = sphere(radius: 0.075, color: fur)  // 腿
-            leg.position = [Float(side) * 0.105, 0.16, 0.01]  // 身体下方
-            leg.scale = [0.95, 1.7, 0.95]  // 拉长
+            let s = Float(side)  // 侧别转成 Float 省得反复转换
+            let leg = sphere(radius: 0.15, color: fur)  // 腿（样板是胶囊，用竖椭圆近似）
+            leg.position = [s * 0.21, -0.72, 0]  // 与样板 leg.position 一致
+            leg.scale = [1, 1.8, 1]  // 拉伸成柱状，总高约 0.54
             group.addChild(leg)  // 挂上
 
-            let foot = sphere(radius: 0.072, color: cream)  // 脚掌
-            foot.position = [Float(side) * 0.105, 0.052, 0.06]  // 落地并往前伸
-            foot.scale = [1, 0.6, 1.35]  // 压扁拉长
+            let foot = sphere(radius: 0.2, color: cream)  // 脚掌白毛
+            foot.position = [s * 0.22, -0.92, 0.1]  // 与样板 foot.position 一致
+            foot.scale = [1, 0.6, 1.28]  // 压扁并往前伸
             group.addChild(foot)  // 挂上
-
-            let pad = sphere(radius: 0.028, color: CatPalette.paw)  // 肉垫
-            pad.position = [Float(side) * 0.105, 0.048, 0.13]  // 脚掌前缘
-            pad.scale = [1, 0.5, 0.8]  // 扁平
-            group.addChild(pad)  // 挂上
         }  // 循环结束
         return group  // 返回腿
     }  // legs 结束
 
-    // MARK: - 头与五官                                              // 分节：头部
+    static func bodyBlock(fur: UIColor, cream: UIColor) -> Entity {  // 身体与白肚皮
+        let group = Entity()  // 身体整体
+        let body = sphere(radius: 0.5, color: fur)  // 身体（上宽下窄的梨形）
+        body.position = [0, -0.1, 0]  // 与样板 bodyMesh.position 一致
+        body.scale = [0.95, 0.92, 0.8]  // 与样板 scale 一致
+        group.addChild(body)  // 挂上
+
+        let belly = sphere(radius: 0.4, color: cream)  // 白肚皮
+        belly.position = [0, -0.16, 0.24]  // 与样板 belly.position 一致
+        belly.scale = [0.8, 0.86, 0.46]  // 贴在前胸
+        group.addChild(belly)  // 挂上
+        return group  // 返回身体
+    }  // bodyBlock 结束
+
+    static func arms(fur: UIColor, cream: UIColor) -> Entity {  // 两臂与白手套
+        let group = Entity()  // 手臂整体
+        for side in [-1.0, 1.0] {  // 左右各一
+            let s = Float(side)  // 侧别
+            let armGroup = Entity()  // 单侧手臂组，方便摆动
+            armGroup.position = [s * 0.49, 0.06, 0.06]  // 与样板 armGroup.position 一致
+            armGroup.orientation = simd_quatf(angle: s * 0.14, axis: [0, 0, 1])  // 稍微外张，不贴身体
+
+            let upper = sphere(radius: 0.098, color: fur)  // 上臂（样板是胶囊）
+            upper.position = [0, -0.17, 0]  // 与样板 upper.position 一致
+            upper.scale = [1, 2.02, 1]  // 拉长到样板胶囊的 0.396 总高
+            armGroup.addChild(upper)  // 挂上
+
+            let hand = sphere(radius: 0.145, color: cream)  // 手（白手套）
+            hand.position = [0, -0.38, 0.03]  // 与样板 hand.position 一致
+            armGroup.addChild(hand)  // 挂上
+            group.addChild(armGroup)  // 挂到整体
+        }  // 循环结束
+        return group  // 返回手臂
+    }  // arms 结束
+
+    // MARK: - 头部                                                  // 分节：头部
 
     static func head(fur: UIColor, cream: UIColor) -> Entity {  // 头与五官
         let group = Entity()  // 头部整体
-        let skull = sphere(radius: CatMetrics.headRadius, color: fur)  // 头
-        skull.position = [0, CatMetrics.headY, 0]  // 躯干上方
-        skull.scale = [1.06, 0.98, 0.98]  // 略宽，像猫脸
+        group.name = "cat.head"  // 便于查找
+        group.position = [0, CatMetrics.headY, 0]  // 与样板 H.position.y = 0.6 一致
+
+        let skull = sphere(radius: 0.65, color: fur)  // 头（大脸，占整体四成）
+        skull.scale = [1.08, 0.98, 1.0]  // 与样板 head.scale 一致
         group.addChild(skull)  // 挂上
 
-        group.addChild(ears(fur: fur))  // 两只尖耳
-        group.addChild(face(fur: fur, cream: cream))  // 腮白毛与五官
-        return group  // 返回头部
+        group.addChild(ears(fur: fur))  // 尖耳与粉色内耳
+        group.addChild(face(fur: fur, cream: cream))  // 腮、腮红、眼、鼻、嘴、胡须、额纹
+        return group  // 返回头
     }  // head 结束
 
-    static func ears(fur: UIColor) -> Entity {  // 尖耳
+    static func ears(fur: UIColor) -> Entity {  // 尖耳 + 粉色内耳
         let group = Entity()  // 耳朵整体
         for side in [-1.0, 1.0] {  // 左右各一
-            let ear = sphere(radius: 0.088, color: fur)  // 外耳
-            ear.position = [Float(side) * 0.155, 1.115, -0.01]  // 头顶两侧
-            ear.scale = [0.85, 1.55, 0.5]  // 拉长压扁成尖
-            ear.orientation = simd_quatf(angle: Float(side) * 0.28, axis: [0, 0, 1])  // 向外倾
+            let s = Float(side)  // 侧别
+            let qz = simd_quatf(angle: -s * 0.3, axis: [0, 0, 1])  // 往外歪，与样板 rotation.z 一致
+            let qx = simd_quatf(angle: -0.12, axis: [1, 0, 0])  // 稍往前倾，与样板 rotation.x 一致
+
+            let ear = ModelEntity(mesh: .generateCone(height: 0.36, radius: 0.21),  // 外耳：锥体
+                                  materials: [material(fur)])  // 毛色
+            ear.position = [s * 0.4, 0.5, -0.02]  // 与样板 ear.position 一致
+            ear.orientation = qx * qz  // 样板欧拉顺序 XYZ：先歪再倾
             group.addChild(ear)  // 挂上
 
-            let inner = sphere(radius: 0.052, color: CatPalette.pink)  // 内耳
-            inner.position = [Float(side) * 0.152, 1.105, 0.03]  // 稍前稍下
-            inner.scale = [0.8, 1.4, 0.35]  // 比外耳小一圈
-            inner.orientation = simd_quatf(angle: Float(side) * 0.28, axis: [0, 0, 1])  // 同角度
+            let inner = ModelEntity(mesh: .generateCone(height: 0.23, radius: 0.125),  // 内耳
+                                    materials: [material(CatPalette.pink)])  // 粉色
+            inner.position = [s * 0.4, 0.49, 0.07]  // 与样板 inner.position 一致
+            inner.orientation = qx * qz  // 同角度
             group.addChild(inner)  // 挂上
         }  // 循环结束
         return group  // 返回耳朵
     }  // ears 结束
 
-    static func face(fur: UIColor, cream: UIColor) -> Entity {  // 腮、眼、鼻、嘴、胡须、额纹
+    static func face(fur: UIColor, cream: UIColor) -> Entity {  // 腮、腮红、眼、鼻、嘴、胡须、额纹
         let group = Entity()  // 面部整体
         for side in [-1.0, 1.0] {  // 左右对称的部分
-            let cheek = sphere(radius: 0.098, color: cream)  // 腮部白毛（没有这个猫脸就是块圆面包）
-            cheek.position = [Float(side) * 0.175, 0.855, 0.155]  // 脸下方两侧
-            cheek.scale = [1, 0.85, 0.55]  // 压成片
+            let s = Float(side)  // 侧别
+
+            let cheek = sphere(radius: 0.25, color: cream)  // 腮部白毛（没有这个猫脸就是块圆面包）
+            cheek.position = [s * 0.29, -0.15, 0.49]  // 与样板 cheek.position 一致
+            cheek.scale = [1, 0.8, 0.52]  // 压成片贴在脸上
             group.addChild(cheek)  // 挂上
 
-            let eye = sphere(radius: 0.047, color: CatPalette.eye)  // 眼睛
-            eye.position = [Float(side) * 0.095, 0.945, 0.222]  // 脸前方
-            eye.scale = [1, 1.18, 0.66]  // 竖椭圆
+            let blush = sphere(radius: 0.115, color: CatPalette.pink)  // 腮红（卡通脸的关键）
+            blush.position = [s * 0.42, -0.06, 0.5]  // 与样板 blush.position 一致
+            blush.scale = [1, 0.6, 0.25]  // 极薄一片
+            group.addChild(blush)  // 挂上
+
+            let eye = sphere(radius: 0.135, color: CatPalette.eye)  // 眼睛
+            eye.position = [s * 0.24, 0.06, 0.55]  // 与样板 eye.position 一致
+            eye.scale = [1, 1.25, 0.7]  // 竖椭圆
             group.addChild(eye)  // 挂上
 
-            let shine = sphere(radius: 0.014, color: CatPalette.eyeShine)  // 高光点
-            shine.position = [Float(side) * 0.108, 0.962, 0.252]  // 眼睛右上
+            let shine = sphere(radius: 0.045, color: CatPalette.eyeShine)  // 高光点（大）
+            shine.position = [s * 0.24 + 0.04, 0.12, 0.63]  // 与样板 shine.position 一致
             group.addChild(shine)  // 挂上
 
+            let shine2 = sphere(radius: 0.022, color: CatPalette.eyeShine)  // 高光点（小）
+            shine2.position = [s * 0.24 - 0.045, -0.02, 0.63]  // 与样板 shine2.position 一致
+            group.addChild(shine2)  // 挂上
+
             for i in 0..<3 {  // 每侧三根胡须
-                let whisker = ModelEntity(mesh: .generateCylinder(height: 0.12, radius: 0.0035),  // 细杆
+                let dy: Float = [Float(0.03), -0.02, -0.07][i]  // 样板的三档高度差
+                let whisker = ModelEntity(mesh: .generateCylinder(height: 0.36, radius: 0.007),  // 细杆
                                           materials: [material(CatPalette.whisker)])  // 近白色
-                whisker.position = [Float(side) * 0.175, 0.875 + Float(i) * 0.02, 0.20]  // 腮两侧
-                whisker.orientation = simd_quatf(angle: .pi / 2, axis: [0, 0, 1])  // 转成横向
-                whisker.orientation *= simd_quatf(angle: Float(side) * 0.24, axis: [0, 1, 0])  // 向外撇
+                whisker.position = [s * 0.34, -0.1 + dy, 0.63]  // 与样板 w.position 一致
+                let qz = simd_quatf(angle: s * (.pi / 2 - 0.06 - Float(i) * 0.16), axis: [0, 0, 1])  // 放平并逐根错开
+                let qy = simd_quatf(angle: s * 0.34, axis: [0, 1, 0])  // 往外撇
+                whisker.orientation = qy * qz  // 样板欧拉顺序 XYZ：先转 Z 再转 Y
                 group.addChild(whisker)  // 挂上
             }  // 胡须循环结束
 
-            let lip = ModelEntity(mesh: .generateCylinder(height: 0.055, radius: 0.005),  // ω 嘴的半边
-                                  materials: [material(CatPalette.mouth)])  // 深灰
-            lip.position = [Float(side) * 0.032, 0.848, 0.245]  // 鼻子下方左右
-            lip.orientation = simd_quatf(angle: Float(side) * 0.55, axis: [0, 0, 1])  // 斜成八字
-            group.addChild(lip)  // 挂上
+            group.addChild(lipArc(center: [s * 0.052, -0.155, 0.627]))  // ω 嘴的左右两撇
         }  // 循环结束
 
-        let nose = sphere(radius: 0.027, color: CatPalette.pink)  // 鼻头
-        nose.position = [0, 0.882, 0.248]  // 脸中央略下
-        nose.scale = [1.15, 0.9, 0.8]  // 压成小三角
+        let nose = ModelEntity(mesh: .generateCone(height: 0.068, radius: 0.05),  // 鼻头（样板是三棱锥）
+                               materials: [material(CatPalette.pink)])  // 粉色
+        nose.position = [0, -0.1, 0.64]  // 与样板 nose.position 一致
+        nose.orientation = simd_quatf(angle: .pi, axis: [1, 0, 0])  // 倒过来，尖朝下
         group.addChild(nose)  // 挂上
 
-        for dx in [Float(-0.062), 0, 0.062] {  // 额头三道橘纹
-            let stripe = ModelEntity(mesh: .generateCylinder(height: 0.075, radius: 0.009),  // 细纹
+        for dx in [Float(-0.085), 0, 0.085] {  // 额头三道橘纹
+            let stripe = ModelEntity(mesh: .generateCylinder(height: 0.17, radius: 0.016),  // 细纹
                                      materials: [material(darken(fur, by: 0.16))])  // 比毛色深一档
-            stripe.position = [dx, 1.045, 0.165]  // 额头偏前
-            stripe.orientation = simd_quatf(angle: -0.5, axis: [1, 0, 0])  // 顺着额头斜面
+            stripe.position = [dx, 0.47, 0.5]  // 与样板 stripe.position 一致
+            stripe.orientation = simd_quatf(angle: 0.46, axis: [1, 0, 0])  // 顺着额头斜面
             group.addChild(stripe)  // 挂上
         }  // 循环结束
         return group  // 返回面部
     }  // face 结束
 
+    /// ω 嘴的一撇：RealityKit 没有半环网格，用小球沿下半圆弧串成（样板是 TorusGeometry 半环）
+    static func lipArc(center: SIMD3<Float>) -> Entity {  // 一撇嘴
+        let group = Entity()  // 这一撇整体
+        let radius: Float = 0.052  // 样板 TorusGeometry 的半径
+        let steps = 8  // 分八段，足够顺滑
+        for i in 0...steps {  // 沿弧采样
+            let theta = Float.pi + Float.pi * Float(i) / Float(steps)  // π→2π 正好是下半圆
+            let bead = sphere(radius: 0.0085, color: CatPalette.mouth)  // 一颗嘴线小球
+            bead.position = center + [cos(theta) * radius, sin(theta) * radius, 0]  // 摆到弧上
+            group.addChild(bead)  // 挂上
+        }  // 循环结束
+        return group  // 返回一撇
+    }  // lipArc 结束
+
     // MARK: - 尾巴                                                  // 分节：尾巴
 
-    static func tail(fur: UIColor, cream: UIColor) -> Entity {  // 尾巴：从身后向右上方翘
-        let pivot = Entity()  // 尾巴根部节点，摆动转它
+    static func tail(fur: UIColor, cream: UIColor) -> Entity {  // 尾巴：从后腰往右上方翘
+        let pivot = Entity()  // 尾巴根部节点，摆尾转它
         pivot.name = CatMetrics.tailName  // 起名方便查找
-        pivot.position = [0.13, 0.30, -0.17]  // 身体右后下方
-        var radius: Float = 0.058  // 起始粗细
-        for i in 0..<7 {  // 七段串成弧线
-            let t = Float(i)  // 段序号
-            let isTip = i == 6  // 最后一段
-            let seg = sphere(radius: radius, color: isTip ? cream : fur)  // 尾尖是白毛
-            seg.position = [0.028 * t, 0.052 * t + 0.008 * t * t, -0.035 * t]  // 向上向右翘
-            pivot.addChild(seg)  // 挂上
-            radius *= 0.9  // 越末端越细
-        }  // 循环结束
+        pivot.position = [0.4, -0.76, -0.52]  // 与样板 tail.position 一致
+        pivot.orientation = simd_quatf(angle: -0.45, axis: [0, 0, 1])  // 与样板 tail.rotation.z 一致
+
+        let t1 = sphere(radius: 0.13, color: fur)  // 根部最粗
+        t1.position = [0, 0, 0]  // 原点
+        pivot.addChild(t1)  // 挂上
+
+        let t25 = sphere(radius: 0.104, color: fur)  // 第二段（夹在中间补缝）
+        t25.position = [0.2, 0.23, 0.01]  // 与样板 t25.position 一致
+        pivot.addChild(t25)  // 挂上
+
+        let t2 = sphere(radius: 0.112, color: fur)  // 第三段
+        t2.position = [0.14, 0.15, 0]  // 与样板 t2.position 一致
+        pivot.addChild(t2)  // 挂上
+
+        let t3 = sphere(radius: 0.095, color: fur)  // 第四段
+        t3.position = [0.25, 0.31, 0]  // 与样板 t3.position 一致
+        pivot.addChild(t3)  // 挂上
+
+        let t4 = sphere(radius: 0.084, color: fur)  // 第五段
+        t4.position = [0.285, 0.38, 0.01]  // 与样板 t4.position 一致
+        pivot.addChild(t4)  // 挂上
+
+        let tip = sphere(radius: 0.072, color: cream)  // 尾尖一撮白毛
+        tip.position = [0.31, 0.45, 0]  // 与样板 tTip.position 一致
+        pivot.addChild(tip)  // 挂上
         return pivot  // 返回尾巴根
     }  // tail 结束
 
-    // MARK: - 配件                                                  // 分节：配件
+    static func shadowDisc() -> Entity {  // 脚下的柔和投影（样板是透明圆片，这里用近底色实心片）
+        let disc = ModelEntity(mesh: .generateCylinder(height: 0.004, radius: 0.648),  // 薄圆片
+                               materials: [material(CatPalette.shadow)])  // 比卡片底色略深
+        disc.position = [0, -1.045, 0.06]  // 贴在脚掌下方
+        disc.scale = [1, 1, 0.56]  // 压成椭圆，像俯视投影
+        return disc  // 返回投影
+    }  // shadowDisc 结束
 
-    static func wearables(stage: PetStage, outfit: CatOutfit) -> Entity {  // 按穿戴装配件
+    // MARK: - 头上配件                                              // 分节：帽子与眼镜
+
+    static func headWear(stage: PetStage, outfit: CatOutfit) -> Entity {  // 帽子与眼镜（坐标是头组局部）
         let group = Entity()  // 配件整体
         let hat = catalog.item(id: outfit.id(for: .hat) ?? "")  // 头顶配件
         if let hat, hat.id != "hat.none" {  // 不是「不戴」
@@ -384,6 +442,11 @@ enum PetSceneBuilder {  // 猫建模器
         if let faceItem, faceItem.id != "face.none" {  // 不是「不戴」
             group.addChild(glassesEntity(faceItem))  // 装眼镜
         }  // 分支结束
+        return group  // 返回头部配件
+    }  // headWear 结束
+
+    static func bodyWear(outfit: CatOutfit) -> Entity {  // 围巾与背包（坐标是根节点局部）
+        let group = Entity()  // 配件整体
         let neck = catalog.item(id: outfit.id(for: .neck) ?? "")  // 颈部配件
         if let neck, neck.id != "neck.none" {  // 不是「不戴」
             group.addChild(neckEntity(neck))  // 装围巾或项圈
@@ -392,217 +455,248 @@ enum PetSceneBuilder {  // 猫建模器
         if let back, back.id != "back.none" {  // 不是「不戴」
             group.addChild(backEntity(back))  // 装背包或披风
         }  // 分支结束
-        return group  // 返回配件组
-    }  // wearables 结束
+        return group  // 返回身体配件
+    }  // bodyWear 结束
 
-    static func hatEntity(_ item: OutfitItem, stage: PetStage) -> Entity {  // 帽子
+    static func hatEntity(_ item: OutfitItem, stage: PetStage) -> Entity {  // 帽子（头组局部坐标）
         let group = Entity()  // 帽子整体
-        group.position = [0, CatMetrics.topY, 0]  // 头顶
         let main = UIColor(hex: item.hex)  // 主色
         let accent = UIColor(hex: item.accent)  // 点缀色
 
-        if item.id == "hat.graduate" {  // 学士帽（样板样子：帽围 + 45° 帽板 + 红流苏）
-            let crown = ModelEntity(mesh: .generateCylinder(height: 0.062, radius: 0.135),  // 帽围
-                                    materials: [material(main)])  // 主色
+        if item.id == "hat.graduate" {  // 学士帽：照抄样板的三件套 + 流苏
+            let crown = ModelEntity(mesh: .generateCylinder(height: 0.1, radius: 0.26),  // 帽围
+                                    materials: [material(main)])  // 主色（蓝）
+            crown.position = [0, 0.68, 0]  // 与样板 capBase.position 一致
             group.addChild(crown)  // 挂上
-            let board = ModelEntity(mesh: .generateBox(width: 0.32, height: 0.016, depth: 0.32, cornerRadius: 0.004),  // 帽板
-                                    materials: [material(main)])  // 主色
-            board.position = [0, 0.042, 0]  // 帽围上方
+
+            let board = ModelEntity(mesh: .generateBox(width: 0.66, height: 0.045, depth: 0.66, cornerRadius: 0.006),  // 方形帽板
+                                    materials: [material(main)])  // 主色（蓝）
+            board.position = [0, 0.75, 0]  // 与样板 capBoard.position 一致
             board.orientation = simd_quatf(angle: .pi / 4, axis: [0, 1, 0])  // 转 45°，与样板一致
             group.addChild(board)  // 挂上
-            let edge = ModelEntity(mesh: .generateBox(width: 0.335, height: 0.006, depth: 0.335, cornerRadius: 0.002),  // 帽板亮边
-                                   materials: [material(accent)])  // 点缀色
-            edge.position = [0, 0.052, 0]  // 帽板之上
+
+            let edge = ModelEntity(mesh: .generateBox(width: 0.7, height: 0.014, depth: 0.7, cornerRadius: 0.004),  // 帽板亮边
+                                   materials: [material(accent)])  // 浅蓝亮边
+            edge.position = [0, 0.775, 0]  // 与样板 capEdge.position 一致
             edge.orientation = simd_quatf(angle: .pi / 4, axis: [0, 1, 0])  // 同角度
             group.addChild(edge)  // 挂上
+
             group.addChild(tasselNode())  // 挂流苏
         } else if item.id == "hat.beanie" {  // 毛线帽
-            let dome = sphere(radius: 0.152, color: main)  // 半球
-            dome.scale = [1, 0.72, 1]  // 压扁
-            dome.position = [0, 0.012, 0]  // 盖住头顶
+            let dome = sphere(radius: 0.6, color: main)  // 半球（用球压扁）
+            dome.scale = [1, 0.62, 1]  // 压成帽顶
+            dome.position = [0, 0.62, 0]  // 盖住头顶
             group.addChild(dome)  // 挂上
-            let brim = ModelEntity(mesh: .generateCylinder(height: 0.035, radius: 0.155),  // 帽檐
+
+            let brim = ModelEntity(mesh: .generateCylinder(height: 0.1, radius: 0.6),  // 帽檐
                                    materials: [material(main)])  // 主色
+            brim.position = [0, 0.4, 0]  // 贴住额头
             group.addChild(brim)  // 挂上
-            let pom = sphere(radius: 0.055, color: accent)  // 绒球
-            pom.position = [0, 0.135, 0]  // 顶部
+
+            let pom = sphere(radius: 0.16, color: accent)  // 绒球
+            pom.position = [0, 1.02, 0]  // 帽顶中央
             group.addChild(pom)  // 挂上
         } else if item.id == "hat.crown" {  // 小皇冠
-            let band = ModelEntity(mesh: .generateCylinder(height: 0.045, radius: 0.13),  // 冠环
+            let band = ModelEntity(mesh: .generateCylinder(height: 0.12, radius: 0.32),  // 冠环
                                    materials: [material(main, metallic: true)])  // 金属
+            band.position = [0, 0.78, 0]  // 压在头顶
             group.addChild(band)  // 挂上
+
             for i in 0..<5 {  // 五个尖
                 let angle = Float(i) * (2 * .pi / 5)  // 均分一圈
-                let spike = sphere(radius: 0.03, color: main)  // 尖（用球拉长）
-                spike.scale = [0.7, 2.0, 0.7]  // 拉高
-                spike.position = [cos(angle) * 0.11, 0.055, sin(angle) * 0.11]  // 沿环排布
+                let spike = ModelEntity(mesh: .generateCone(height: 0.22, radius: 0.075),  // 冠尖
+                                        materials: [material(main, metallic: true)])  // 金属
+                spike.position = [cos(angle) * 0.28, 0.94, sin(angle) * 0.28]  // 沿环排布
                 group.addChild(spike)  // 挂上
             }  // 循环结束
-            let gem = sphere(radius: 0.022, color: accent)  // 正中宝石
-            gem.position = [0, 0.01, 0.132]  // 正面
+
+            let gem = sphere(radius: 0.06, color: accent)  // 正中宝石
+            gem.position = [0, 0.8, 0.31]  // 正面
             group.addChild(gem)  // 挂上
         } else if item.id == "hat.headphones" {  // 耳机
-            let band = ModelEntity(mesh: .generateBox(width: 0.30, height: 0.028, depth: 0.035, cornerRadius: 0.012),  // 横梁
+            let band = ModelEntity(mesh: .generateBox(width: 0.72, height: 0.07, depth: 0.09, cornerRadius: 0.03),  // 横梁
                                    materials: [material(main)])  // 主色
-            band.position = [0, 0.06, 0]  // 头顶上方
+            band.position = [0, 0.86, 0]  // 头顶上方
             group.addChild(band)  // 挂上
+
             for side in [-1.0, 1.0] {  // 左右耳罩
-                let cup = ModelEntity(mesh: .generateCylinder(height: 0.05, radius: 0.055),  // 耳罩
+                let s = Float(side)  // 侧别
+                let cup = ModelEntity(mesh: .generateCylinder(height: 0.14, radius: 0.15),  // 耳罩
                                       materials: [material(main)])  // 主色
-                cup.position = [Float(side) * 0.15, -0.03, 0]  // 两侧
+                cup.position = [s * 0.36, 0.72, 0]  // 两侧
                 cup.orientation = simd_quatf(angle: .pi / 2, axis: [0, 0, 1])  // 横放
                 group.addChild(cup)  // 挂上
-                let glow = sphere(radius: 0.02, color: accent)  // 指示灯光
-                glow.position = [Float(side) * 0.175, -0.03, 0.02]  // 耳罩外侧
+
+                let glow = sphere(radius: 0.045, color: accent)  // 指示灯光
+                glow.position = [s * 0.44, 0.72, 0.02]  // 耳罩外侧
                 group.addChild(glow)  // 挂上
             }  // 循环结束
         }  // 分支结束
 
-        if stage == .seed { group.scale = [0.88, 0.88, 0.88] }  // 幼体帽子小一号
+        if stage == .seed { group.scale = [0.9, 0.9, 0.9] }  // 幼体帽子小一号
         return group  // 返回帽子
     }  // hatEntity 结束
 
-    static func tasselNode() -> Entity {  // 流苏（样板是分段拼接，不是单根棍）
-        let tassel = Entity()  // 流苏节点
+    static func tasselNode() -> Entity {  // 流苏：帽顶金扣 → 斜拉帽檐 → 垂下 → 金环 → 五根穗
+        let tassel = Entity()  // 流苏节点（头组局部坐标）
         tassel.name = tasselName  // 起名方便拨穗
-        tassel.position = [0, 0.05, 0]  // 帽顶
+        tassel.position = [0, 0.8, 0]  // 与样板 tassel.position 一致
+        tassel.scale = [1.22, 1.22, 1.22]  // 与样板 tassel.scale 一致
 
-        let knot = sphere(radius: 0.024, color: CatPalette.gold)  // 帽顶金扣
-        knot.position = [0, 0.008, 0]  // 正上方
+        let knot = sphere(radius: 0.055, color: CatPalette.gold)  // 帽顶金扣
+        knot.position = [0, 0.02, 0]  // 与样板 knot.position 一致
         tassel.addChild(knot)  // 挂上
 
-        let cordA = ModelEntity(mesh: .generateCylinder(height: 0.15, radius: 0.006),  // 帽顶到帽檐
-                                materials: [material(CatPalette.cord)])  // 红绳
-        cordA.position = [0.075, -0.02, 0.05]  // 斜向帽檐
-        cordA.orientation = simd_quatf(angle: 0.6, axis: [0, 0, 1])  // 往右下斜
-        tassel.addChild(cordA)  // 挂上
+        tassel.addChild(rod(from: [0, 0.02, 0], to: [0.34, -0.02, 0.22],  // 帽顶 → 帽檐
+                            radius: 0.034, color: CatPalette.cord))  // 红绳
+        tassel.addChild(rod(from: [0.34, -0.02, 0.22], to: [0.52, -0.2, 0.32],  // 帽檐 → 外侧
+                            radius: 0.032, color: CatPalette.cord))  // 红绳
+        tassel.addChild(rod(from: [0.52, -0.2, 0.32], to: [0.52, -0.56, 0.32],  // 外侧 → 垂直下垂
+                            radius: 0.03, color: CatPalette.cord))  // 红绳
 
-        let cordB = ModelEntity(mesh: .generateCylinder(height: 0.16, radius: 0.005),  // 垂直垂下
-                                materials: [material(CatPalette.cord)])  // 红绳
-        cordB.position = [0.14, -0.13, 0.05]  // 帽檐外侧
-        tassel.addChild(cordB)  // 挂上
-
-        let ring = ModelEntity(mesh: .generateCylinder(height: 0.012, radius: 0.022),  // 金环
+        let ring = ModelEntity(mesh: .generateCylinder(height: 0.05, radius: 0.052),  // 金环
                                materials: [material(CatPalette.gold, metallic: true)])  // 金属
-        ring.position = [0.14, -0.215, 0.05]  // 绳末端
+        ring.position = [0.52, -0.57, 0.32]  // 与样板 ring.position 一致
         tassel.addChild(ring)  // 挂上
 
-        for dx in [Float(-0.016), 0, 0.016] {  // 三根穗子
-            let strand = ModelEntity(mesh: .generateCylinder(height: 0.075, radius: 0.006),  // 穗
-                                     materials: [material(CatPalette.cord)])  // 红色
-            strand.position = [0.14 + dx, -0.265, 0.05]  // 金环下方
-            strand.orientation = simd_quatf(angle: dx * 5, axis: [0, 0, 1])  // 微微散开
+        let fringeTop = sphere(radius: 0.062, color: CatPalette.cordDeep)  // 穗子上端鼓包
+        fringeTop.position = [0.52, -0.62, 0.32]  // 与样板 fringeTop.position 一致
+        tassel.addChild(fringeTop)  // 挂上
+
+        let offsets: [Float] = [-0.052, -0.026, 0, 0.026, 0.052]  // 样板五根穗的横向偏移
+        for (i, dx) in offsets.enumerated() {  // 五根穗子
+            let strand = ModelEntity(mesh: .generateCylinder(height: 0.28, radius: 0.017),  // 一根穗
+                                     materials: [material(CatPalette.cordDeep)])  // 暗红
+            strand.position = [0.52 + dx, -0.78, 0.32 + (i % 2 == 0 ? -0.022 : 0.022)]  // 与样板一致
+            strand.orientation = simd_quatf(angle: dx * 2.2, axis: [0, 0, 1])  // 微微散开
             tassel.addChild(strand)  // 挂上
         }  // 循环结束
         return tassel  // 返回流苏
     }  // tasselNode 结束
 
-    static func glassesEntity(_ item: OutfitItem) -> Entity {  // 眼镜
+    // MARK: - 眼镜、围巾、背包                                        // 分节：其他配件
+
+    static func glassesEntity(_ item: OutfitItem) -> Entity {  // 眼镜（头组局部坐标）
         let group = Entity()  // 眼镜整体
-        group.position = [0, 0.945, 0.215]  // 眼睛位置
+        group.position = [0, 0.06, 0.55]  // 与眼睛同高同深
         let frame = UIColor(hex: item.hex)  // 框色
         let lens = UIColor(hex: item.accent)  // 镜片色
+
         for side in [-1.0, 1.0] {  // 左右镜片
-            let glass = ModelEntity(mesh: .generateCylinder(height: 0.012, radius: 0.058),  // 镜片盘
+            let s = Float(side)  // 侧别
+            let glass = ModelEntity(mesh: .generateCylinder(height: 0.012, radius: 0.16),  // 镜片盘
                                     materials: [material(lens)])  // 镜片色
-            glass.position = [Float(side) * 0.095, 0, 0.03]  // 对应眼睛
+            glass.position = [s * 0.24, 0, 0.06]  // 对齐眼睛
             glass.orientation = simd_quatf(angle: .pi / 2, axis: [1, 0, 0])  // 立起来
             group.addChild(glass)  // 挂上
-            let rim = ModelEntity(mesh: .generateCylinder(height: 0.008, radius: 0.066),  // 镜圈
+
+            let rim = ModelEntity(mesh: .generateCylinder(height: 0.02, radius: 0.175),  // 镜圈
                                   materials: [material(frame)])  // 框色
-            rim.position = [Float(side) * 0.095, 0, 0.026]  // 镜片后一点
+            rim.position = [s * 0.24, 0, 0.052]  // 镜片后一点
             rim.orientation = simd_quatf(angle: .pi / 2, axis: [1, 0, 0])  // 同镜片
             group.addChild(rim)  // 挂上
-            let leg = ModelEntity(mesh: .generateCylinder(height: 0.10, radius: 0.005),  // 镜腿
+
+            let leg = ModelEntity(mesh: .generateCylinder(height: 0.3, radius: 0.012),  // 镜腿
                                   materials: [material(frame)])  // 框色
-            leg.position = [Float(side) * 0.155, 0, -0.02]  // 往耳朵方向
+            leg.position = [s * 0.34, 0, -0.12]  // 往耳朵方向
             leg.orientation = simd_quatf(angle: .pi / 2, axis: [0, 1, 0])  // 横向
             group.addChild(leg)  // 挂上
         }  // 循环结束
-        let bridge = ModelEntity(mesh: .generateBox(width: 0.07, height: 0.008, depth: 0.008),  // 鼻梁
+
+        let bridge = ModelEntity(mesh: .generateBox(width: 0.16, height: 0.02, depth: 0.02, cornerRadius: 0.008),  // 鼻梁
                                  materials: [material(frame)])  // 框色
-        bridge.position = [0, 0.01, 0.03]  // 两镜片之间
+        bridge.position = [0, 0.02, 0.06]  // 两镜片之间
         group.addChild(bridge)  // 挂上
         return group  // 返回眼镜
     }  // glassesEntity 结束
 
-    static func neckEntity(_ item: OutfitItem) -> Entity {  // 围巾或项圈
+    static func neckEntity(_ item: OutfitItem) -> Entity {  // 围巾或项圈（根节点局部坐标）
         let group = Entity()  // 颈部整体
-        group.position = [0, 0.70, 0.02]  // 脖子位置（头与身之间）
+        group.position = [0, 0.3, 0]  // 身体上沿，样板没有脖子所以压得低
         let main = UIColor(hex: item.hex)  // 主色
         let accent = UIColor(hex: item.accent)  // 点缀色
 
         if item.id.hasPrefix("neck.scarf") {  // 围巾
-            let band = ModelEntity(mesh: .generateCylinder(height: 0.055, radius: 0.165),  // 围一圈
+            let band = ModelEntity(mesh: .generateCylinder(height: 0.14, radius: 0.32),  // 围一圈
                                    materials: [material(main)])  // 主色
             band.scale = [1, 1, 0.86]  // 前后压薄
             group.addChild(band)  // 挂上
-            let hang = ModelEntity(mesh: .generateBox(width: 0.07, height: 0.15, depth: 0.02, cornerRadius: 0.008),  // 垂下一截
+
+            let hang = ModelEntity(mesh: .generateBox(width: 0.14, height: 0.3, depth: 0.04, cornerRadius: 0.016),  // 垂下一截
                                    materials: [material(main)])  // 主色
-            hang.position = [0.055, -0.10, 0.145]  // 胸前
+            hang.position = [0.11, -0.2, 0.28]  // 胸前
             hang.orientation = simd_quatf(angle: 0.16, axis: [0, 0, 1])  // 稍微歪
             group.addChild(hang)  // 挂上
-            let tip = ModelEntity(mesh: .generateBox(width: 0.073, height: 0.02, depth: 0.022, cornerRadius: 0.006),  // 流苏边
+
+            let tip = ModelEntity(mesh: .generateBox(width: 0.146, height: 0.04, depth: 0.044, cornerRadius: 0.012),  // 流苏边
                                   materials: [material(accent)])  // 点缀色
-            tip.position = [0.068, -0.175, 0.145]  // 垂片末端
+            tip.position = [0.136, -0.35, 0.28]  // 垂片末端
             group.addChild(tip)  // 挂上
         } else if item.id == "neck.bell" {  // 铃铛项圈
-            let band = ModelEntity(mesh: .generateCylinder(height: 0.032, radius: 0.162),  // 项圈
+            let band = ModelEntity(mesh: .generateCylinder(height: 0.08, radius: 0.3),  // 项圈
                                    materials: [material(main)])  // 主色
             band.scale = [1, 1, 0.88]  // 压薄
             group.addChild(band)  // 挂上
-            let bell = sphere(radius: 0.04, color: accent)  // 铃铛
-            bell.position = [0, -0.035, 0.155]  // 脖子正前
+
+            let bell = sphere(radius: 0.08, color: accent)  // 铃铛
+            bell.position = [0, -0.07, 0.29]  // 脖子正前
             group.addChild(bell)  // 挂上
-            let hole = sphere(radius: 0.011, color: main)  // 铃铛上的孔
-            hole.position = [0, -0.05, 0.19]  // 铃铛下方
+
+            let hole = sphere(radius: 0.022, color: main)  // 铃铛上的孔
+            hole.position = [0, -0.1, 0.35]  // 铃铛下方
             group.addChild(hole)  // 挂上
         } else if item.id == "neck.bowtie" {  // 领结
             for side in [-1.0, 1.0] {  // 左右两片
-                let wing = ModelEntity(mesh: .generateBox(width: 0.072, height: 0.052, depth: 0.022, cornerRadius: 0.01),  // 一片翅膀
+                let s = Float(side)  // 侧别
+                let wing = ModelEntity(mesh: .generateBox(width: 0.14, height: 0.1, depth: 0.04, cornerRadius: 0.02),  // 一片翅膀
                                        materials: [material(main)])  // 主色
-                wing.position = [Float(side) * 0.052, 0, 0.155]  // 分列两侧
-                wing.orientation = simd_quatf(angle: Float(side) * 0.35, axis: [0, 1, 0])  // 微微外张
+                wing.position = [s * 0.1, 0, 0.29]  // 分列两侧
+                wing.orientation = simd_quatf(angle: s * 0.35, axis: [0, 1, 0])  // 微微外张
                 group.addChild(wing)  // 挂上
             }  // 循环结束
-            let knot = ModelEntity(mesh: .generateBox(width: 0.028, height: 0.04, depth: 0.026, cornerRadius: 0.01),  // 结
+
+            let knot = ModelEntity(mesh: .generateBox(width: 0.055, height: 0.08, depth: 0.05, cornerRadius: 0.02),  // 结
                                    materials: [material(accent)])  // 点缀色
-            knot.position = [0, 0, 0.163]  // 正中
+            knot.position = [0, 0, 0.305]  // 正中
             group.addChild(knot)  // 挂上
         }  // 分支结束
         return group  // 返回颈部配件
     }  // neckEntity 结束
 
-    static func backEntity(_ item: OutfitItem) -> Entity {  // 背包或披风
+    static func backEntity(_ item: OutfitItem) -> Entity {  // 背包或披风（根节点局部坐标）
         let group = Entity()  // 背部整体
         let main = UIColor(hex: item.hex)  // 主色
         let accent = UIColor(hex: item.accent)  // 点缀色
 
         if item.id == "back.backpack" {  // 小书包
-            group.position = [0, 0.46, -0.22]  // 背后
-            let bag = ModelEntity(mesh: .generateBox(width: 0.20, height: 0.20, depth: 0.11, cornerRadius: 0.03),  // 包体
+            group.position = [0, -0.1, -0.44]  // 背后
+            let bag = ModelEntity(mesh: .generateBox(width: 0.4, height: 0.4, depth: 0.2, cornerRadius: 0.06),  // 包体
                                   materials: [material(main)])  // 主色
             group.addChild(bag)  // 挂上
-            let flap = ModelEntity(mesh: .generateBox(width: 0.19, height: 0.10, depth: 0.02, cornerRadius: 0.02),  // 翻盖
+
+            let flap = ModelEntity(mesh: .generateBox(width: 0.38, height: 0.2, depth: 0.045, cornerRadius: 0.03),  // 翻盖
                                    materials: [material(accent)])  // 点缀色
-            flap.position = [0, 0.055, -0.058]  // 背面顶部
+            flap.position = [0, 0.11, -0.1]  // 背面顶部
             group.addChild(flap)  // 挂上
+
             for side in [-1.0, 1.0] {  // 两条肩带
-                let strap = ModelEntity(mesh: .generateCylinder(height: 0.24, radius: 0.012),  // 带子
+                let s = Float(side)  // 侧别
+                let strap = ModelEntity(mesh: .generateCylinder(height: 0.5, radius: 0.024),  // 带子
                                         materials: [material(accent)])  // 点缀色
-                strap.position = [Float(side) * 0.085, 0.0, 0.09]  // 绕到胸前
+                strap.position = [s * 0.17, 0.0, 0.2]  // 绕到胸前
                 strap.orientation = simd_quatf(angle: 0.2, axis: [1, 0, 0])  // 略微前倾
                 group.addChild(strap)  // 挂上
             }  // 循环结束
         } else if item.id == "back.cape" {  // 披风
-            group.position = [0, 0.66, -0.17]  // 肩后
-            let cloth = ModelEntity(mesh: .generateBox(width: 0.34, height: 0.42, depth: 0.014, cornerRadius: 0.02),  // 披风布
+            group.position = [0, 0.16, -0.36]  // 肩后
+            let cloth = ModelEntity(mesh: .generateBox(width: 0.66, height: 0.8, depth: 0.028, cornerRadius: 0.04),  // 披风布
                                     materials: [material(main)])  // 主色
-            cloth.position = [0, -0.18, 0]  // 向下垂
+            cloth.position = [0, -0.34, 0]  // 向下垂
             cloth.orientation = simd_quatf(angle: -0.18, axis: [1, 0, 0])  // 后摆
             group.addChild(cloth)  // 挂上
-            let clasp = sphere(radius: 0.033, color: accent)  // 领扣
-            clasp.position = [0, 0.03, 0.03]  // 颈部
+
+            let clasp = sphere(radius: 0.065, color: accent)  // 领扣
+            clasp.position = [0, 0.06, 0.06]  // 颈部
             group.addChild(clasp)  // 挂上
         }  // 分支结束
         return group  // 返回背部配件
@@ -629,6 +723,24 @@ enum PetSceneBuilder {  // 猫建模器
     static func sphere(radius: Float, color: UIColor) -> ModelEntity {  // 造一个球
         ModelEntity(mesh: .generateSphere(radius: radius), materials: [material(color)])  // 直接返回
     }  // sphere 结束
+
+    /// 两点之间架一根圆柱（对应样板 tassel 的 seg 辅助函数）
+    static func rod(from a: SIMD3<Float>, to b: SIMD3<Float>, radius: Float, color: UIColor) -> ModelEntity {  // 连点成杆
+        let dir = b - a  // 方向向量
+        let length = simd_length(dir)  // 杆长
+        let entity = ModelEntity(mesh: .generateCylinder(height: length, radius: radius),  // 按长度造圆柱
+                                 materials: [material(color)])  // 上材质
+        entity.position = a + dir * 0.5  // 放在两点中点
+        let unit = simd_normalize(dir)  // 单位方向
+        if unit.y < -0.9999 {  // 正好朝下（样板第三段就是垂直下垂）
+            entity.orientation = simd_quatf(angle: .pi, axis: [1, 0, 0])  // 绕 X 翻 180°，避免退化
+        } else if unit.y > 0.9999 {  // 正好朝上
+            entity.orientation = simd_quatf(angle: 0, axis: [0, 1, 0])  // 不用转
+        } else {  // 一般情况
+            entity.orientation = simd_quatf(from: [0, 1, 0], to: unit)  // 把 Y 轴对齐方向
+        }  // 分支结束
+        return entity  // 返回这根杆
+    }  // rod 结束
 
     static func material(_ color: UIColor, metallic: Bool = false) -> SimpleMaterial {  // 造一个材质
         SimpleMaterial(color: color, roughness: .float(0.62), isMetallic: metallic)  // 哑光为主，像毛绒
