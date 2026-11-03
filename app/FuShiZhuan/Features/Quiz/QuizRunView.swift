@@ -79,10 +79,10 @@ struct QuizRunView: View {  // 练习作答页
         HStack(spacing: Space.s) {  // 横向排列
             Text(verbatim: "\(index + 1) / \(paper.count)")  // 进度文案（verbatim 防千位逗号）
                 .font(.system(size: 11.5, weight: .medium))  // 与样板 .pill 一致
-                .foregroundStyle(Color(hex: "5B5B61"))  // 样板灰
+                .foregroundStyle(Color(hex: 0x5B5B61))  // 样板灰
                 .padding(.horizontal, 10)  // 左右内边距
                 .frame(height: 26)  // 样板高度
-                .background(Capsule().fill(Color(hex: "E9E9EF")))  // 灰底胶囊
+                .background(Capsule().fill(Color(hex: 0xE9E9EF)))  // 灰底胶囊
 
             Spacer(minLength: 0)  // 撑开
 
@@ -100,7 +100,7 @@ struct QuizRunView: View {  // 练习作答页
     private var progressBar: some View {  // 细进度条（样板 .progress）
         GeometryReader { geo in  // 拿宽度算比例
             ZStack(alignment: .leading) {  // 底条 + 进度条叠放
-                Capsule().fill(Color(hex: "E3E3E9"))  // 底条
+                Capsule().fill(Color(hex: 0xE3E3E9))  // 底条
                 Capsule()  // 进度条
                     .fill(LinearGradient(colors: [Color.appBrand, Color.appBrand2],  // 品牌渐变
                                          startPoint: .leading, endPoint: .trailing))  // 左到右
@@ -176,7 +176,7 @@ struct QuizRunView: View {  // 练习作答页
             .frame(height: 22)  // 样板高度
             .background(  // 底色
                 RoundedRectangle(cornerRadius: 7, style: .continuous)  // 圆角 7
-                    .fill(soft ? Color(hex: "F2F2F7") : Color.appBrand.opacity(0.10))  // 灰或淡蓝
+                    .fill(soft ? Color(hex: 0xF2F2F7) : Color.appBrand.opacity(0.10))  // 灰或淡蓝
             )  // 背景结束
     }  // tagChip 结束
 
@@ -243,7 +243,7 @@ struct QuizRunView: View {  // 练习作答页
         .frame(maxWidth: .infinity, alignment: .leading)  // 撑满左对齐
         .background(  // 灰底
             RoundedRectangle(cornerRadius: 12, style: .continuous)  // 圆角 12
-                .fill(Color(hex: "F7F7FA"))  // 样板底色
+                .fill(Color(hex: 0xF7F7FA))  // 样板底色
         )  // 背景结束
         .overlay(alignment: .leading) {  // 左侧品牌色竖条（样板 border-left 3px）
             Rectangle()  // 细条

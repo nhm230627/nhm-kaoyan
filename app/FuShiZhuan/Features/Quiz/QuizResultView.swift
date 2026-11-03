@@ -74,7 +74,7 @@ struct QuizResultView: View {  // 练习结果页
         .foregroundStyle(.white)  // 白字
         .padding(18)  // 与样板 padding 一致
         .background(  // 渐变底（样板 140deg #1b2a6b → #2b54e8）
-            LinearGradient(colors: [Color(hex: "1B2A6B"), Color(hex: "2B54E8")],  // 两个色标
+            LinearGradient(colors: [Color(hex: 0x1B2A6B), Color(hex: 0x2B54E8)],  // 两个色标
                            startPoint: .topLeading, endPoint: .bottomTrailing)  // 左上到右下
         )  // 背景结束
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))  // 圆角 20
@@ -191,7 +191,7 @@ struct QuizResultView: View {  // 练习结果页
             .frame(height: 22)  // 与样板同高
             .background(  // 浅灰底
                 RoundedRectangle(cornerRadius: 7, style: .continuous)  // 圆角 7
-                    .fill(Color(hex: "F2F2F7"))  // 样板同色
+                    .fill(Color(hex: 0xF2F2F7))  // 样板同色
             )  // 背景结束
     }  // softTag 结束
 
