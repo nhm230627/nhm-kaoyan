@@ -230,8 +230,33 @@ final class SmokeUITests: XCTestCase {  // 冒烟测试集
                         .waitForExistence(timeout: 10), "评论没出现在评论区")  // 真的写进去了
     }  // 用例结束
 
-    // MARK: - 今日打卡                                                  // 分节：今日
+    // MARK: - 换装工坊                                                  // 分节：换装
 
+    /// 换装：点一件能穿的配件 → 它变成「正在穿」；再点一件没解锁的 → 出解锁提示
+    func testAvatarEquipItem() throws {  // 换装点击
+        let app = launch(["-startTab", "quiz", "-startShot", "avatar"])  // 直接进换装工坊
+        XCTAssertTrue(app.wait(for: .runningForeground, timeout: 30), "换装工坊没启动起来")  // 启动检查
+        Thread.sleep(forTimeInterval: 2.5)  // 等 3D 与列表渲染
+
+        let wearable = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "点击穿上"))  // 已解锁且没在穿的
+        XCTAssertGreaterThan(wearable.count, 0, "一件能穿的配件都没有，页面数据不对")  // 至少有一件
+        let picked = wearable.element(boundBy: 0)  // 取第一件
+        let label = picked.label  // 形如「纯白猫，点击穿上」
+        let name = String(label.split(separator: "，").first ?? "")  // 只取名字部分
+        picked.tap()  // 穿上
+        let worn = app.buttons.matching(NSPredicate(format: "label == %@", "\(name)，正在穿"))  // 穿好后的朗读文案
+        XCTAssertTrue(worn.firstMatch.waitForExistence(timeout: 8), "点了「\(name)」但没变成正在穿")  // 真的穿上并写进状态
+
+        let locked = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "未解锁"))  // 没解锁的配件
+        if locked.count > 0 {  // 有锁着的就试一下拦截
+            locked.element(boundBy: 0).tap()  // 点它
+            XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "还差")).firstMatch
+                            .waitForExistence(timeout: 6), "点未解锁配件没有给出解锁提示")  // 有提示，且没穿上
+        }  // 分支结束
+        XCTAssertEqual(app.state, .runningForeground, "换装后 App 不在前台")  // 没崩
+    }  // 用例结束
+
+    // MARK: - 今日打卡                                                  // 分节：今日
     /// 今日：点打卡 → 任务行状态变「已打卡」
     func testTodayCheckIn() throws {  // 今日打卡
         let app = launch()  // 默认进今日
