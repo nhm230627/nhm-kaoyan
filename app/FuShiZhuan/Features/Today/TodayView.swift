@@ -49,6 +49,7 @@ struct TodayView: View {  // 首页
                 ) {  // 点击动作
                     app.checkIn()  // 调唯一写入口打卡
                 }  // 打卡按钮结束
+                .accessibilityIdentifier("today-checkin")  // 给 UI 测试一个稳定的抓手（图标按钮没有可读文案）
                 NavigationLink {  // 齿轮进「我的」
                     ProfileView()  // 复用个人中心当设置页
                 } label: {  // 圆钮外观

@@ -61,7 +61,9 @@ struct QuizRunView: View {  // 练习作答页
         .navigationBarTitleDisplayMode(.inline)  // 标题内联
         .toolbar {  // 工具栏
             ToolbarItem(placement: .topBarLeading) {  // 左侧
-                if !submitted {  // 交卷后不给退
+                if submitted {  // 交卷后
+                    Button("完成") { dismiss() }  // 给一个出口：院校模考是全屏覆盖，没有返回手势，不给按钮就出不去
+                } else {  // 作答中
                     Button("退出") { dismiss() }  // 中途退出
                 }  // 分支结束
             }  // 工具栏项结束

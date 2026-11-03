@@ -150,6 +150,7 @@ struct MockExamView: View {  // 院校模考页
                                      startPoint: .topLeading, endPoint: .bottomTrailing)))  // 140 度方向
         }  // 按钮结束
         .buttonStyle(.plain)  // 去掉系统样式
+        .accessibilityIdentifier("mock-hero")  // 给 UI 测试一个稳定的抓手（整张卡是一个按钮）
     }  // hero 结束
 
     // MARK: - 卷别 Tab                                                // 分节：Tab

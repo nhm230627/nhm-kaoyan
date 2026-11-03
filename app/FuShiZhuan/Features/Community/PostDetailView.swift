@@ -77,6 +77,7 @@ struct PostDetailView: View {  // 帖子详情
                     .foregroundStyle(app.communityLiked(current.id) ? Color.appErr : Color.textSecondary)  // 点过变红
             }  // 按钮结束
             .buttonStyle(.plain)  // 去掉系统高亮
+            .accessibilityIdentifier("post-like")  // 给 UI 测试一个稳定的抓手（按钮文案是点赞数，会变）
             .padding(.top, Space.s)  // 与正文拉开
         }  // 纵向排列结束
         .padding(14)  // 卡片内边距（样板 14）
@@ -167,6 +168,7 @@ struct PostDetailView: View {  // 帖子详情
                 .frame(width: 34, height: 34)  // 34 直径（样板同）
             }  // 按钮结束
             .buttonStyle(.plain)  // 去掉系统高亮
+            .accessibilityIdentifier("comment-send")  // 给 UI 测试一个稳定的抓手（纯箭头图标没有可读文案）
             .opacity(draft.trimmingCharacters(in: .whitespaces).isEmpty ? 0.45 : 1)  // 空内容变淡提示（不用 disabled，系统还会再压一层）
         }  // 排列结束
         .padding(.horizontal, Metrics.pagePadding)  // 左右边距

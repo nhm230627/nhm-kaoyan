@@ -222,6 +222,7 @@ struct CommunityView: View {  // 研友论坛
             .shadow(color: Color.appBrand.opacity(0.35), radius: 13, x: 0, y: 8)  // 蓝色投影（样板同感觉）
         }  // 按钮结束
         .buttonStyle(.plain)  // 去掉系统高亮
+        .accessibilityIdentifier("compose-fab")  // 给 UI 测试一个稳定的抓手（纯加号图标没有可读文案）
         .padding(.trailing, 18)  // 距右 18（样板同）
         .padding(.bottom, 118)  // 抬到悬浮 TabBar 之上（样板是 22，iOS 要让开胶囊）
     }  // fab 结束
