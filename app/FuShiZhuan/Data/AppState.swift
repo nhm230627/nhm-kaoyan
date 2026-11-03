@@ -22,6 +22,7 @@ struct AppSnapshot: Codable, Equatable {  // 持久化单位
     var streakDays: Int  // 连续打卡天数
     var outfit: CatOutfit = .default  // 猫当前穿戴（有默认值，旧快照能直接解码）
     var diy: [Question] = []  // 我的题库（自己录的题，有默认值，旧快照能直接解码）
+    var track: String = "tax"  // 当前考试方向 id（有默认值，旧快照能直接解码）
 
     static let currentVersion = 1  // 当前结构版本
 
@@ -56,6 +57,7 @@ struct AppSnapshot: Codable, Equatable {  // 持久化单位
         streakDays = try c.decodeIfPresent(Int.self, forKey: .streakDays) ?? 0  // 缺省 0
         outfit = try c.decodeIfPresent(CatOutfit.self, forKey: .outfit) ?? .default  // 缺省默认穿戴
         diy = try c.decodeIfPresent([Question].self, forKey: .diy) ?? []  // 缺省空自建题库
+        track = try c.decodeIfPresent(String.self, forKey: .track) ?? "tax"  // 缺省税务方向
     }  // 解码结束
 
     init(  // 全参构造器
@@ -90,7 +92,7 @@ struct AppSnapshot: Codable, Equatable {  // 持久化单位
 @Observable  // 可观察，视图自动刷新
 final class AppState {  // 全局状态类
     private(set) var data: AppSnapshot  // 唯一可变状态，外部只读
-    private(set) var bank: QuestionBank?  // 题库，未加载为 nil
+    private(set) var banks: [String: QuestionBank] = [:]  // 各考试方向的题库，key 是方向 id
     private(set) var loadError: AppError?  // 加载错误，nil 为正常
     private let store: SnapshotStore  // 落盘器
     private var saveTask: Task<Void, Never>?  // 防抖任务句柄
@@ -113,6 +115,8 @@ final class AppState {  // 全局状态类
     var entitlement: Entitlement { data.entitlement }  // 权益快捷方式
     var stage: PetStage { PetStage.stage(for: data.growth) }  // 由成长值推阶段
     var outfit: CatOutfit { data.outfit }  // 猫当前穿戴快捷方式
+    var currentTrack: Track { Track.meta(data.track) }  // 当前考试方向
+    var bank: QuestionBank? { banks[data.track] }  // 当前方向的题库，未加载为 nil
 
     func isUnlocked(_ item: OutfitItem) -> Bool {  // 配件是否已解锁
         data.growth >= item.minGrowth  // 只看成长值，不搞抽卡、不搞概率掉落
@@ -145,15 +149,28 @@ final class AppState {  // 全局状态类
 
     // MARK: - 初始化流程                                              // 分节：初始化
 
-    func loadBank() {  // 加载题库
-        guard bank == nil else { return }  // 已加载就不重复读
-        do {  // 尝试读取
-            bank = try QuestionBankLoader.loadBundled()  // 读内置题库
-            loadError = nil  // 清空错误
-        } catch {  // 读取失败
-            loadError = .dataCorrupted("题库文件读取失败，请重装 App")  // 记录错误
-        }  // 分支结束
+    func loadBank() {  // 加载题库（五个方向一次读完，切方向不用等）
+        guard banks.isEmpty else { return }  // 已加载就不重复读
+        var loaded: [String: QuestionBank] = [:]  // 临时收集
+        for track in Track.all {  // 逐个方向
+            if let one = try? BankRepository.load(track) { loaded[track.id] = one }  // 读成功就收下
+        }  // 循环结束
+        banks = loaded  // 一次性写回，视图刷新一次
+        loadError = loaded.isEmpty ? .dataCorrupted("题库文件读取失败，请重装 App") : nil  // 一个都没读到才算错
     }  // loadBank 结束
+
+    func setTrack(_ id: String) {  // 切换考试方向（题库、模考、面试间都跟着变）
+        let target = Track.meta(id)  // 解析成方向对象
+        guard data.track != target.id else { return }  // 没变就不用写盘
+        var snap = data  // 拷一份改
+        snap.track = target.id  // 写入方向
+        data = snap  // 一次性替换，页面自动刷新
+        scheduleSave()  // 落盘，重进 App 还是这个方向
+    }  // setTrack 结束
+
+    func topicName(_ id: String) -> String {  // 知识点名字（跨方向查）
+        BankRepository.topicName(id, in: banks)  // 交给仓库统一查
+    }  // topicName 结束
 
     func dailyTick() {  // 每日结算，幂等
         var snap = data  // 拷一份改

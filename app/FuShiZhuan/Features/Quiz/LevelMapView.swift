@@ -31,6 +31,7 @@ struct LevelMapView: View {  // 关卡地图（列表形态）
         ScrollView {  // 可滚动
             VStack(spacing: Space.l) {  // 纵向排列
                 hud  // 三格战绩
+                duelNotice  // 1V1 竞赛：如实说明没接
                 ForEach(SortCatalog.chapters) { chapter in  // 逐章
                     chapterBlock(chapter)  // 一章一块
                 }  // 遍历结束
@@ -60,6 +61,27 @@ struct LevelMapView: View {  // 关卡地图（列表形态）
             hudCell(value: "\(bestCombo)", title: "归位")  // 最好一次归位数
         }  // 排列结束
     }  // hud 结束
+
+    private var duelNotice: some View {  // 1V1 竞赛的缺口说明
+        // 样板 page-game 右下角有一个「1V1 竞赛」按钮，它靠 /api/duel/* 配对两个
+        // 同时在等的人（duel.js 注释原话：「和真人打这件事必须有服务端」）。
+        // 本工程 BFF 还没有这组接口，所以这里不放一个点了没反应的按钮，
+        // 而是把缺口摆在明面上，等接口接上再把按钮换成真的。
+        HStack(spacing: Space.s) {  // 横向排列
+            Image(systemName: "person.2.slash")  // 双人划掉的图标
+                .font(.system(size: 13, weight: .semibold))  // 图标大小
+                .foregroundStyle(Color.textTertiary)  // 弱化色
+            Text("1V1 知识竞赛需要配对服务（两个真人同题对决），服务端接口尚未接入")  // 如实说明
+                .font(.system(size: 11))  // 11 号
+                .foregroundStyle(Color.textTertiary)  // 弱化色
+                .fixedSize(horizontal: false, vertical: true)  // 允许多行
+            Spacer(minLength: 0)  // 撑开
+        }  // 横排结束
+        .padding(.horizontal, Space.m)  // 左右
+        .padding(.vertical, Space.s)  // 上下
+        .background(RoundedRectangle(cornerRadius: Radius.chip, style: .continuous)  // 圆角胶囊卡
+            .fill(Color(hex: 0xF4F5F9)))  // 浅灰底
+    }  // duelNotice 结束
 
     private func hudCell(value: String, title: String) -> some View {  // 一格战绩
         VStack(spacing: 3) {  // 上数字下标题

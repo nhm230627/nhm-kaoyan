@@ -31,6 +31,9 @@ struct QuizHomeView: View {  // 刷题首页
         }  // 分组结束
         .background(Color.appBG)  // 底色
         .navigationTitle("刷题闯关")  // 标题
+        .toolbar {  // 工具栏
+            ToolbarItem(placement: .topBarTrailing) { TrackChip() }  // 右上角考试方向胶囊（照样板 appbar）
+        }  // 工具栏结束
         .fullScreenCover(item: $run) { cfg in  // 开始练习
             NavigationStack {  // 套导航栈才有标题栏
                 QuizRunView(pool: cfg.pool, size: cfg.size, revealEach: cfg.revealEach)  // 样板 page-run

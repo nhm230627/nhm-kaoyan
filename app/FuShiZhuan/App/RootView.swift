@@ -66,6 +66,8 @@ struct RootView: View {  // 根视图
         case sortmap  // 关卡地图
         case sortplay  // 分拣关卡
         case diy  // 我的题库
+        case mock  // 院校模考
+        case tracksheet  // 考试方向选择层
 
         var id: String { rawValue }  // 用原始值当 id
     }  // Shot 结束
@@ -148,6 +150,10 @@ struct RootView: View {  // 根视图
             LevelMapView()  // 四章十二关
         case .diy:  // 我的题库
             DiyBankView(startWithForm: true)  // 录题页（截图时展开表单）
+        case .mock:  // 院校模考
+            MockExamView()  // 通用卷 + 48 所院校分卷
+        case .tracksheet:  // 方向选择层
+            TrackPickerSheet()  // 直接铺满整屏截（正常是从胶囊弹出的 sheet）
         case .sortplay:  // 分拣关卡
             if let level = SortCatalog.level(SortCatalog.order.first ?? "") {  // 第一关
                 SortGameView(level: level)  // 直接开玩

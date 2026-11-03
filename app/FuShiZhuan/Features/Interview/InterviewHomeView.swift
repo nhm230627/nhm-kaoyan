@@ -86,25 +86,41 @@ struct InterviewHomeView: View {  // 面试首页
         }  // 排列结束
     }  // labeledPicker 结束
 
-    private var mockExamLink: some View {  // 模考入口
-        NavigationLink {  // 进入大厅
-            MockExamHomeView()  // 大厅页
+    private var mockExamLink: some View {  // 模考入口（对标样板 page-interview 里的 mock-entry）
+        NavigationLink {  // 进入模考板块
+            MockExamView()  // 通用卷 + 48 所院校分卷
         } label: {  // 行外观
-            Card {  // 卡片
-                HStack(spacing: Space.xs) {  // 横向排列
-                    VStack(alignment: .leading, spacing: 2) {  // 文字区
-                        Text("模考大厅").font(AppFont.bodyStrong)  // 标题
-                        Text("预约场次、看自己和模拟对手的差距")  // 说明
-                            .font(AppFont.caption)  // 小字
-                            .foregroundStyle(Color.textSecondary)  // 次要色
-                    }  // 文字区结束
-                    Spacer()  // 撑开
-                    Chip(text: "单机模拟", tint: .appWarn)  // 如实标记
-                    Image(systemName: "chevron.right")  // 箭头
-                        .font(.system(size: 11))  // 小图标
-                        .foregroundStyle(Color.textTertiary)  // 弱化色
-                }  // 排列结束
-            }  // 卡片结束
+            HStack(spacing: 11) {  // 图标 + 文字 + 箭头（照样板 .mock-entry）
+                Image(systemName: "doc.text")  // 试卷图标
+                    .font(.system(size: 15, weight: .regular))  // 图标大小
+                    .foregroundStyle(Color.appBrand)  // 品牌蓝
+                    .frame(width: 30, height: 30)  // 30 方块
+                    .background(RoundedRectangle(cornerRadius: 10, style: .continuous)  // 圆角 10
+                        .fill(Color(hex: 0xE0E7FF)))  // 浅蓝底
+
+                VStack(alignment: .leading, spacing: 1) {  // 文字区
+                    Text("模考大厅 · 分院校卷")  // 标题（样板原话是「同题同场」，本工程没有同场活动）
+                        .font(.system(size: 12.5, weight: .semibold))  // 12.5 号
+                        .foregroundStyle(Color(hex: 0x1F2A52))  // 深蓝
+                    Text("\(app.currentTrack.name) · 通用卷随时开考，院校卷按侧重抽题")  // 说明（真实口径）
+                        .font(.system(size: 10))  // 10 号
+                        .foregroundStyle(Color(hex: 0x6B76A8))  // 灰蓝
+                        .lineLimit(1)  // 只留一行
+                }  // 文字区结束
+
+                Spacer(minLength: 0)  // 撑开
+
+                Image(systemName: "chevron.right")  // 箭头
+                    .font(.system(size: 12, weight: .semibold))  // 图标
+                    .foregroundStyle(Color(hex: 0x8F9AD0))  // 浅蓝灰
+            }  // 排列结束
+            .padding(.horizontal, 13)  // 左右
+            .padding(.vertical, 12)  // 上下
+            .background(RoundedRectangle(cornerRadius: 15, style: .continuous)  // 圆角 15
+                .fill(LinearGradient(colors: [Color(hex: 0xEEF2FF), Color(hex: 0xF7F8FF)],  // 浅蓝渐变
+                                     startPoint: .leading, endPoint: .trailing)))  // 左到右
+            .overlay(RoundedRectangle(cornerRadius: 15, style: .continuous)  // 内描边
+                .strokeBorder(Color(hex: 0xDFE5FF), lineWidth: 1))  // 淡蓝边
         }  // 链接结束
         .buttonStyle(.plain)  // 不用默认高亮
     }  // mockExamLink 结束

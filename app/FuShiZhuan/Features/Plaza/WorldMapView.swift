@@ -96,11 +96,11 @@ struct WorldMapView: View {  // 学习地图
             ),  // 结束
             Spot(  // 模考区
                 id: "exam",  // id
-                name: "模考区",  // 名字
-                detail: "每周日 20:00 一场，对手为本地模拟",  // 说明
+                name: "模考广场",  // 名字（样板地图 POI 原话）
+                detail: "通用卷 + 48 所院校卷",  // 说明（照样板 POI 副标题）
                 icon: "chart.bar.xaxis",  // 图标
                 available: true,  // 可进入
-                destination: AnyView(MockExamHomeView())  // 跳模考大厅
+                destination: AnyView(MockExamView())  // 跳院校模考页
             )  // 结束
         ]  // 数组结束
     }  // spots 结束

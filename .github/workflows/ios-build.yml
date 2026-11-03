@@ -74,7 +74,7 @@ jobs:
             sleep 6  # 等首帧渲染完，3D 页面尤其慢
             xcrun simctl io "$UDID" screenshot "shots/$TAB.png" || echo "截图失败：$TAB"  # 截当前屏幕
           done
-          for PAGE in avatar papers paper wrongbook run result sortmap sortplay diy; do  # 子页面各来一张：这些页面点不进去，只能靠 -startShot 直接弹开
+          for PAGE in avatar papers paper wrongbook run result sortmap sortplay diy mock tracksheet; do  # 子页面各来一张：这些页面点不进去，只能靠 -startShot 直接弹开
             xcrun simctl terminate "$UDID" com.fushizhuan.app 2>/dev/null || true  # 杀进程保证冷启动
             echo "== 子页面 $PAGE =="  # 日志分隔
             xcrun simctl launch "$UDID" com.fushizhuan.app -startTab quiz -startShot "$PAGE" || echo "启动失败：$PAGE"  # RootView.initialShot 解析

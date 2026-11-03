@@ -12,6 +12,8 @@ struct QuizRunView: View {  // 练习作答页
     let pool: [Question]  // 题池，「再来一组」时从这里重新抽
     let size: Int  // 每组题量
     let revealEach: Bool  // 作答模式：true = 每题即时看
+    let title: String  // 卷名（院校模考时显示，普通练习为空）
+    let fixed: Bool  // true = 题序固定、不重抽（院校模考卷必须每次同一套）
 
     @State private var paper: [Question] = []  // 本组题目
     @State private var index = 0  // 当前第几题
@@ -21,11 +23,15 @@ struct QuizRunView: View {  // 练习作答页
     @State private var seconds = 0  // 交卷时定格的用时
     @State private var unanswered = 0  // 交卷时未答数
 
-    init(pool: [Question], size: Int, revealEach: Bool) {  // 初始化并存下第一组题
+    init(pool: [Question], size: Int, revealEach: Bool,  // 练习用构造器
+         title: String = "", fixed: Bool = false) {  // 模考可传卷名与固定题序
         self.pool = pool  // 题池
         self.size = size  // 题量
         self.revealEach = revealEach  // 模式
-        _paper = State(initialValue: Array(pool.shuffled().prefix(max(1, size))))  // 先抽一组
+        self.title = title  // 卷名
+        self.fixed = fixed  // 是否固定题序
+        _paper = State(initialValue: fixed ? pool  // 固定题序：原样给
+                       : Array(pool.shuffled().prefix(max(1, size))))  // 普通练习：抽一组
     }  // init 结束
 
     // MARK: - 视图                                                    // 分节：视图
@@ -46,7 +52,7 @@ struct QuizRunView: View {  // 练习作答页
             }  // 分支结束
         }  // 分组结束
         .background(Color.appBG)  // 底色
-        .navigationTitle(submitted ? "练习结果" : "练习")  // 标题跟着状态走
+        .navigationTitle(submitted ? "练习结果" : (title.isEmpty ? "练习" : title))  // 卷名优先，普通练习显示「练习」
         .navigationBarTitleDisplayMode(.inline)  // 标题内联
         .toolbar {  // 工具栏
             ToolbarItem(placement: .topBarLeading) {  // 左侧
@@ -84,9 +90,11 @@ struct QuizRunView: View {  // 练习作答页
                 .frame(height: 26)  // 样板高度
                 .background(Capsule().fill(Color(hex: 0xE9E9EF)))  // 灰底胶囊
 
-            Spacer(minLength: 0)  // 撑开
+            Spacer(minLength: 0)  // 撑开（样板 space-between 让计时落在中段）
 
             timerView  // 计时
+
+            Spacer(minLength: 0)  // 再撑开一次，计时才会居中
 
             Button("交卷") { submit() }  // 交卷（样板是文字链接按钮）
                 .font(.system(size: 13, weight: .semibold))  // 与 link-btn 一致
@@ -320,7 +328,9 @@ struct QuizRunView: View {  // 练习作答页
     }  // submit 结束
 
     private func restart() {  // 再来一组
-        paper = Array(pool.shuffled().prefix(max(1, size)))  // 重新抽题
+        // 模考卷（fixed）按原卷重做：样板的「再来一组」这时会退回普通练习重抽，
+        // 那等于把「人大初试卷 A」变成随便一组题，成绩没法横向比，所以这里不改题。
+        paper = fixed ? pool : Array(pool.shuffled().prefix(max(1, size)))  // 固定卷原样，练习重抽
         index = 0  // 回到第一题
         answers = [:]  // 清空作答
         startedAt = Date()  // 重新计时
@@ -330,6 +340,6 @@ struct QuizRunView: View {  // 练习作答页
     }  // restart 结束
 
     private func topicName(_ id: String) -> String {  // 知识点 id 转中文名
-        app.bank?.topics.first { $0.id == id }?.name ?? id  // 找不到就显示 id
+        app.topicName(id)  // 交给 AppState 跨方向查（切方向后旧题也能显示名字）
     }  // topicName 结束
 }  // QuizRunView 结束
