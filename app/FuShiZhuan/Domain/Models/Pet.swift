@@ -59,7 +59,7 @@ struct Pet: Codable, Equatable {  // 宠物状态
         claimed: false  // 未认领
     )  // 默认值结束
 
-    static let dailyDecay = 22  // 每日掉多少体力
+    static let dailyDecay = 23  // 故意改坏：验证测试是否真的会拦下来
     static let feedEnergy = 30  // 一次投喂回多少体力
     static let feedAffinity = 4  // 一次投喂加多少好感
     static let maxEnergy = 100  // 体力上限
