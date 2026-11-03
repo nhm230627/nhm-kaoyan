@@ -1,16 +1,19 @@
 //  LevelMapView.swift —— 闯关关卡入口（4 章 × 3 关）                      // 文件说明
-//  ⚠️ 与样板的一处已知偏离：样板真正的关卡入口是 3D 星海地图（game3d.js 里点水晶进关），
-//     它的「降级列表」只是只读的章名 + BOSS 名，写着「关卡仍可在刷题中练习」，不可玩。
-//     用户 2026-11-03 明确要求「先别动 3D 整体」，所以这里做的是可玩的列表入口，
-//     玩法规格（分拣）严格照样板，只有「入口形态」与 3D 地图不同，等用户确认是否改回 3D。// 偏离说明
-//  解锁规则照样板 game.js：第一关默认开，之后需要前一关 star > 0                // 解锁约定
+//  入口形态已与样板对齐：顶部是 game3d.js 的 3D 星海地图，点水晶进关；      // 入口说明
+//  下面保留可玩的关卡列表，对应样板 WebGL 不可用时的「降级列表」思路，      // 兜底说明
+//  顺带解决「3D 点不准」的老问题：编号胶囊也能进关。                       // 兜底说明
+//  解锁规则照样板 game.js：第一关默认开，之后需要前一关 star > 0            // 解锁约定
 
 import SwiftUI  // 界面框架
 
-struct LevelMapView: View {  // 关卡地图（列表形态）
+struct LevelMapView: View {  // 关卡地图
     @Environment(AppState.self) private var app  // 读成绩
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion  // 减弱动效
+    @AppStorage("app.pet.static3D") private var staticMode = false  // 省电开关
     @State private var activeLevel: SortLevel?  // 正在玩的关卡
     @State private var showDuel = false  // 1V1 竞赛是否打开
+
+    private var animationsOff: Bool { staticMode || reduceMotion }  // 任一个开关都关动效
 
     private var starsByLevel: [String: Int] {  // 各关星数
         Dictionary(uniqueKeysWithValues: app.data.levelResults.map { ($0.id, $0.stars) })  // 成绩转字典
@@ -32,6 +35,7 @@ struct LevelMapView: View {  // 关卡地图（列表形态）
         ScrollView {  // 可滚动
             VStack(spacing: Space.l) {  // 纵向排列
                 hud  // 三格战绩
+                starSection  // 3D 星海关卡地图（样板主入口）
                 duelEntry  // 1V1 知识竞赛入口
                 ForEach(SortCatalog.chapters) { chapter in  // 逐章
                     chapterBlock(chapter)  // 一章一块
@@ -67,8 +71,65 @@ struct LevelMapView: View {  // 关卡地图（列表形态）
         }  // 排列结束
     }  // hud 结束
 
-    private var duelEntry: some View {  // 1V1 竞赛入口
-        // 样板 page-game 右下角的「1V1 竞赛」是浮层。这里做成同样的浮层，
+    // MARK: - 3D 星海                                                  // 分节：星海
+
+    private var starSection: some View {  // 3D 星海关卡地图
+        VStack(spacing: Space.s) {  // 纵向排列
+            StarMap3DView(stars: starsByLevel,  // 各关星数决定水晶三态
+                          animationsOff: animationsOff,  // 省电时只摆不动
+                          onPick: { id in openLevel(id) })  // 点水晶进关
+                .frame(height: 360)  // 高度：4 座岛 + 12 颗水晶刚好装下
+                .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))  // 圆角卡片
+            levelChips  // 12 个关卡编号胶囊（也是 3D 点不准时的备用入口）
+        }  // 排列结束
+    }  // starSection 结束
+
+    private var levelChips: some View {  // 关卡编号胶囊
+        VStack(spacing: Space.xs) {  // 纵向排列
+            ForEach(Array(SortCatalog.chapters.enumerated()), id: \.element.id) { ci, chapter in  // 逐章一行
+                HStack(spacing: Space.xs) {  // 一行三关
+                    Text(chapter.name)  // 章名
+                        .font(.system(size: 10.5))  // 小字
+                        .foregroundStyle(color(chapter.color))  // 章节主题色
+                        .frame(width: 52, alignment: .leading)  // 固定宽度对齐
+                    ForEach(1...SortCatalog.perChapter, id: \.self) { i in  // 三关
+                        let id = "\(chapter.id)-\(i)"  // 关卡 id
+                        chip(id: id, label: "\(ci + 1)-\(i)", tint: color(chapter.color))  // 一枚胶囊
+                    }  // 遍历结束
+                    Spacer(minLength: 0)  // 撑开
+                }  // 横向排列结束
+            }  // 遍历结束
+        }  // 排列结束
+    }  // levelChips 结束
+
+    private func chip(id: String, label: String, tint: Color) -> some View {  // 一枚关卡胶囊
+        let stars = starsByLevel[id] ?? 0  // 这关星数
+        let unlocked = isUnlocked(id)  // 是否解锁
+        return Button {  // 点进关
+            openLevel(id)  // 与点水晶同一入口
+        } label: {  // 外观
+            HStack(spacing: 3) {  // 横排
+                Text(verbatim: label)  // 1-1 这种编号
+                    .font(.system(size: 11, weight: .semibold))  // 小字加粗
+                if stars > 0 { Text("★").font(.system(size: 9)) }  // 有星就点一颗
+            }  // 横排结束
+            .foregroundStyle(unlocked ? Color.textPrimary : Color.textTertiary)  // 锁定变灰
+            .padding(.horizontal, 9)  // 左右内边距
+            .frame(height: 24)  // 高度
+            .background(  // 底
+                Capsule().fill(unlocked ? tint.opacity(0.14) : Color.separator.opacity(0.25))  // 解锁淡主题色
+            )  // 背景结束
+        }  // 外观结束
+        .buttonStyle(.plain)  // 去掉系统高亮
+        .disabled(!unlocked)  // 锁住不能点
+    }  // chip 结束
+
+    private func openLevel(_ id: String) {  // 打开某一关
+        guard isUnlocked(id), let level = SortCatalog.level(id) else { return }  // 锁住的打不开
+        activeLevel = level  // 弹出分拣
+    }  // openLevel 结束
+
+    private var duelEntry: some View {  // 1V1 竞赛入口        // 样板 page-game 右下角的「1V1 竞赛」是浮层。这里做成同样的浮层，
         // 配对走 BFF 的 /api/duel/*（已实测：两人同种子同题，9 秒配不上转 AI 陪练）。
         Button {  // 点开竞赛
             showDuel = true  // 铺满整屏

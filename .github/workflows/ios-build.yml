@@ -19,7 +19,13 @@ on:
 
 jobs:
   build:  # 唯一的一个任务：编译
-    runs-on: macos-latest  # GitHub 提供的真实 macOS 机器（Apple Silicon）
+    # 为什么用 Intel 机而不是 macos-latest：
+    #   2026-11-03 连续三次构建在排队 15 分钟后被取消，注解原话是
+    #   「The job was not acquired by Runner of type hosted even after multiple attempts」，
+    #   附带通知「Due to capacity constraints, jobs targeting macOS arm64 runners may experience
+    #   longer queue times」。arm64 池子挤爆了，Intel 池（macos-15-intel）排队短得多。
+    #   工程 deploymentTarget 是 iOS 18，Xcode 16 就够，不需要 Apple Silicon 或 Xcode 26。
+    runs-on: macos-15-intel  # Intel 池的 macOS 15，装的是 Xcode 16 系列
 
     defaults:
       run:
