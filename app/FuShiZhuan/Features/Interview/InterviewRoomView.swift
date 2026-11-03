@@ -29,6 +29,9 @@ struct InterviewRoomView: View {                                      // 面试�
                         .frame(height: 380)                          // 舞台高度
                 }                                                    // 分支结束
                 VStack(spacing: Space.l) {                           // 下方内容
+                    if !engine.isFinished && !engine.knowledgePoints.isEmpty { // 有考察点
+                        knowledgeLine                                // 补一行考察知识点
+                    }                                                // 分支结束
                     if engine.isFinished {                           // 已结束
                         resultSection                                // 结果区
                     } else if engine.session.state == .paused {      // 暂停中
@@ -93,88 +96,19 @@ struct InterviewRoomView: View {                                      // 面试�
 
     // MARK: 顶部状态                                                   // 分节：状态
 
-    private var statusBar: some View {                               // 状态条
-        VStack(spacing: Space.xs) {                                  // 纵向排列
-            HStack {                                                 // 横向排列
-                Text(engine.phase.title).font(AppFont.section)        // 当前环节
-                Spacer()                                             // 撑开
-                Text("第 \(engine.stepNumber) / \(engine.totalSteps) 问") // 进度
-                    .font(AppFont.caption)                           // 小字
-                    .foregroundStyle(Color.textSecondary)            // 次要色
-            }                                                        // 排列结束
-            Meter(                                                   // 进度条
-                value: engine.totalSteps == 0 ? 0 : Double(engine.stepNumber - 1) / Double(engine.totalSteps), // 已答比例
-                tint: .appBrand                                      // 品牌色
-            )                                                        // 进度条结束
-        }                                                            // 排列结束
-    }                                                                // statusBar 结束
-
     private var timeText: String {                                   // 倒计时文本
         let s = engine.session.remainingSeconds                      // 剩余秒
         return String(format: "%02d:%02d", s / 60, s % 60)           // 分:秒
     }                                                                // 属性结束
 
-    // MARK: 导师席                                                    // 分节：导师席
+    // MARK: 作答                                                      // 分节：作答
 
-    private var mentorSeats: some View {                             // 五位导师
-        Card {                                                       // 卡片
-            VStack(alignment: .leading, spacing: Space.m) {           // 纵向排列
-                HStack(spacing: Space.xs) {                          // 五个座位
-                    ForEach(MentorRole.seated) { role in             // 遍历导师
-                        VStack(spacing: Space.xxs) {                 // 单个座位
-                            ZStack {                                 // 叠放
-                                Circle()                             // 圆形底
-                                    .fill(role == engine.currentSpeaker ? Color.appBrand : Color.separator) // 发言高亮
-                                    .frame(width: 34, height: 34)    // 尺寸
-                                Image(systemName: "person.fill")   // 人形
-                                    .font(.system(size: 14))         // 图标大小
-                                    .foregroundStyle(role == engine.currentSpeaker ? .white : Color.textTertiary) // 字色
-                            }                                        // 叠放结束
-                            Text(role.title)                         // 角色名
-                                .font(.system(size: 9))              // 极小字
-                                .foregroundStyle(role == engine.currentSpeaker ? Color.appBrand : Color.textTertiary) // 高亮
-                                .lineLimit(1)                        // 单行
-                        }                                            // 座位结束
-                    }                                                // 遍历结束
-                }                                                    // 排列结束
-                Text("AI 模拟角色，非真实导师")                            // 必须声明
-                    .font(.system(size: 10))                         // 极小字
-                    .foregroundStyle(Color.textTertiary)             // 弱化色
-            }                                                        // 排列结束
-        }                                                            // 卡片结束
-    }                                                                // mentorSeats 结束
-
-    // MARK: 问题与作答                                                // 分节：问答
-
-    private var questionCard: some View {                            // 问题卡
-        Card {                                                       // 卡片
-            VStack(alignment: .leading, spacing: Space.s) {           // 纵向排列
-                HStack(spacing: Space.xs) {                          // 提问人行
-                    Chip(text: engine.currentSpeaker.title, tint: .appViolet) // 谁在问
-                    if voice.isSpeaking {                            // 正在读题
-                        Image(systemName: "speaker.wave.2.fill")     // 喇叭图标
-                            .font(.system(size: 11))                 // 小图标
-                            .foregroundStyle(Color.appBrand)         // 品牌色
-                    }                                                // 分支结束
-                    if engine.isBusy {                               // 正在请求
-                        ProgressView().scaleEffect(0.6)              // 小转圈
-                    }                                                // 分支结束
-                }                                                    // 排列结束
-                if engine.currentQuestion.isEmpty {                  // 还没出题
-                    Text("正在准备问题…").font(AppFont.body).foregroundStyle(Color.textSecondary) // 提示
-                } else {                                             // 有题
-                    Text(engine.currentQuestion)                     // 问题
-                        .font(AppFont.section)                       // 区段字号
-                        .fixedSize(horizontal: false, vertical: true) // 允许换行
-                }                                                    // 分支结束
-                if !engine.knowledgePoints.isEmpty {                 // 有知识点才显示
-                    Text("考察：\(engine.knowledgePoints.joined(separator: "、"))") // 展示
-                        .font(AppFont.caption)                       // 小字
-                        .foregroundStyle(Color.textTertiary)         // 弱化色
-                }                                                    // 分支结束
-            }                                                        // 排列结束
-        }                                                            // 卡片结束
-    }                                                                // questionCard 结束
+    private var knowledgeLine: some View {                           // 考察知识点
+        Text("考察：\(engine.knowledgePoints.joined(separator: "、"))") // 内容
+            .font(AppFont.caption)                                   // 小字
+            .foregroundStyle(Color.textTertiary)                     // 弱化色
+            .frame(maxWidth: .infinity, alignment: .leading)          // 左对齐
+    }                                                                // knowledgeLine 结束
 
     private var answerEditor: some View {                            // 作答框
         Card {                                                       // 卡片

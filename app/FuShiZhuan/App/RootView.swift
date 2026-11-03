@@ -70,6 +70,8 @@ struct RootView: View {  // 根视图
         case tracksheet  // 考试方向选择层
         case community  // 研友论坛（样板 page-community）
         case post  // 帖子详情（样板 page-post）
+        case room  // 2D 考场（样板 page-room）
+        case ritual  // 拨穗礼成（样板 page-ritual）
 
         var id: String { rawValue }  // 用原始值当 id
     }  // Shot 结束
@@ -170,6 +172,10 @@ struct RootView: View {  // 根视图
             } else {  // 数据没读到
                 EmptyState(icon: "square.grid.3x3", title: "关卡数据缺失", message: "sort-levels.json 没打进包里。")  // 空态
             }  // 分支结束
+        case .room:  // 2D 考场
+            ShotRoomHost()  // 等题库就绪再建，免得截到加载态
+        case .ritual:  // 拨穗礼成
+            RitualView()  // 直接进证书页（时序动画自己会跑）
         }  // 分支结束
     }  // shotBody 结束
 }  // RootView 结束
@@ -209,3 +215,9 @@ private struct ShotResultHost: View {  // 截结果页
         }  // 分支结束
     }  // body 结束
 }  // ShotResultHost 结束
+
+private struct ShotRoomHost: View {  // 截 2D 考场内部
+    var body: some View {  // 视图主体
+        InterviewRoomView(mode: .professional, style: .standard)  // 专业面试 + 标准风格，进页即出考场
+    }  // body 结束
+}  // ShotRoomHost 结束
