@@ -349,6 +349,31 @@ function buildCoachPrompt({ question, context }) {  // 拼学伴提示词
   ].join('\n')  // 拼成一段
 }  // buildCoachPrompt 结束
 
+// 讲题：把一道客观题讲透，不评价考生水平
+function buildExplainPrompt({ stem, options, answer, picked, explain }) {  // 拼讲题提示词
+  const letters = ['A', 'B', 'C', 'D', 'E', 'F']  // 选项字母
+  const optionText = (options || []).map((o, i) => `${letters[i]}. ${o}`).join('\n')  // 选项清单
+  const right = (answer || []).map((i) => letters[i]).join('、')  // 正确项字母
+  const wrong = (picked || []).filter((i) => !(answer || []).includes(i)).map((i) => letters[i])  // 考生选错的项
+  return [  // 提示词数组
+    SYSTEM_BASE,  // 系统约束
+    '',  // 空行
+    `题干：${stem}`,  // 题干
+    `选项：\n${optionText}`,  // 选项
+    `正确答案：${right}`,  // 正确答案
+    wrong.length ? `考生选错：${wrong.join('、')}` : '考生没有选错项',  // 错项
+    `题库自带解析：${explain || '无'}`,  // 已有解析，供参考
+    '',  // 空行
+    '请讲这道题，规则：',  // 规则标题
+    '1. 全中文，正文不超过 180 字，不要客套话。',  // 长度
+    '2. 先用一句话点出这题考哪个知识点，再讲正确项为什么对，再逐个讲错项错在哪（选项少于两个就跳过这一步）。',  // 结构
+    '3. keyPoints 给 1-3 条可背诵的要点，每条不超过 24 字。',  // 要点
+    '4. 必须补一句记忆钩子（对比、口诀或场景），要贴这道题，不许泛泛而谈。',  // 钩子
+    '5. 不评价考生水平、不预测分数、不说“你应该”。',  // 禁止
+    '6. 输出格式：{"explain":"","keyPoints":[""],"hook":""}；解释放 explain，记忆钩子单独放 hook。',  // 输出结构
+  ].join('\n')  // 拼成一段
+}  // buildExplainPrompt 结束
+
 // ---------- 调上游 ----------
 
 // 调 DeepSeek，返回解析后的对象；失败抛结构化错误
@@ -434,7 +459,8 @@ async function handle(req, res) {  // 主路由
   if (path !== '/v1/interview/turn' &&  // 非出题
       path !== '/v1/interview/evaluate' &&  // 非评分
       path !== '/v1/interview/summary' &&  // 非总结
-      path !== '/v1/coach') {  // 非学伴
+      path !== '/v1/coach' &&  // 非学伴
+      path !== '/v1/quiz/explain') {  // 非讲题
     return sendJSON(res, 404, { code: 'notFound', message: '接口不存在' })  // 404
   }  // 404 分支结束
 
@@ -471,6 +497,42 @@ async function handle(req, res) {  // 主路由
       confidence: out.confidence || 'low',  // 置信度
     })  // 返回结束
   }  // 学伴分支结束
+
+  // AI 讲题：以题目 id 为幂等键，同一题反复点不会重复烧额度
+  if (path === '/v1/quiz/explain') {  // 讲题分支
+    const questionId = String(body.questionId || '').slice(0, 64)  // 题号
+    if (!questionId) {  // 没题号没法讲
+      return sendJSON(res, 400, { code: 'badRequest', message: 'questionId 不能为空' })  // 400
+    }  // 分支结束
+    const hit = idempotentGet(`explain:${questionId}`)  // 查同题缓存
+    if (hit) return sendJSON(res, 200, { ...hit, cached: true })  // 命中直接返回
+    try {  // 尝试讲题
+      const out = await callModel(buildExplainPrompt({  // 拼提示词并调模型
+        stem: String(body.stem || '').slice(0, 400),  // 题干
+        options: Array.isArray(body.options) ? body.options.slice(0, 6) : [],  // 选项
+        answer: Array.isArray(body.answer) ? body.answer : [],  // 正确答案
+        picked: Array.isArray(body.picked) ? body.picked : [],  // 考生所选
+        explain: String(body.explain || '').slice(0, 600),  // 题库解析
+      }), { temperature: 0.4 })  // 温度低一点，讲得更稳
+      const payload = {  // 组装响应
+        requestId: randomUUID(),  // 请求 id
+        explain: String(out.explain || '').slice(0, 800),  // 讲解正文
+        keyPoints: Array.isArray(out.keyPoints) ? out.keyPoints.slice(0, 3).map((s) => String(s).slice(0, 40)) : [],  // 要点
+        hook: String(out.hook || '').slice(0, 80),  // 记忆钩子
+        disclaimer: 'AI 讲解仅供参考；以题库解析与教材为准',  // 强制声明，不允许模型改写
+      }  // 组装结束
+      idempotentSet(`explain:${questionId}`, payload)  // 写缓存
+      return sendJSON(res, 200, payload)  // 返回
+    } catch (err) {  // 讲题失败
+      const msg = String(err?.message || err)  // 错误信息
+      const timeout = /abort/i.test(msg)  // 是否超时
+      return sendJSON(res, timeout ? 504 : 502, {  // 超时 504，其它 502
+        code: timeout ? 'timeout' : 'aiUnavailable',  // 错误码，对应 iOS AppError
+        message: msg.slice(0, 300),  // 截断，避免泄露上游细节
+        retriable: true,  // 允许重试
+      })  // 响应结束
+    }  // catch 结束
+  }  // 讲题分支结束
 
   const cacheKey = `${path}:${sessionId}:${turnIndex}`  // 幂等键
   const cached = idempotentGet(cacheKey)  // 查缓存

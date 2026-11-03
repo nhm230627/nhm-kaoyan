@@ -23,6 +23,10 @@ struct QuizRunView: View {  // 练习作答页
     @State private var seconds = 0  // 交卷时定格的用时
     @State private var unanswered = 0  // 交卷时未答数
     @State private var hint: String?  // 底部轻提示（AI 讲题等未接功能的说明）
+    @State private var aiLoading = false  // AI 讲题是否在请求
+    @State private var aiResult: QuizExplainResponse?  // AI 讲题结果
+    @State private var aiError: AppError?  // AI 讲题错误
+    @State private var showAI = false  // 讲题面板是否弹出
 
     init(pool: [Question], size: Int, revealEach: Bool,  // 练习用构造器
          title: String = "", fixed: Bool = false) {  // 模考可传卷名与固定题序
@@ -76,6 +80,9 @@ struct QuizRunView: View {  // 练习作答页
                     .padding(.bottom, 28)  // 离底边
             }  // 分支结束
         }  // 浮层结束
+        .sheet(isPresented: $showAI) {  // AI 讲题面板
+            aiSheet  // 讲解内容
+        }  // 面板结束
     }  // body 结束
 
     private var runBody: some View {  // 作答界面
@@ -281,11 +288,11 @@ struct QuizRunView: View {  // 练习作答页
     // MARK: - 导航与答题卡                                            // 分节：导航
 
     /// 样板的「让 AI 讲讲这道题」（.ai-explain-btn）。
-    /// BFF 目前只有 interview / coach 两组接口，没有讲题接口，所以点下去如实提示，
-    /// 不假装能讲、也不偷偷调 coach 去糊一个答案。
+    /// 走 BFF 的 /v1/quiz/explain：只讲知识点与对错项、给记忆钩子，不评价考生水平。
+    /// 同一题在服务端按题目 id 缓存，反复点不会重复烧额度。
     private var aiExplainButton: some View {  // AI 讲解按钮
         Button {  // 点击
-            showHint("AI 讲题接口还没接，先把上面的解析看明白；接上就换成真的讲题。")  // 如实提示
+            askAI()  // 真正去请求
         } label: {  // 按钮外观
             HStack(spacing: 7) {  // 小圆点 + 文字
                 Circle().fill(Color.appViolet)  // 紫色小点（样板 .ai-dot）
@@ -305,6 +312,91 @@ struct QuizRunView: View {  // 练习作答页
         .buttonStyle(.plain)  // 去掉系统样式
         .padding(.top, 10)  // 与解析隔开（样板 margin-top 10）
     }  // aiExplainButton 结束
+
+    private func askAI() {  // 请求 AI 讲题
+        guard let q = current else { return }  // 没题就不动
+        aiResult = nil  // 清上次结果
+        aiError = nil  // 清上次错误
+        showAI = true  // 先弹出面板
+        aiLoading = true  // 转圈
+        let req = QuizExplainRequest(  // 组装请求
+            questionId: q.id,  // 题号
+            stem: q.stem,  // 题干
+            options: q.options,  // 选项
+            answer: q.answer,  // 正确答案
+            picked: (answers[q.id] ?? []).sorted(),  // 我选的
+            explain: q.explain  // 题库解析
+        )  // 组装结束
+        Task {  // 异步请求
+            do {  // 正常路径
+                aiResult = try await QuizExplainService().explain(req)  // 拿到讲解
+            } catch let e as AppError {  // 已知错误
+                aiError = e  // 记下
+            } catch {  // 其它错误
+                aiError = .aiUnavailable(String(describing: error))  // 统一归为 AI 不可用
+            }  // 分支结束
+            aiLoading = false  // 收起转圈
+        }  // 任务结束
+    }  // askAI 结束
+
+    private var aiSheet: some View {  // AI 讲题面板
+        NavigationStack {  // 套栈才有标题栏
+            ScrollView {  // 可滚动
+                VStack(alignment: .leading, spacing: Space.m) {  // 纵向排列
+                    if aiLoading {  // 请求中
+                        HStack(spacing: Space.s) {  // 横排
+                            ProgressView()  // 转圈
+                            Text("AI 正在讲这道题…").font(AppFont.body).foregroundStyle(Color.textSecondary)  // 说明
+                        }  // 横排结束
+                        .frame(maxWidth: .infinity, alignment: .center)  // 居中
+                        .padding(.top, Space.xl)  // 上留白
+                    } else if let e = aiError {  // 出错
+                        VStack(alignment: .leading, spacing: Space.xs) {  // 纵向
+                            Text(e.title).font(AppFont.bodyStrong).foregroundStyle(Color.appErr)  // 标题
+                            Text(e.action).font(AppFont.caption).foregroundStyle(Color.textSecondary)  // 下一步
+                            GhostButton(title: "重试", systemImage: "arrow.clockwise") { askAI() }  // 重试
+                                .padding(.top, Space.s)  // 上留白
+                        }  // 排列结束
+                        .frame(maxWidth: .infinity, alignment: .leading)  // 左对齐
+                    } else if let r = aiResult {  // 有结果
+                        Text(r.explain)  // 讲解正文
+                            .font(AppFont.body)  // 正文
+                            .fixedSize(horizontal: false, vertical: true)  // 允许换行
+                        if !r.keyPoints.isEmpty {  // 有要点
+                            VStack(alignment: .leading, spacing: Space.xxs) {  // 纵向
+                                Text("可背要点").font(AppFont.captionStrong).foregroundStyle(Color.textSecondary)  // 小标题
+                                ForEach(r.keyPoints, id: \.self) { p in  // 逐条
+                                    Text("· \(p)").font(AppFont.caption).foregroundStyle(Color.textPrimary)  // 一条
+                                }  // 遍历结束
+                            }  // 排列结束
+                        }  // 分支结束
+                        if let hook = r.hook, !hook.isEmpty {  // 有记忆钩子
+                            Text("记忆钩子：\(hook)")  // 钩子
+                                .font(AppFont.caption)  // 小字
+                                .foregroundStyle(Color(hex: 0x5B45D6))  // 样板紫
+                                .fixedSize(horizontal: false, vertical: true)  // 允许换行
+                        }  // 分支结束
+                        if let d = r.disclaimer {  // 有声明
+                            Text(d)  // 声明
+                                .font(.system(size: 10.5))  // 极小
+                                .foregroundStyle(Color.textTertiary)  // 弱化色
+                                .fixedSize(horizontal: false, vertical: true)  // 允许换行
+                        }  // 分支结束
+                    }  // 分支结束
+                }  // 排列结束
+                .padding(Metrics.pagePadding)  // 内边距
+            }  // 滚动结束
+            .background(Color.appBG)  // 底色
+            .navigationTitle("AI 讲题")  // 标题
+            .navigationBarTitleDisplayMode(.inline)  // 内联
+            .toolbar {  // 工具栏
+                ToolbarItem(placement: .topBarTrailing) {  // 右侧
+                    Button("关闭") { showAI = false }  // 关掉面板
+                }  // 工具栏项结束
+            }  // 工具栏结束
+        }  // 栈结束
+        .presentationDetents([.medium, .large])  // 先半屏，可拉大
+    }  // aiSheet 结束
 
     private func showHint(_ text: String) {  // 底部轻提示
         hint = text  // 设文案
