@@ -19,13 +19,15 @@ on:
 
 jobs:
   build:  # 唯一的一个任务：编译
-    # 为什么用 Intel 机而不是 macos-latest：
-    #   2026-11-03 连续三次构建在排队 15 分钟后被取消，注解原话是
+    # 2026-11-03 排查记录（别再来回试镜像浪费时间）：
+    #   连续三次在 macos-latest 上排队 15 分钟后被取消，注解是
     #   「The job was not acquired by Runner of type hosted even after multiple attempts」，
-    #   附带通知「Due to capacity constraints, jobs targeting macOS arm64 runners may experience
-    #   longer queue times」。arm64 池子挤爆了，Intel 池（macos-15-intel）排队短得多。
-    #   工程 deploymentTarget 是 iOS 18，Xcode 16 就够，不需要 Apple Silicon 或 Xcode 26。
-    runs-on: macos-15-intel  # Intel 池的 macOS 15，装的是 Xcode 16 系列
+    #   并附带「macOS arm64 容量紧张」的提示；换成 macos-15-intel 后立刻失败，注解才说真话：
+    #   「The job was not started because recent account payments have failed or your spending
+    #   limit needs to be increased」。所以排队/换池都是表象，根因是私有仓库的 Actions 额度。
+    #   办法只有三个：仓库改 public（公开仓库的 Actions 全免费、不限分钟）、充值或调高 spending
+    #   limit、等下个计费周期额度重置。代码本身没动过。
+    runs-on: macos-latest  # GitHub 提供的真实 macOS 机器（Apple Silicon）
 
     defaults:
       run:
@@ -55,9 +57,6 @@ jobs:
           UDID=$(xcrun simctl list devices available --json | python3 -c "import json,sys;d=json.load(sys.stdin)['devices'];print([x['udid'] for k in sorted(d, reverse=True) for x in d[k] if x['name'].startswith('iPhone')][0])")  # 取最新运行时里的第一台 iPhone
           echo "选中的模拟器 UDID: $UDID"  # 打出来方便排查
           echo "udid=$UDID" >> "$GITHUB_OUTPUT"  # 传给后面的步骤
-
-      - name: 跑单元测试  # 只跑 build 只能证明"能编译"，跑 test 才能证明"逻辑对"
-        run: xcodebuild test -project FuShiZhuan.xcodeproj -scheme FuShiZhuan -destination "id=${{ steps.pick.outputs.udid }}" CODE_SIGNING_ALLOWED=NO  # 目标设备由上一步动态挑，避免写死机型名导致找不到模拟器
 
       - name: 装进模拟器并逐 Tab 截图  # 这一步同时验证「App 能不能启动」——此前 6074 行代码从未上过屏幕
         if: always()  # 就算测试挂了也要截图：界面本身有问题时，图比测试日志更能说明情况
@@ -105,3 +104,11 @@ jobs:
           name: app-screenshots  # artifact 名字，网页上按这个下载
           path: app/shots/  # 注意路径是相对仓库根目录，不是 working-directory
           if-no-files-found: warn  # 一张都没截到也不额外报错，日志里已写明原因
+
+      # 顺序为什么把测试放在截图后面：
+      #   2026-11-03 的 run 68 在「跑单元测试」这一步卡了 30 分钟不动，导致后面的截图与上传
+      #   全部没机会执行，白等一轮。截图是看界面必需的东西，测试卡住不该拖累它，所以先截图、
+      #   先上传，最后再跑测试。再加 timeout-minutes 兜底：卡住最多 15 分钟就被杀掉，job 能收尾。
+      - name: 跑单元测试  # 只跑 build 只能证明"能编译"，跑 test 才能证明"逻辑对"
+        timeout-minutes: 15  # 卡死兜底：模拟器偶发 hang 时不至于把整个 job 拖到 6 小时上限
+        run: xcodebuild test -project FuShiZhuan.xcodeproj -scheme FuShiZhuan -destination "id=${{ steps.pick.outputs.udid }}" CODE_SIGNING_ALLOWED=NO  # 目标设备由上一步动态挑，避免写死机型名导致找不到模拟器
