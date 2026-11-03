@@ -63,6 +63,8 @@ struct RootView: View {  // 根视图
         case wrongbook  // 错题本
         case run  // 练习作答（样板 page-run）
         case result  // 练习结果（样板 page-result）
+        case sortmap  // 关卡地图
+        case sortplay  // 分拣关卡
 
         var id: String { rawValue }  // 用原始值当 id
     }  // Shot 结束
@@ -141,6 +143,14 @@ struct RootView: View {  // 根视图
             ShotRunHost()  // 等题库加载好再建
         case .result:  // 练习结果
             ShotResultHost()  // 造一份结果数据
+        case .sortmap:  // 关卡地图
+            LevelMapView()  // 四章十二关
+        case .sortplay:  // 分拣关卡
+            if let level = SortCatalog.level(SortCatalog.order.first ?? "") {  // 第一关
+                SortGameView(level: level)  // 直接开玩
+            } else {  // 数据没读到
+                EmptyState(icon: "square.grid.3x3", title: "关卡数据缺失", message: "sort-levels.json 没打进包里。")  // 空态
+            }  // 分支结束
         }  // 分支结束
     }  // shotBody 结束
 }  // RootView 结束

@@ -1,0 +1,219 @@
+{
+  "_readme": "闯关分拣数据。玩法：把卡片拖进它所属的分类槽。每条 note 是判错时给出的依据。数据来源以项目题库 data/questions.json 为主（标注 qXX），其余为标准税法通识。",
+  "levels": {
+    "tax-system-1": {
+      "title": "税种归位",
+      "hint": "税款最终归谁所有？把税种放进正确的归属",
+      "slots": [
+        { "id": "central", "name": "中央税", "color": "#5b7cff" },
+        { "id": "local", "name": "地方税", "color": "#0f9d58" },
+        { "id": "shared", "name": "共享税", "color": "#e8890c" }
+      ],
+      "cards": [
+        { "text": "消费税", "slot": "central", "note": "消费税为中央固定收入（题库 q04）" },
+        { "text": "关税", "slot": "central", "note": "关税为中央固定收入（题库 q04）" },
+        { "text": "车辆购置税", "slot": "central", "note": "车辆购置税属中央固定收入（题库 q04 解析）" },
+        { "text": "房产税", "slot": "local", "note": "房产税为地方固定收入（题库 q09）" },
+        { "text": "契税", "slot": "local", "note": "契税为地方固定收入（题库 q09）" },
+        { "text": "增值税", "slot": "shared", "note": "增值税中央地方 50∶50 分享（题库 q01）" },
+        { "text": "企业所得税", "slot": "shared", "note": "企业所得税为共享税（题库 q04 解析）" },
+        { "text": "个人所得税", "slot": "shared", "note": "个人所得税为共享税（题库 q04 解析）" }
+      ]
+    },
+    "tax-system-2": {
+      "title": "按征税对象分类",
+      "hint": "看它对着什么征税：商品流转、所得，还是财产行为",
+      "slots": [
+        { "id": "turnover", "name": "流转税", "color": "#5b7cff" },
+        { "id": "income", "name": "所得税", "color": "#0f9d58" },
+        { "id": "property", "name": "财产行为税", "color": "#7c4dff" }
+      ],
+      "cards": [
+        { "text": "增值税", "slot": "turnover", "note": "增值税对商品和服务的流转额课征，属流转税" },
+        { "text": "消费税", "slot": "turnover", "note": "消费税在生产进口环节对流转额课征，属流转税" },
+        { "text": "关税", "slot": "turnover", "note": "关税对进出口货物课征，属流转税" },
+        { "text": "企业所得税", "slot": "income", "note": "对企业应纳税所得额课征，属所得税" },
+        { "text": "个人所得税", "slot": "income", "note": "对个人各项所得课征，属所得税" },
+        { "text": "房产税", "slot": "property", "note": "房产税以房屋为征税对象，属财产税" },
+        { "text": "契税", "slot": "property", "note": "契税因权属转移行为课征，属财产行为税" },
+        { "text": "车船税", "slot": "property", "note": "车船税对车船财产课征，属财产行为税" }
+      ]
+    },
+    "tax-system-3": {
+      "title": "税率形式",
+      "hint": "按比例算、按固定额算，还是按档递增",
+      "slots": [
+        { "id": "ratio", "name": "比例税率", "color": "#5b7cff" },
+        { "id": "fixed", "name": "定额税率", "color": "#0f9d58" },
+        { "id": "progressive", "name": "累进税率", "color": "#e8890c" }
+      ],
+      "cards": [
+        { "text": "增值税", "slot": "ratio", "note": "增值税按 13%/9%/6% 的比例税率课征" },
+        { "text": "企业所得税", "slot": "ratio", "note": "企业所得税法定税率 25%，为比例税率（题库 q19）" },
+        { "text": "房产税", "slot": "ratio", "note": "房产税按房产余值或租金收入的一定比例课征" },
+        { "text": "车船税", "slot": "fixed", "note": "车船税按每辆、每吨规定固定税额，属定额税率" },
+        { "text": "耕地占用税", "slot": "fixed", "note": "耕地占用税按占用面积规定每平方米税额，属定额税率" },
+        { "text": "城镇土地使用税", "slot": "fixed", "note": "城镇土地使用税按土地面积分级定额课征" },
+        { "text": "综合所得个税", "slot": "progressive", "note": "综合所得适用 3%–45% 七级超额累进税率（题库 q22）" },
+        { "text": "经营所得个税", "slot": "progressive", "note": "经营所得适用 5%–35% 五级超额累进税率（题库 q22）" }
+      ]
+    },
+    "vat-1": {
+      "title": "增值税税率档位",
+      "hint": "13% / 9% / 6%，看清应税行为属于哪一档",
+      "slots": [
+        { "id": "r13", "name": "13%", "color": "#e2402f" },
+        { "id": "r9", "name": "9%", "color": "#e8890c" },
+        { "id": "r6", "name": "6%", "color": "#0f9d58" }
+      ],
+      "cards": [
+        { "text": "销售货物", "slot": "r13", "note": "货物及加工修理修配适用 13%（题库 q10 解析）" },
+        { "text": "加工修理修配劳务", "slot": "r13", "note": "13% 档适用于货物及加工修理修配（题库 q10 解析）" },
+        { "text": "交通运输服务", "slot": "r9", "note": "交通运输服务适用 9%（题库 q10）" },
+        { "text": "建筑服务", "slot": "r9", "note": "建筑服务在 9% 档内（题库 q10 解析）" },
+        { "text": "销售不动产", "slot": "r9", "note": "销售不动产适用 9%（题库 q13）" },
+        { "text": "现代服务", "slot": "r6", "note": "研发技术、信息技术等现代服务适用 6%（题库 q17）" },
+        { "text": "金融服务", "slot": "r6", "note": "金融服务适用 6%（题库 q17 解析）" },
+        { "text": "生活服务", "slot": "r6", "note": "生活服务适用 6%（题库 q17 解析）" }
+      ]
+    },
+    "vat-2": {
+      "title": "进项税能不能抵",
+      "hint": "购进的东西用在哪，决定这笔进项税能不能抵",
+      "slots": [
+        { "id": "yes", "name": "可以抵扣", "color": "#0f9d58" },
+        { "id": "no", "name": "不得抵扣", "color": "#e2402f" }
+      ],
+      "cards": [
+        { "text": "生产用原材料（取得专票）", "slot": "yes", "note": "正常生产用原材料取得专票可正常抵扣（题库 q12）" },
+        { "text": "生产用机器设备（取得专票）", "slot": "yes", "note": "消费型增值税允许抵扣购进机器设备进项税（题库 q12、q16）" },
+        { "text": "用于集体福利的购进货物", "slot": "no", "note": "用于集体福利的购进货物进项税不得抵扣（题库 q12）" },
+        { "text": "非正常损失的购进货物", "slot": "no", "note": "非正常损失的购进货物不得抵扣（题库 q12）" },
+        { "text": "用于简易计税项目的货物", "slot": "no", "note": "用于简易计税方法计税项目的进项税不得抵扣（题库 q12）" },
+        { "text": "用于免税项目的购进货物", "slot": "no", "note": "用于免税项目的购进货物进项税不得抵扣（题库 q12 解析）" }
+      ]
+    },
+    "vat-3": {
+      "title": "视同销售判断",
+      "hint": "自产的和外购的，处理不一样——这是最容易错的地方",
+      "slots": [
+        { "id": "same", "name": "视同销售", "color": "#e8890c" },
+        { "id": "not", "name": "不视同销售", "color": "#8e8e93" }
+      ],
+      "cards": [
+        { "text": "自产货物用于集体福利", "slot": "same", "note": "自产、委托加工货物用于集体福利视同销售（题库 q15）" },
+        { "text": "自产货物无偿赠送他人", "slot": "same", "note": "无偿赠送自产货物视同销售" },
+        { "text": "委托加工货物用于投资", "slot": "same", "note": "委托加工货物用于投资视同销售" },
+        { "text": "购进货物用于集体福利", "slot": "not", "note": "外购货物用于集体福利不视同销售，作进项税转出" },
+        { "text": "购进货物用于个人消费", "slot": "not", "note": "外购货物用于个人消费不视同销售，进项税转出" },
+        { "text": "自产货物继续用于生产", "slot": "not", "note": "货物在内部继续生产流转，不视同销售" }
+      ]
+    },
+    "income-tax-1": {
+      "title": "个人所得税的分类",
+      "hint": "哪些合并按年算，哪些单独算",
+      "slots": [
+        { "id": "comprehensive", "name": "综合所得", "color": "#5b7cff" },
+        { "id": "business", "name": "经营所得", "color": "#0f9d58" },
+        { "id": "classified", "name": "分类所得", "color": "#7c4dff" }
+      ],
+      "cards": [
+        { "text": "工资、薪金所得", "slot": "comprehensive", "note": "综合所得四项之一（题库 q20）" },
+        { "text": "劳务报酬所得", "slot": "comprehensive", "note": "综合所得四项之一（题库 q20）" },
+        { "text": "稿酬所得", "slot": "comprehensive", "note": "综合所得四项之一（题库 q20）" },
+        { "text": "特许权使用费所得", "slot": "comprehensive", "note": "综合所得四项之一（题库 q20 解析）" },
+        { "text": "经营所得", "slot": "business", "note": "经营所得单独计税，不并入综合所得（题库 q20 解析）" },
+        { "text": "利息、股息、红利所得", "slot": "classified", "note": "利息股息红利按分类所得单独计税" },
+        { "text": "财产租赁所得", "slot": "classified", "note": "财产租赁所得按分类所得单独计税" },
+        { "text": "偶然所得", "slot": "classified", "note": "偶然所得按分类所得单独计税" }
+      ]
+    },
+    "income-tax-2": {
+      "title": "企业所得税扣除",
+      "hint": "能全扣、只能扣一部分、还是压根不能扣",
+      "slots": [
+        { "id": "full", "name": "全额扣除", "color": "#0f9d58" },
+        { "id": "limit", "name": "限额扣除", "color": "#e8890c" },
+        { "id": "never", "name": "不得扣除", "color": "#e2402f" }
+      ],
+      "cards": [
+        { "text": "合理的工资薪金支出", "slot": "full", "note": "合理的工资薪金支出准予据实全额扣除" },
+        { "text": "公益性捐赠支出", "slot": "limit", "note": "不超过年度利润总额 12% 的部分扣除（题库 q23）" },
+        { "text": "业务招待费", "slot": "limit", "note": "按发生额 60% 与营收 5‰ 孰低扣除（题库 q24）" },
+        { "text": "广告费和业务宣传费", "slot": "limit", "note": "一般企业不超过当年营收 15% 的部分扣除" },
+        { "text": "税收滞纳金", "slot": "never", "note": "税收滞纳金属不得扣除项目" },
+        { "text": "向投资者支付的股息", "slot": "never", "note": "股息红利属税后分配，不得在税前扣除" }
+      ]
+    },
+    "income-tax-3": {
+      "title": "个税用哪套税率",
+      "hint": "七级、五级，还是直接 20%",
+      "slots": [
+        { "id": "seven", "name": "3%–45% 七级", "color": "#5b7cff" },
+        { "id": "five", "name": "5%–35% 五级", "color": "#0f9d58" },
+        { "id": "flat", "name": "20% 比例", "color": "#7c4dff" }
+      ],
+      "cards": [
+        { "text": "综合所得", "slot": "seven", "note": "综合所得适用 3%–45% 七级超额累进（题库 q22 解析）" },
+        { "text": "经营所得", "slot": "five", "note": "经营所得适用 5%–35% 五级超额累进（题库 q22）" },
+        { "text": "利息股息红利所得", "slot": "flat", "note": "利息股息红利适用 20% 比例税率" },
+        { "text": "财产租赁所得", "slot": "flat", "note": "财产租赁所得适用 20% 比例税率" },
+        { "text": "财产转让所得", "slot": "flat", "note": "财产转让所得适用 20% 比例税率" },
+        { "text": "偶然所得", "slot": "flat", "note": "偶然所得适用 20% 比例税率" }
+      ]
+    },
+    "admin-1": {
+      "title": "税务机关能做什么",
+      "hint": "保全、强制执行、还是别的措施——程序不能混",
+      "slots": [
+        { "id": "preserve", "name": "税收保全", "color": "#5b7cff" },
+        { "id": "enforce", "name": "强制执行", "color": "#e2402f" },
+        { "id": "other", "name": "其他措施", "color": "#8e8e93" }
+      ],
+      "cards": [
+        { "text": "冻结相当于税款的存款", "slot": "preserve", "note": "冻结存款属税收保全措施（题库 q30）" },
+        { "text": "扣押、查封商品货物", "slot": "preserve", "note": "扣押查封属税收保全措施（题库 q30）" },
+        { "text": "变卖财产抵缴税款", "slot": "enforce", "note": "直接变卖抵缴属强制执行措施（题库 q30 解析）" },
+        { "text": "从存款中扣缴税款", "slot": "enforce", "note": "书面通知银行扣缴税款属强制执行" },
+        { "text": "通知出境机关阻止出境", "slot": "other", "note": "阻止出境属出境清税管理措施，与保全、强制执行并列（题库 q30 解析）" },
+        { "text": "按日加收万分之五滞纳金", "slot": "other", "note": "滞纳金属税款征收的附随义务（题库 q28）" }
+      ]
+    },
+    "admin-2": {
+      "title": "税务管理三环节",
+      "hint": "登记、账簿、申报——每件事归哪个环节",
+      "slots": [
+        { "id": "reg", "name": "税务登记", "color": "#5b7cff" },
+        { "id": "book", "name": "账簿凭证", "color": "#e8890c" },
+        { "id": "file", "name": "纳税申报", "color": "#0f9d58" }
+      ],
+      "cards": [
+        { "text": "设立税务登记", "slot": "reg", "note": "开业设立登记属税务登记环节" },
+        { "text": "变更税务登记", "slot": "reg", "note": "变更登记属税务登记环节" },
+        { "text": "注销税务登记", "slot": "reg", "note": "注销登记属税务登记环节" },
+        { "text": "设置、保管账簿", "slot": "book", "note": "账簿设置与保管属账簿凭证管理" },
+        { "text": "发票领用与缴销", "slot": "book", "note": "发票管理归入账簿凭证管理" },
+        { "text": "延期办理纳税申报", "slot": "file", "note": "延期申报属纳税申报环节（题库 q29）" },
+        { "text": "年度汇算清缴", "slot": "file", "note": "汇算清缴属纳税申报环节（题库 q21）" }
+      ]
+    },
+    "admin-3": {
+      "title": "综合复习",
+      "hint": "走到最后一关，三类混着来",
+      "slots": [
+        { "id": "turnover", "name": "流转税", "color": "#5b7cff" },
+        { "id": "income", "name": "所得税", "color": "#0f9d58" },
+        { "id": "admin", "name": "税收征管", "color": "#7c4dff" }
+      ],
+      "cards": [
+        { "text": "增值税", "slot": "turnover", "note": "流转税，对流转额课征" },
+        { "text": "消费税", "slot": "turnover", "note": "流转税，对特定消费品课征" },
+        { "text": "关税", "slot": "turnover", "note": "流转税，对进出口货物课征" },
+        { "text": "企业所得税", "slot": "income", "note": "所得税，对应纳税所得额课征" },
+        { "text": "个人所得税", "slot": "income", "note": "所得税，对个人所得课征" },
+        { "text": "滞纳金", "slot": "admin", "note": "滞纳金属税款征收管理（题库 q28）" },
+        { "text": "纳税申报", "slot": "admin", "note": "纳税申报属税收征管环节" }
+      ]
+    }
+  }
+}

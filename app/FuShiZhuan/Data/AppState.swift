@@ -273,6 +273,35 @@ final class AppState {  // 全局状态类
         data.levelResults.first { $0.id == id }  // 取第一条匹配
     }  // 方法结束
 
+    /// 分拣关卡结算：星级由剩余命数决定（样板 sortgame.js：stars = pass ? max(1, lives) : 0）
+    @discardableResult  // 返回值可忽略
+    func finishSortLevel(id: String, cleared: Int, total: Int, stars: Int) -> LevelResult {  // 结算一关分拣
+        let firstClear = !data.levelResults.contains { $0.id == id }  // 首通判断要在写盘前（坑 P-14）
+
+        var snap = data  // 拷一份
+        if let idx = snap.levelResults.firstIndex(where: { $0.id == id }) {  // 已有成绩
+            if stars > snap.levelResults[idx].stars {  // 只升不降
+                snap.levelResults[idx].stars = stars  // 覆盖成更高星
+            }  // 分支结束
+        } else {  // 首次通关
+            snap.levelResults.append(  // 追加成绩
+                LevelResult(id: id, correct: cleared, total: total, stars: stars, clearedAt: .now)  // 归位数当答对数
+            )  // 追加结束
+        }  // 分支结束
+
+        let foodGained = firstClear ? 2 : 1  // 首通 2 份，重复 1 份（与样板一致）
+        snap.pet.addFood(foodGained)  // 发口粮，唯一产出途径
+
+        if firstClear && stars > 0 {  // 首次且过了
+            snap.growth += GrowthReason.levelClear.delta  // 加通关成长值
+        }  // 分支结束
+
+        data = snap  // 写回
+        scheduleSave()  // 落盘
+
+        return LevelResult(id: id, correct: cleared, total: total, stars: stars, clearedAt: .now)  // 返回本次成绩
+    }  // finishSortLevel 结束
+
     func stars(inChapter chapterID: String) -> Int {  // 某章总星数
         data.levelResults  // 全部成绩
             .filter { Chapter.chapterID(from: $0.id) == chapterID }  // 只留本章

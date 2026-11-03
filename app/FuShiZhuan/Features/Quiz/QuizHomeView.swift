@@ -146,7 +146,7 @@ struct QuizHomeView: View {  // 刷题首页
 
     private var typeGroup: some View {  // 题型 chips（样板 .type-row）
         VStack(alignment: .leading, spacing: Space.s) {  // 纵向排列
-            groupTitle("选择题型", note: "点选筛题")  // 标题
+            groupTitle("选择题型", note: typeHint)  // 标题（右侧提示照样板跟着筛题结果变）
             ScrollView(.horizontal, showsIndicators: false) {  // 横向滚动
                 HStack(spacing: Space.xs) {  // 横向排列
                     typeChip(id: "all", title: "全部")  // 全部
@@ -158,6 +158,10 @@ struct QuizHomeView: View {  // 刷题首页
             .scrollClipDisabled()  // 允许边缘溢出
         }  // 排列结束
     }  // typeGroup 结束
+
+    private var typeHint: String {  // 题型标题右侧提示（样板 typeHint，跟着筛题结果变）
+        filtered.isEmpty ? "这组条件没题" : "当前可抽 \(filtered.count) 题"  // 有题报数量，没题直说
+    }  // typeHint 结束
 
     private func typeChip(id: String, title: String) -> some View {  // 单个题型 chip
         let on = pickedType == id  // 是否选中
@@ -217,7 +221,7 @@ struct QuizHomeView: View {  // 刷题首页
                     HStack {  // 横向排列
                         Text("答案与解析").font(AppFont.bodyStrong)  // 标签
                         Spacer()  // 撑开
-                        Text(revealEach ? "做一题看一题" : "交卷后统一看")  // 当前值
+                        Text(revealEach ? "每题即时看" : "交卷后统一看")  // 当前值（与样板 modeText 一致）
                             .font(AppFont.caption)  // 小字
                             .foregroundStyle(Color.textSecondary)  // 次要色
                         Image(systemName: "chevron.right")  // 箭头
@@ -234,14 +238,9 @@ struct QuizHomeView: View {  // 刷题首页
     // MARK: - 开始练习                                                // 分节：开始
 
     private var startButton: some View {  // 开始练习按钮
-        VStack(spacing: Space.xs) {  // 纵向排列
-            PrimaryButton(title: "开始练习", systemImage: "play.fill") {  // 主按钮
-                beginQuiz()  // 组卷并进入
-            }  // 按钮结束
-            Text(verbatim: "按当前筛选可抽 \(filtered.count) 题")  // 可用题数
-                .font(AppFont.caption)  // 小字
-                .foregroundStyle(Color.textTertiary)  // 弱化色
-        }  // 排列结束
+        PrimaryButton(title: "开始练习", systemImage: "play.fill") {  // 主按钮
+            beginQuiz()  // 组卷并进入
+        }  // 按钮结束
     }  // startButton 结束
 
     private var filtered: [Question] {  // 按筛选条件过滤后的题
@@ -294,9 +293,9 @@ struct QuizHomeView: View {  // 刷题首页
                     .buttonStyle(.plain)  // 不用默认高亮
                     Divider().padding(.leading, 44)  // 分隔线
                     NavigationLink {  // 闯关模式
-                        ChapterListView()  // 章节关卡列表
+                        LevelMapView()  // 关卡地图（4 章 × 3 关，进关玩拖拽分拣）
                     } label: {  // 行外观
-                        toolRow(icon: "flame.fill", title: "闯关模式", trailing: "按章节闯关")  // 行内容
+                        toolRow(icon: "flame.fill", title: "闯关模式", trailing: "拖拽分拣")  // 行内容（样板文案就是拖拽分拣）
                     }  // 链接结束
                     .buttonStyle(.plain)  // 不用默认高亮
                     Divider().padding(.leading, 44)  // 分隔线
