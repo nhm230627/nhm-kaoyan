@@ -40,14 +40,14 @@ final class PetTests: XCTestCase {  // 宠物规则测试
         var pet = Pet.default                                   // 默认宠物
         pet.lastDecayDate = noon                                // 上次结算在中午
         pet.settle(now: day(1))                                 // 第二天中午
-        XCTAssertEqual(pet.energy, 80 - Pet.dailyDecay)          // 应为 58
+        XCTAssertEqual(pet.energy, 58)                           // 写死 58：不能引用 Pet.dailyDecay，否则常量改坏了测试也跟着改
     }                                                           // 测试结束
 
     func testThreeDayDecay() {                                    // 隔三天扣 66
         var pet = Pet.default                                     // 默认宠物
         pet.lastDecayDate = noon                                  // 上次结算
         pet.settle(now: day(3))                                   // 三天后
-        XCTAssertEqual(pet.energy, 80 - Pet.dailyDecay * 3)        // 应为 14
+        XCTAssertEqual(pet.energy, 14)                             // 写死 14：同上，断言必须独立于实现
     }                                                             // 测试结束
 
     func testEnergyNeverGoesNegative() {                          // 体力不会变负数
@@ -86,7 +86,7 @@ final class PetTests: XCTestCase {  // 宠物规则测试
         pet.lastDecayDate = noon                                   // 上次结算
         pet.settle(now: day(1))                                    // 第一天：归零但不掉好感
         pet.settle(now: day(2))                                    // 第二天：开始掉
-        XCTAssertEqual(pet.affinity, 50 - Pet.starveAffinityLoss)   // 应为 46
+        XCTAssertEqual(pet.affinity, 46)                            // 写死 46：饿死第二天掉 4 点好感
         XCTAssertEqual(pet.starvedDays, 2)                          // 已饿两天
     }                                                              // 测试结束
 
@@ -115,7 +115,7 @@ final class PetTests: XCTestCase {  // 宠物规则测试
         var pet = Pet.default                                   // 默认宠物
         pet.energy = 90                                         // 体力 90
         pet.feed(now: noon)                                     // 喂一颗
-        XCTAssertEqual(pet.energy, Pet.maxEnergy)               // 封顶 100
+        XCTAssertEqual(pet.energy, 100)                         // 写死 100：体力上限
     }                                                           // 测试结束
 
     func testFeedWithoutFood() {                                // 没口粮喂不了
@@ -127,7 +127,7 @@ final class PetTests: XCTestCase {  // 宠物规则测试
 
     func testFeedWhenFull() {                                   // 吃饱了不能喂
         var pet = Pet.default                                   // 默认宠物
-        pet.energy = Pet.maxEnergy                              // 体力已满
+        pet.energy = 100                                        // 写死 100：模拟体力已满
         XCTAssertEqual(pet.feed(now: noon), .alreadyFull)       // 返回已吃饱
         XCTAssertEqual(pet.food, 2)                             // 口粮不扣
     }                                                           // 测试结束
