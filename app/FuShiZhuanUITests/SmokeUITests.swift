@@ -174,13 +174,18 @@ final class SmokeUITests: XCTestCase {  // 冒烟测试集
         XCTAssertTrue(explain.firstMatch.waitForExistence(timeout: 20), "错题本是空的，说明交卷没把错题写进存档")  // 有数据
         XCTAssertTrue(tapFirstHittable(explain), "点不到「看解析」")  // 展开解析
         XCTAssertTrue(app.buttons["收起解析"].waitForExistence(timeout: 8), "点了看解析但解析没展开")  // 真的展开了
+        XCTAssertTrue(tapFirstHittable(app.buttons.matching(identifier: "收起解析")), "点不到「收起解析」")  // 收起：展开后卡片变高，底部按钮会被挤出可视区
 
-        let resolve = app.buttons.matching(identifier: "已掌握")  // 待攻错题才有
-        XCTAssertTrue(tapFirstHittable(resolve), "点不到「已掌握」")  // 标记掌握
-        XCTAssertTrue(app.buttons["放回待攻"].waitForExistence(timeout: 8), "点了已掌握但按钮没变成放回待攻")  // 状态真的写进去了
+        let segments = app.segmentedControls.firstMatch  // 顶部「待攻 / 已掌握」分段
+        XCTAssertTrue(segments.exists, "错题本没有待攻/已掌握分段控件")  // 必须在
+        XCTAssertTrue(tapFirstHittable(app.buttons.matching(identifier: "已掌握")), "点不到「已掌握」")  // 标记掌握
+        segments.buttons.element(boundBy: 1).tap()  // 切到「已掌握」段
+        let reopen = app.buttons["放回待攻"]  // 已掌握段里才有的按钮
+        XCTAssertTrue(reopen.waitForExistence(timeout: 10), "切到已掌握段没看到「放回待攻」，说明标记掌握没写进状态")  // 真的写进去了
 
         XCTAssertTrue(tapFirstHittable(app.buttons.matching(identifier: "放回待攻")), "点不到「放回待攻」")  // 再放回去
-        XCTAssertTrue(app.buttons["已掌握"].waitForExistence(timeout: 8), "放回待攻后按钮没变回已掌握")  // 双向都通
+        segments.buttons.element(boundBy: 0).tap()  // 切回「待攻」段
+        XCTAssertTrue(app.buttons["已掌握"].waitForExistence(timeout: 10), "放回待攻后待攻列表里没出现这条错题")  // 双向都通
     }  // 用例结束
 
     // MARK: - 社区与发帖                                                // 分节：社区
