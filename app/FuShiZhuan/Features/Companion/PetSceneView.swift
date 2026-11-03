@@ -59,10 +59,14 @@ struct PetSceneView: UIViewRepresentable {  // 3D 视图
         context.coordinator.pet = cat  // 存引用便于播动画
         context.coordinator.tassel = cat.findEntity(named: PetSceneBuilder.tasselName)  // 找流苏节点
         context.coordinator.tail = cat.findEntity(named: CatMetrics.tailName)  // 找尾巴节点
+        context.coordinator.eyes = PetSceneBuilder.eyeNodes(in: cat)  // 找两只眼睛
         context.coordinator.stage = stage  // 记下当前阶段
         context.coordinator.outfit = outfit  // 记下当前穿戴
         context.coordinator.animationsOff = animationsOff  // 同步动效开关
-        if !animationsOff { context.coordinator.playIdle() }  // 开着就轻微起伏
+        if !animationsOff {  // 开着动效才动
+            context.coordinator.playIdle()  // 轻微起伏
+            context.coordinator.startBlinking()  // 开始眨眼
+        }  // 分支结束
         return view  // 返回
     }  // makeUIView 结束
 
@@ -76,6 +80,7 @@ struct PetSceneView: UIViewRepresentable {  // 3D 视图
         if animationsOff != coordinator.animationsOff {  // 动效开关变了
             coordinator.animationsOff = animationsOff  // 同步
             coordinator.rebuild(stage: stage, outfit: outfit)  // 重建回静止姿态
+            if animationsOff { coordinator.stopBlinking() } else { coordinator.startBlinking() }  // 眨眼跟着开关走
         }  // 分支结束
         if jumpToken != coordinator.lastJump {  // 要求跳
             coordinator.lastJump = jumpToken  // 记下
@@ -93,12 +98,18 @@ struct PetSceneView: UIViewRepresentable {  // 3D 视图
 
     func makeCoordinator() -> Coordinator { Coordinator() }  // 建协调器
 
+    static func dismantleUIView(_ view: ARView, coordinator: Coordinator) {  // 视图销毁时
+        coordinator.stopBlinking()  // 停掉眨眼定时器，避免泄漏
+    }  // dismantleUIView 结束
+
     // MARK: - 协调器                                                  // 分节：协调器
 
     final class Coordinator {  // 持有节点与动画状态
         var pet: Entity?  // 猫根节点
         var tassel: Entity?  // 流苏节点
         var tail: Entity?  // 尾巴节点
+        var eyes: [Entity] = []  // 两只眼睛节点
+        var blinkTimer: Timer?  // 眨眼定时器
         var stage: PetStage?  // 当前阶段
         var outfit: CatOutfit?  // 当前穿戴
         var lastJump = 0  // 上次跳跃 token
@@ -116,8 +127,38 @@ struct PetSceneView: UIViewRepresentable {  // 3D 视图
             self.pet = fresh  // 更新引用
             self.tassel = fresh.findEntity(named: PetSceneBuilder.tasselName)  // 重新找流苏
             self.tail = fresh.findEntity(named: CatMetrics.tailName)  // 重新找尾巴
+            self.eyes = PetSceneBuilder.eyeNodes(in: fresh)  // 重新找眼睛
             if !animationsOff { playIdle() }  // 开着动效才继续起伏
         }  // rebuild 结束
+
+        func startBlinking() {  // 开始周期性眨眼（样板是每 2.2～4.8 秒一次，这里取 3.2 秒）
+            guard !animationsOff else { return }  // 关掉动效就不眨
+            stopBlinking()  // 先清掉旧的
+            guard !eyes.isEmpty else { return }  // 没眼睛就不折腾
+            blinkTimer = Timer.scheduledTimer(withTimeInterval: 3.2, repeats: true) { [weak self] _ in  // 每 3.2 秒
+                self?.blink()  // 眨一下
+            }  // 定时器建立结束
+        }  // startBlinking 结束
+
+        func stopBlinking() {  // 停止眨眼
+            blinkTimer?.invalidate()  // 取消定时器
+            blinkTimer = nil  // 清空引用
+        }  // stopBlinking 结束
+
+        func blink() {  // 眨一下眼
+            guard !animationsOff, !eyes.isEmpty else { return }  // 关掉动效或没眼睛就退出
+            for eye in eyes {  // 两只眼一起眨
+                let open = eye.transform  // 当前睁眼姿态
+                var shut = open  // 闭眼姿态
+                shut.scale = [open.scale.x, 0.14, open.scale.z]  // 竖向压扁，对应样板 scale.y = 0.12
+                guard let close = try? AnimationResource.generate(with: FromToByAnimation<Transform>(from: open, to: shut, duration: 0.06, timing: .linear, bindTarget: .transform)),  // 闭上
+                      let reopen = try? AnimationResource.generate(with: FromToByAnimation<Transform>(from: shut, to: open, duration: 0.09, timing: .linear, bindTarget: .transform)) else { continue }  // 睁开
+                eye.playAnimation(close)  // 先闭上
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.06) {  // 闭眼停留
+                    eye.playAnimation(reopen)  // 再睁开
+                }  // 延迟结束
+            }  // 循环结束
+        }  // blink 结束
 
         func playIdle() {  // 轻微上下起伏
             guard !animationsOff else { return }  // 关掉动效就不播
@@ -332,6 +373,7 @@ enum PetSceneBuilder {  // 猫建模器
             group.addChild(blush)  // 挂上
 
             let eye = sphere(radius: 0.135, color: CatPalette.eye)  // 眼睛
+            eye.name = s < 0 ? "cat.eye.L" : "cat.eye.R"  // 起名，眨眼动画按名字找
             eye.position = [s * 0.24, 0.06, 0.55]  // 与样板 eye.position 一致
             eye.scale = [1, 1.25, 0.7]  // 竖椭圆
             group.addChild(eye)  // 挂上
@@ -703,6 +745,11 @@ enum PetSceneBuilder {  // 猫建模器
     }  // backEntity 结束
 
     // MARK: - 小工具                                                // 分节：工具
+
+    /// 按名字取出两只眼睛节点（眨眼动画要用）
+    static func eyeNodes(in root: Entity) -> [Entity] {  // 找眼睛
+        ["cat.eye.L", "cat.eye.R"].compactMap { root.findEntity(named: $0) }  // 左右各找一次
+    }  // eyeNodes 结束
 
     static func furColor(outfit: CatOutfit, accent: Bool) -> UIColor {  // 取毛色
         let id = outfit.id(for: .fur) ?? "fur.orange"  // 当前毛色 id
