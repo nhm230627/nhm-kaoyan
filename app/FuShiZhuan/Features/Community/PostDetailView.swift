@@ -156,7 +156,7 @@ struct PostDetailView: View {  // 帖子详情
                 )  // 覆盖层结束
 
             Button {  // 发送
-                if app.addCommunityComment(draft, to: current) { draft = "" }  // 成功就清空
+                if app.addCommunityComment(draft, to: current) { draft = "" }  // 空内容会被状态层拒掉
             } label: {  // 外观
                 ZStack {  // 叠放
                     Circle().fill(Color.appBrand)  // 品牌蓝圆底
@@ -167,8 +167,7 @@ struct PostDetailView: View {  // 帖子详情
                 .frame(width: 34, height: 34)  // 34 直径（样板同）
             }  // 按钮结束
             .buttonStyle(.plain)  // 去掉系统高亮
-            .disabled(draft.trimmingCharacters(in: .whitespaces).isEmpty)  // 空内容不能发
-            .opacity(draft.trimmingCharacters(in: .whitespaces).isEmpty ? 0.45 : 1)  // 空内容变淡
+            .opacity(draft.trimmingCharacters(in: .whitespaces).isEmpty ? 0.45 : 1)  // 空内容变淡提示（不用 disabled，系统还会再压一层）
         }  // 排列结束
         .padding(.horizontal, Metrics.pagePadding)  // 左右边距
         .padding(.top, Space.s)  // 上边距
