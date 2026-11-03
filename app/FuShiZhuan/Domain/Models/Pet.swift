@@ -28,6 +28,15 @@ enum PetStage: String, Codable, CaseIterable {  // 成长阶段
         }  // 分支结束
     }  // threshold 结束
 
+    var level: Int {  // 等级数字（样板宠物名后面显示 Lv.N）
+        switch self {  // 按阶段分支
+        case .seed: 1  // 幼体 Lv.1
+        case .growing: 2  // 成长 Lv.2
+        case .mature: 3  // 成熟 Lv.3
+        case .master: 4  // 硕士 Lv.4
+        }  // 分支结束
+    }  // level 结束
+
     static func stage(for growth: Int) -> PetStage {  // 由成长值推阶段
         PetStage.allCases.last { growth >= $0.threshold } ?? .seed  // 取够得到的最高阶段
     }  // 方法结束

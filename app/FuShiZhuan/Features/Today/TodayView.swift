@@ -8,6 +8,7 @@ import SwiftUI  // 界面框架
 
 struct TodayView: View {  // 首页
     @Environment(AppState.self) private var app  // 注入全局状态
+    @State private var infoSheet: TodayInfoKind?  // 考试服务的说明弹层
 
     var body: some View {  // 视图主体
         ScrollView {  // 可滚动
@@ -20,15 +21,20 @@ struct TodayView: View {  // 首页
                     heroCard  // 蓝色渐变主卡
                     statsRow  // 四格统计
                     coachCard  // AI 学伴（本地建议免费，点「问问」才联网）
-                    petCard  // 宠物卡
                     todayTasks  // 今日任务
-                    weakTopics  // 薄弱点
+                    examServices  // 考试服务（分数查询 / 报名通道）
+                    keepLearning  // 继续学习（模拟面试 / 刷题训练）
                 }  // 分支结束
             }  // 排列结束
             .padding(.bottom, 96)  // 底部留白：悬浮 TabBar 不占安全区，必须手动让开
         }  // 滚动结束
         .background(Color.appBG)  // 页面底色
         .toolbar(.hidden, for: .navigationBar)  // 隐藏系统导航栏，标题由 PageHeader 自己画
+        .sheet(item: $infoSheet) { which in  // 考试服务的说明弹层
+            TodayInfoSheet(kind: which)  // 按类型给内容
+                .presentationDetents([.height(300), .medium])  // 半屏足够
+                .presentationDragIndicator(.visible)  // 顶部小横条
+        }  // 弹层结束
     }  // body 结束
 
     // MARK: - 页头                                                      // 分节：页头
@@ -149,63 +155,6 @@ struct TodayView: View {  // 首页
             .padding(.horizontal, Metrics.pagePadding)  // 与其它卡片对齐左右边距
     }  // coachCard 结束
 
-    // MARK: - 宠物卡                                                    // 分节：宠物
-
-    private var petCard: some View {  // 宠物卡
-        Card {  // 卡片容器
-            VStack(alignment: .leading, spacing: Space.m) {  // 纵向排列
-                HStack {  // 标题行
-                    Text("我的伙伴").font(AppFont.section)  // 标题
-                    Spacer()  // 撑开
-                    Text(app.pet.statusText)  // 状态文案
-                        .font(AppFont.caption)  // 小字
-                        .foregroundStyle(petStatusColor)  // 按状态上色
-                }  // 排列结束
-
-                HStack(spacing: Space.l) {  // 图标加数据
-                    ZStack {  // 叠放
-                        Circle()  // 圆形底
-                            .fill(Color.appBrand.opacity(0.12))  // 淡品牌色
-                            .frame(width: 64, height: 64)  // 尺寸
-                        Text(app.stage.title)  // 阶段名
-                            .font(AppFont.captionStrong)  // 小字加粗
-                            .foregroundStyle(Color.appBrand)  // 品牌色
-                    }  // 叠放结束
-                    VStack(alignment: .leading, spacing: Space.xs) {  // 右侧数据
-                        Meter(  // 体力条
-                            value: Double(app.pet.energy) / Double(Pet.maxEnergy),  // 比例
-                            tint: petStatusColor,  // 按状态上色
-                            label: "体力 \(app.pet.energy)/\(Pet.maxEnergy)"  // 语义标签
-                        )  // 体力条结束
-                        HStack(spacing: Space.s) {  // 口粮与好感
-                            Label("口粮 \(app.pet.food)", systemImage: "leaf")  // 口粮
-                            Label("好感 \(app.pet.affinity)", systemImage: "heart")  // 好感
-                        }  // 排列结束
-                        .font(AppFont.caption)  // 小字
-                        .foregroundStyle(Color.textSecondary)  // 次要色
-                    }  // 右侧结束
-                }  // 排列结束
-
-                if app.pet.starved {  // 已饿死
-                    Text("宠物已饿死。闯关可以换口粮，先去过一关再来喂它。")  // 提示
-                        .font(AppFont.caption)  // 小字
-                        .foregroundStyle(Color.appErr)  // 红色
-                } else if app.pet.isHungry {  // 濒危
-                    Text("体力快见底了，去闯关拿口粮。")  // 提示
-                        .font(AppFont.caption)  // 小字
-                        .foregroundStyle(Color.appWarn)  // 橙色
-                }  // 分支结束
-            }  // 排列结束
-        }  // 卡片结束
-        .padding(.horizontal, Metrics.pagePadding)  // 左右边距
-    }  // petCard 结束
-
-    private var petStatusColor: Color {  // 宠物状态配色
-        if app.pet.starved { return .appErr }  // 饿死红
-        if app.pet.isHungry { return .appWarn }  // 濒危橙
-        return .appOK  // 正常绿
-    }  // 属性结束
-
     // MARK: - 今日任务                                                  // 分节：任务
 
     private var todayTasks: some View {  // 今日任务区
@@ -308,58 +257,195 @@ struct TodayView: View {  // 首页
         .accessibilityLabel("\(title)，\(detail)，\(done ? "已完成" : "未完成")")  // 朗读文案
     }  // taskRow 结束
 
-    // MARK: - 薄弱点                                                    // 分节：薄弱点
+    // MARK: - 考试服务                                                 // 分节：考试服务
 
-    @ViewBuilder  // 可能不渲染
-    private var weakTopics: some View {  // 薄弱点区
-        let weak = app.weakTopics()  // 取薄弱点
-        if !weak.isEmpty {  // 有才显示
-            VStack(alignment: .leading, spacing: Space.m) {  // 纵向排列
-                Text("薄弱点").font(AppFont.section)  // 区段标题
-                    .padding(.horizontal, Metrics.pagePadding)  // 左右边距
-                Card {  // 卡片
-                    VStack(spacing: Space.m) {  // 纵向排列
-                        ForEach(weak.prefix(3), id: \.topic.id) { item in  // 最多三条
-                            NavigationLink {  // 「去练」真的能进
-                                weakDestination(chapterID: item.topic.id)  // 该板块第一关
-                            } label: {  // 行外观
-                                HStack {  // 横向排列
-                                    VStack(alignment: .leading, spacing: 2) {  // 文字区
-                                        Text(item.topic.name).font(AppFont.bodyStrong)  // 板块名
-                                        Text("答了 \(item.total) 题，正确率 \(Int((item.accuracy * 100).rounded()))%")  // 统计
-                                            .font(AppFont.caption)  // 小字
-                                            .foregroundStyle(Color.textSecondary)  // 次要色
-                                    }  // 文字区结束
-                                    Spacer()  // 撑开
-                                    Text("去练")  // 引导文案
-                                        .font(AppFont.captionStrong)  // 小字加粗
-                                        .foregroundStyle(Color.appBrand)  // 品牌色
-                                    Image(systemName: "chevron.right")  // 箭头
-                                        .font(.system(size: 11, weight: .semibold))  // 小箭头
-                                        .foregroundStyle(Color.textTertiary)  // 弱化色
-                                }  // 排列结束
-                                .contentShape(Rectangle())  // 整行可点
-                            }  // 外观结束
-                            .buttonStyle(.plain)  // 不用默认高亮
-                        }  // 遍历结束
-                    }  // 排列结束
-                }  // 卡片结束
+    private var examServices: some View {  // 考试服务（样板 .svc-grid 两块）
+        VStack(alignment: .leading, spacing: Space.m) {  // 纵向排列
+            Text("考试服务").font(AppFont.section)  // 区段标题
                 .padding(.horizontal, Metrics.pagePadding)  // 左右边距
-            }  // 排列结束
-        }  // 分支结束
-    }  // weakTopics 结束
 
-    @ViewBuilder  // 目的地随题库状态变化
-    private func weakDestination(chapterID: String) -> some View {  // 某板块第一关
-        if let bank = app.bank {  // 题库已加载
-            let questions = QuestionBankLoader.questions(inChapter: chapterID, levelIndex: 1, bank: bank)  // 第一关题目
-            if questions.isEmpty {  // 没题
-                QuizHomeView()  // 退回刷题首页
-            } else {  // 有题
-                LevelPlayView(questions: questions, levelID: "\(chapterID)-1")  // 直接开打
-            }  // 分支结束
-        } else {  // 题库没来
-            QuizHomeView()  // 先看刷题首页
-        }  // 分支结束
-    }  // weakDestination 结束
+            HStack(spacing: Space.s) {  // 两块并排
+                Button {  // 分数查询
+                    infoSheet = .score  // 弹查分说明
+                } label: {  // 方块外观
+                    serviceTile(icon: "chart.bar.fill",  // 柱状图
+                                title: "分数查询",  // 标题（样板原话）
+                                subtitle: "初试成绩 / 排名",  // 副标题（样板原话）
+                                tint: Color.appBrand,  // 蓝
+                                bg: Color(hex: 0xE8EDFF))  // 浅蓝底
+                }  // 按钮结束
+                .buttonStyle(.plain)  // 去掉系统样式
+
+                Button {  // 报名通道
+                    infoSheet = .signup  // 弹报名说明
+                } label: {  // 方块外观
+                    serviceTile(icon: "calendar",  // 日历
+                                title: "报名通道",  // 标题（样板原话）
+                                subtitle: "复试班 / 调剂指导",  // 副标题（样板原话）
+                                tint: Color.appViolet,  // 紫
+                                bg: Color(hex: 0xF1EBFF))  // 浅紫底
+                }  // 按钮结束
+                .buttonStyle(.plain)  // 去掉系统样式
+            }  // 横排结束
+            .padding(.horizontal, Metrics.pagePadding)  // 左右边距
+        }  // 排列结束
+    }  // examServices 结束
+
+    private func serviceTile(icon: String, title: String, subtitle: String,  // 一个服务方块
+                             tint: Color, bg: Color) -> some View {  // 图标色与底色
+        VStack(alignment: .leading, spacing: 4) {  // 纵向排列
+            Image(systemName: icon)  // 图标
+                .font(.system(size: 16, weight: .medium))  // 图标大小
+                .foregroundStyle(tint)  // 图标色
+                .frame(width: 34, height: 34)  // 34 方块
+                .background(RoundedRectangle(cornerRadius: 11, style: .continuous).fill(bg))  // 圆角底
+
+            Text(title)  // 标题
+                .font(.system(size: 12.5, weight: .semibold))  // 12.5 号
+                .foregroundStyle(Color.textPrimary)  // 主色
+            Text(subtitle)  // 副标题
+                .font(.system(size: 10))  // 10 号
+                .foregroundStyle(Color.textSecondary)  // 次要色
+                .lineLimit(1)  // 一行
+        }  // 竖排结束
+        .frame(maxWidth: .infinity, alignment: .leading)  // 撑满左对齐
+        .padding(.horizontal, 13)  // 左右
+        .padding(.vertical, 12)  // 上下
+        .background(RoundedRectangle(cornerRadius: 16, style: .continuous)  // 圆角 16
+            .fill(Color.appCard))  // 白底
+    }  // serviceTile 结束
+
+    // MARK: - 继续学习                                                 // 分节：继续学习
+
+    private var keepLearning: some View {  // 继续学习（样板 .entry-row 两块）
+        VStack(alignment: .leading, spacing: Space.m) {  // 纵向排列
+            Text("继续学习").font(AppFont.section)  // 区段标题
+                .padding(.horizontal, Metrics.pagePadding)  // 左右边距
+
+            HStack(spacing: Space.s) {  // 两块并排
+                NavigationLink {  // 模拟面试
+                    InterviewRoomsPage()  // 三个面试间
+                } label: {  // 方块外观
+                    entryTile(icon: "mic.fill",  // 麦克风
+                              title: "模拟面试",  // 标题（样板原话）
+                              subtitle: "3 个面试间",  // 副标题（样板原话）
+                              main: true)  // 主入口用实底
+                }  // 链接结束
+                .buttonStyle(.plain)  // 去掉系统样式
+
+                NavigationLink {  // 刷题训练
+                    QuizHomeView()  // 刷题首页
+                } label: {  // 方块外观
+                    entryTile(icon: "checklist",  // 清单
+                              title: "刷题训练",  // 标题（样板原话）
+                              subtitle: "\(app.bank?.questions.count ?? 0) 题",  // 题库题数
+                              main: false)  // 次入口用浅底
+                }  // 链接结束
+                .buttonStyle(.plain)  // 去掉系统样式
+            }  // 横排结束
+            .padding(.horizontal, Metrics.pagePadding)  // 左右边距
+        }  // 排列结束
+    }  // keepLearning 结束
+
+    private func entryTile(icon: String, title: String, subtitle: String,  // 一个学习入口
+                           main: Bool) -> some View {  // main = 主入口
+        VStack(alignment: .leading, spacing: 4) {  // 纵向排列
+            Image(systemName: icon)  // 图标
+                .font(.system(size: 17, weight: .medium))  // 图标大小
+                .foregroundStyle(main ? .white : Color.appBrand)  // 主入口白图标
+            Text(title)  // 标题
+                .font(.system(size: 12.5, weight: .semibold))  // 12.5 号
+                .foregroundStyle(main ? .white : Color.textPrimary)  // 主入口白字
+            Text(subtitle)  // 副标题
+                .font(.system(size: 10))  // 10 号
+                .foregroundStyle(main ? Color.white.opacity(0.75) : Color.textSecondary)  // 主入口半透明白
+        }  // 竖排结束
+        .frame(maxWidth: .infinity, alignment: .leading)  // 撑满左对齐
+        .padding(.horizontal, 13)  // 左右
+        .padding(.vertical, 12)  // 上下
+        .background(RoundedRectangle(cornerRadius: 16, style: .continuous)  // 圆角 16
+            .fill(main ? AnyShapeStyle(LinearGradient(colors: [Color.appBrand, Color(hex: 0x4A72F5)],  // 主入口渐变
+                                                      startPoint: .topLeading, endPoint: .bottomTrailing))  // 左上到右下
+                        : AnyShapeStyle(Color.appCard)))  // 次入口白底
+    }  // entryTile 结束
+
 }  // TodayView 结束
+
+// MARK: - 考试服务弹层                                                  // 分节：说明弹层
+
+enum TodayInfoKind: String, Identifiable {  // 两种说明
+    case score  // 分数查询
+    case signup  // 报名通道
+
+    var id: String { rawValue }  // 用原始值当 id
+
+    var title: String {  // 弹层标题
+        switch self {  // 分支
+        case .score: "分数查询"  // 查分
+        case .signup: "报名通道"  // 报名
+        }  // 分支结束
+    }  // title 结束
+}  // TodayInfoKind 结束
+
+struct TodayInfoSheet: View {  // 说明弹层（样板用 infoSheet 弹层，这里做成 sheet）
+    let kind: TodayInfoKind  // 哪种
+    @Environment(\.dismiss) private var dismiss  // 关闭自己
+
+    var body: some View {  // 视图主体
+        VStack(alignment: .leading, spacing: Space.m) {  // 纵向排列
+            HStack {  // 标题行
+                Text(kind.title)  // 标题
+                    .font(.system(size: 17, weight: .bold))  // 17 加粗
+                Spacer()  // 撑开
+                Button {  // 关闭
+                    dismiss()  // 收起
+                } label: {  // 按钮外观
+                    Image(systemName: "xmark")  // 叉
+                        .font(.system(size: 13, weight: .semibold))  // 图标
+                        .foregroundStyle(Color.textSecondary)  // 次要色
+                        .frame(width: 28, height: 28)  // 点击区
+                        .background(Circle().fill(Color(hex: 0xF2F3F7)))  // 灰圆底
+                }  // 按钮结束
+                .buttonStyle(.plain)  // 去掉系统样式
+            }  // 横排结束
+
+            if kind == .score {  // 查分说明
+                Text("查分需要对接研招网 / 各省考试院接口，目前还没接入，所以这里不能真的查。")  // 如实说明
+                    .font(.system(size: 12))  // 12 号
+                    .foregroundStyle(Color.textSecondary)  // 次要色
+                    .lineSpacing(3)  // 行距
+                Text("出分后，正确做法是把官方查分入口做成外链，引导你去官方页面查，不在 App 里代查。")  // 给方案
+                    .font(.system(size: 12))  // 12 号
+                    .foregroundStyle(Color.textSecondary)  // 次要色
+                    .lineSpacing(3)  // 行距
+            } else {  // 报名说明
+                signupRow("复试全程班", trailing: "3 月开班")  // 样板第一行
+                signupRow("调剂指导", trailing: "出分后启动")  // 样板第二行
+                Text("课程与商家都还没接入，这两行只是样板上原本就有的位置。")  // 如实说明
+                    .font(.system(size: 11))  // 11 号
+                    .foregroundStyle(Color.textTertiary)  // 弱化色
+            }  // 分支结束
+
+            Spacer(minLength: 0)  // 撑开
+        }  // 排列结束
+        .padding(.horizontal, 18)  // 左右
+        .padding(.top, 18)  // 上
+        .frame(maxWidth: .infinity, alignment: .leading)  // 撑满左对齐
+        .background(Color.appBG)  // 底色
+    }  // body 结束
+
+    private func signupRow(_ title: String, trailing: String) -> some View {  // 一行课程
+        HStack {  // 横排
+            Text(title)  // 名称
+                .font(.system(size: 13))  // 13 号
+                .foregroundStyle(Color.textPrimary)  // 主色
+            Spacer()  // 撑开
+            Text(trailing)  // 右侧说明
+                .font(.system(size: 12))  // 12 号
+                .foregroundStyle(Color.textSecondary)  // 次要色
+        }  // 横排结束
+        .padding(.horizontal, 13)  // 左右
+        .padding(.vertical, 12)  // 上下
+        .background(RoundedRectangle(cornerRadius: 13, style: .continuous).fill(Color.appCard))  // 白底圆角
+    }  // signupRow 结束
+}  // TodayInfoSheet 结束

@@ -23,6 +23,8 @@ struct AppSnapshot: Codable, Equatable {  // 持久化单位
     var outfit: CatOutfit = .default  // 猫当前穿戴（有默认值，旧快照能直接解码）
     var diy: [Question] = []  // 我的题库（自己录的题，有默认值，旧快照能直接解码）
     var track: String = "tax"  // 当前考试方向 id（有默认值，旧快照能直接解码）
+    var todayCompanion: Int = 0  // 今日陪伴分钟数（有默认值，旧快照能直接解码）
+    var companionDate: String = ""  // 上面这个数属于哪一天，跨天清零
 
     static let currentVersion = 1  // 当前结构版本
 
@@ -58,6 +60,8 @@ struct AppSnapshot: Codable, Equatable {  // 持久化单位
         outfit = try c.decodeIfPresent(CatOutfit.self, forKey: .outfit) ?? .default  // 缺省默认穿戴
         diy = try c.decodeIfPresent([Question].self, forKey: .diy) ?? []  // 缺省空自建题库
         track = try c.decodeIfPresent(String.self, forKey: .track) ?? "tax"  // 缺省税务方向
+        todayCompanion = try c.decodeIfPresent(Int.self, forKey: .todayCompanion) ?? 0  // 缺省 0 分钟
+        companionDate = try c.decodeIfPresent(String.self, forKey: .companionDate) ?? ""  // 缺省空日期
     }  // 解码结束
 
     init(  // 全参构造器
@@ -171,6 +175,29 @@ final class AppState {  // 全局状态类
     func topicName(_ id: String) -> String {  // 知识点名字（跨方向查）
         BankRepository.topicName(id, in: banks)  // 交给仓库统一查
     }  // topicName 结束
+
+    /// 记今日陪伴时长。
+    /// 口径说明：不是「宠物的陪伴时长」，是「今天在伙伴页停留了多久」，
+    /// 由页面出现/消失时上报差值；跨天自动清零。样板 meter 就是展示这个。
+    func addCompanion(minutes: Int) {  // 累加今日陪伴
+        guard minutes > 0 else { return }  // 不足 1 分钟不记
+        let today = Self.dayKey(Date())  // 今天的日期串
+        var snap = data  // 拷一份改
+        if snap.companionDate != today {  // 跨天了
+            snap.companionDate = today  // 换成今天
+            snap.todayCompanion = 0  // 清零重记
+        }  // 分支结束
+        snap.todayCompanion += minutes  // 累加
+        data = snap  // 写回
+        scheduleSave()  // 落盘
+    }  // addCompanion 结束
+
+    static func dayKey(_ date: Date) -> String {  // 日期转 yyyy-MM-dd
+        let f = DateFormatter()  // 构造格式化器
+        f.locale = Locale(identifier: "zh_CN")  // 固定中文区，避免跟着系统变
+        f.dateFormat = "yyyy-MM-dd"  // 只要年月日
+        return f.string(from: date)  // 输出字符串
+    }  // dayKey 结束
 
     func dailyTick() {  // 每日结算，幂等
         var snap = data  // 拷一份改
