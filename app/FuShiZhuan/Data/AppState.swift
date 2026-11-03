@@ -31,6 +31,8 @@ struct AppSnapshot: Codable, Equatable {  // 持久化单位
     var plazaFriends: [String] = []  // 广场里加过的研友昵称（有默认值，旧快照能直接解码）
     var duelGames: Int = 0  // 1V1 已打场次（有默认值，旧快照能直接解码）
     var duelWins: Int = 0  // 1V1 胜场（有默认值，旧快照能直接解码）
+    var points: Int = 120  // 学习积分（样板 store.js 初始 120 点，集市花它换口粮）
+    var roamRead: Int = 0  // 图书馆翻过的知识卡张数（样板 roam.read）
 
     static let currentVersion = 1  // 当前结构版本
 
@@ -71,6 +73,8 @@ struct AppSnapshot: Codable, Equatable {  // 持久化单位
         communityPosts = try c.decodeIfPresent([CommunityPost].self, forKey: .communityPosts) ?? []  // 缺省无自建帖
         communityLikes = try c.decodeIfPresent([String].self, forKey: .communityLikes) ?? []  // 缺省没点过赞
         communitySeedComments = try c.decodeIfPresent([String: [PostComment]].self, forKey: .communitySeedComments) ?? [:]  // 缺省空
+        points = try c.decodeIfPresent(Int.self, forKey: .points) ?? 120  // 缺省 120 积分（样板同）
+        roamRead = try c.decodeIfPresent(Int.self, forKey: .roamRead) ?? 0  // 缺省没翻过知识卡
     }  // 解码结束
 
     init(  // 全参构造器
@@ -127,6 +131,8 @@ final class AppState {  // 全局状态类
     var growth: Int { data.growth }  // 成长值快捷方式
 
     var streakDays: Int { data.streakDays }  // 连续打卡天数（只读，广场等处展示用）
+    var points: Int { data.points }  // 学习积分（只读，集市花它）
+    var roamRead: Int { data.roamRead }  // 图书馆已翻知识卡张数（只读）
     var entitlement: Entitlement { data.entitlement }  // 权益快捷方式
     var stage: PetStage { PetStage.stage(for: data.growth) }  // 由成长值推阶段
     var outfit: CatOutfit { data.outfit }  // 猫当前穿戴快捷方式
@@ -289,6 +295,7 @@ final class AppState {  // 全局状态类
 
         if correct {  // 答对
             snap.growth += GrowthReason.answerCorrect.delta  // 加成长值
+            snap.points += 5  // 样板 store.js：答对一次 +5 积分
         } else {  // 答错
             if let idx = snap.wrongs.firstIndex(where: { $0.questionID == question.id }) {  // 已有错题
                 snap.wrongs[idx].wrongCount += 1  // 错次加一
@@ -547,6 +554,46 @@ final class AppState {  // 全局状态类
             snap.todayCompanion = 0  // 清零重记
         }  // 分支结束
         snap.todayCompanion += minutes  // 累加今日陪伴分钟
+        snap.points += 2  // 样板 store.js reward() 末尾统一 +2 积分
+    }  // 方法结束
+
+    // MARK: - 漫游（图书馆 / 食堂 / 集市 / 广场）                        // 分节：漫游
+
+    /// 花积分：不够就返回 false，页面据此提示「积分不够」而不是假装买成
+    @discardableResult  // 返回值可忽略
+    func spendPoints(_ amount: Int) -> Bool {  // 花积分
+        guard amount > 0, data.points >= amount else { return false }  // 不够就不动
+        var snap = data  // 拷一份改
+        snap.points -= amount  // 扣掉
+        data = snap  // 写回
+        scheduleSave()  // 落盘
+        return true  // 表示扣成功
+    }  // 方法结束
+
+    /// 漫游里的加减：精力与亲密度都夹在 0...100，跟样板 patch 的写法一致
+    func nudgePet(energy: Int = 0, affinity: Int = 0) {  // 调宠物数值
+        var snap = data  // 拷一份改
+        snap.pet.energy = max(0, min(100, snap.pet.energy + energy))  // 精力夹紧
+        snap.pet.affinity = max(0, min(100, snap.pet.affinity + affinity))  // 亲密度夹紧
+        data = snap  // 写回
+        scheduleSave()  // 落盘
+    }  // 方法结束
+
+    /// 在图书馆翻了一张知识卡：张数 +1、亲密度 +1（照样板 doAct 的 know 分支）
+    func noteRoamRead() {  // 记一次翻卡
+        var snap = data  // 拷一份改
+        snap.roamRead += 1  // 张数加一
+        snap.pet.affinity = min(100, snap.pet.affinity + 1)  // 亲密度 +1
+        data = snap  // 写回
+        scheduleSave()  // 落盘
+    }  // 方法结束
+
+    /// 加口粮：集市用积分换到的口粮从这里进存档
+    func addFood(_ count: Int) {  // 加口粮
+        var snap = data  // 拷一份改
+        snap.pet.addFood(count)  // 交给宠物逻辑
+        data = snap  // 写回
+        scheduleSave()  // 落盘
     }  // 方法结束
 
     // MARK: - 打卡                                                    // 分节：打卡

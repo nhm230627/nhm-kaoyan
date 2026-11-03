@@ -74,6 +74,8 @@ struct RootView: View {  // 根视图
         case ritual  // 拨穗礼成（样板 page-ritual）
         case duel  // 1V1 知识竞赛（样板 page-game 的浮层）
         case plaza  // 广场画布（样板 page-plaza）
+        case world  // 3D 浮空岛地图（样板 page-map）
+        case roam  // 岛内 3D 漫游（样板 page-roam）
 
         var id: String { rawValue }  // 用原始值当 id
     }  // Shot 结束
@@ -182,6 +184,10 @@ struct RootView: View {  // 根视图
             DuelView()  // 停在大厅页（截选题量与规则）
         case .plaza:  // 广场画布
             PlazaView()  // 多宠物同场，进来就动
+        case .world:  // 3D 浮空岛
+            WorldMapView()  // 三座岛，等一两秒让相机与建筑铺开
+        case .roam:  // 岛内漫游
+            RoamView(roomID: "lib")  // 默认进图书馆，房间最丰富
         }  // 分支结束
     }  // shotBody 结束
 }  // RootView 结束

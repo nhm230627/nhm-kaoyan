@@ -45,7 +45,8 @@ final class AppStateFlowTests: XCTestCase {  // 状态层测试
         var dict = try XCTUnwrap(JSONSerialization.jsonObject(with: encoded) as? [String: Any])  // 转字典
         let addedLater = ["outfit", "diy", "track", "todayCompanion", "companionDate",  // 后加字段
                           "communityPosts", "communityLikes", "communitySeedComments",  // 社区
-                          "plazaFriends", "duelGames", "duelWins"]  // 广场与 1V1
+                          "plazaFriends", "duelGames", "duelWins",  // 广场与 1V1
+                          "points", "roamRead"]  // 积分与漫游记录
         for key in addedLater { dict.removeValue(forKey: key) }  // 全部删掉，模拟旧版本存档
         let stripped = try JSONSerialization.data(withJSONObject: dict)  // 重新编码
 
@@ -55,6 +56,8 @@ final class AppStateFlowTests: XCTestCase {  // 状态层测试
         XCTAssertEqual(decoded.duelGames, 0, "缺 duelGames 时应为 0")  // 默认 0
         XCTAssertEqual(decoded.communityPosts.count, 0, "缺 communityPosts 时应为空")  // 默认空
         XCTAssertEqual(decoded.outfit, CatOutfit.default, "缺 outfit 时应回到默认穿戴")  // 默认穿戴
+        XCTAssertEqual(decoded.points, 120, "缺 points 时应按样板的初始 120 积分")  // 默认积分
+        XCTAssertEqual(decoded.roamRead, 0, "缺 roamRead 时应为 0")  // 默认没翻过卡
     }  // 用例结束
 
     // MARK: - 错题闭环                                                  // 分节：错题
@@ -140,5 +143,37 @@ final class AppStateFlowTests: XCTestCase {  // 状态层测试
         XCTAssertEqual(state.data.streakDays, 1, "首次打卡连签应为 1")  // 连签
         XCTAssertFalse(state.checkIn(), "同一天第二次打卡应失败")  // 第二次
         XCTAssertEqual(state.data.streakDays, 1, "重复打卡不该加连签")  // 连签不变
+    }  // 用例结束
+
+    // MARK: - 漫游与积分                                                // 分节：漫游
+
+    /// 积分：初始 120，花得掉才扣，不够不能扣；答对一题 +5
+    func testPointsSpendAndEarn() throws {  // 积分进出
+        XCTAssertEqual(state.points, 120, "新档积分应为样板初始的 120")  // 初值
+        XCTAssertFalse(state.spendPoints(500), "积分不够不该扣成功")  // 不够
+        XCTAssertEqual(state.points, 120, "失败时积分不该变")  // 没变
+        XCTAssertTrue(state.spendPoints(20), "够就该扣成功")  // 够
+        XCTAssertEqual(state.points, 100, "扣 20 后应剩 100")  // 扣减
+
+        _ = state.recordAnswer(question: sampleQuestion(), picked: [0])  // 答对一题
+        XCTAssertEqual(state.points, 105, "答对一题应 +5 积分（样板 store.js 同规则）")  // 加分
+    }  // 用例结束
+
+    /// 漫游里的加减：精力与亲密度都夹在 0…100
+    func testNudgePetClamps() throws {  // 数值夹紧
+        state.nudgePet(energy: 500, affinity: 500)  // 一次加爆
+        XCTAssertEqual(state.pet.energy, 100, "精力上限 100")  // 上限
+        XCTAssertEqual(state.pet.affinity, 100, "亲密度上限 100")  // 上限
+        state.nudgePet(energy: -500, affinity: -500)  // 一次减爆
+        XCTAssertEqual(state.pet.energy, 0, "精力下限 0")  // 下限
+        XCTAssertEqual(state.pet.affinity, 0, "亲密度下限 0")  // 下限
+    }  // 用例结束
+
+    /// 图书馆翻一张知识卡：张数 +1，亲密度 +1
+    func testNoteRoamRead() throws {  // 翻知识卡
+        let before = state.pet.affinity  // 原亲密度
+        state.noteRoamRead()  // 翻一张
+        XCTAssertEqual(state.roamRead, 1, "翻卡张数应加一")  // 张数
+        XCTAssertEqual(state.pet.affinity, min(100, before + 1), "亲密度应 +1")  // 亲密度
     }  // 用例结束
 }  // AppStateFlowTests 结束

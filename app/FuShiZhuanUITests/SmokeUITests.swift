@@ -87,6 +87,7 @@ final class SmokeUITests: XCTestCase {  // 冒烟测试集
         let pages = ["papers", "wrongbook", "sortmap", "mock", "tracksheet",  // 学习相关
                      "community", "post",  // 社区
                      "room", "ritual", "duel", "plaza",  // 面试与伙伴
+                     "world", "roam",  // 3D 地图与岛内漫游
                      "run", "result", "diy", "avatar", "sortplay", "paper"]  // 作答与换装
         for page in pages {  // 逐页
             let app = launch(["-startTab", "quiz", "-startShot", page])  // 直接落到该页
@@ -254,6 +255,28 @@ final class SmokeUITests: XCTestCase {  // 冒烟测试集
                             .waitForExistence(timeout: 6), "点未解锁配件没有给出解锁提示")  // 有提示，且没穿上
         }  // 分支结束
         XCTAssertEqual(app.state, .runningForeground, "换装后 App 不在前台")  // 没崩
+    }  // 用例结束
+
+    // MARK: - 3D 地图与漫游                                              // 分节：3D
+
+    /// 岛内漫游：点画布让猫走 → 点「书架」胶囊开卡片 → 点「记下来」出提示
+    func testRoamWalkAndReadCard() throws {  // 漫游交互
+        let app = launch(["-startTab", "quiz", "-startShot", "roam"])  // 直接进图书馆
+        XCTAssertTrue(app.wait(for: .runningForeground, timeout: 30), "漫游页没启动起来")  // 启动检查
+        Thread.sleep(forTimeInterval: 3.5)  // 等 3D 房间与猫搭好
+
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.62)).tap()  // 点画布地面，猫该走过去
+        Thread.sleep(forTimeInterval: 1.2)  // 等走动动画
+        XCTAssertEqual(app.state, .runningForeground, "点地面后 App 不在前台")  // 没崩
+
+        let shelf = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "书架")).firstMatch  // 书架入口胶囊
+        XCTAssertTrue(shelf.waitForExistence(timeout: 10), "找不到「书架」胶囊入口")  // 必须在
+        shelf.tap()  // 打开卡片
+        let remember = app.buttons["记下来"]  // 知识卡的主按钮
+        XCTAssertTrue(remember.waitForExistence(timeout: 8), "书架卡片没弹出「记下来」")  // 卡片真的开了
+        remember.tap()  // 记下来
+        let toastText = app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "记下了"))  // 轻提示
+        XCTAssertTrue(toastText.firstMatch.waitForExistence(timeout: 6), "点记下来没有出现提示，说明没写进状态")  // 真写入了
     }  // 用例结束
 
     // MARK: - 今日打卡                                                  // 分节：今日
