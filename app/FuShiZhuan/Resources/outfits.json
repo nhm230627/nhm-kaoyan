@@ -26,10 +26,10 @@
       "id": "fur.orange",
       "slot": "fur",
       "name": "橘猫",
-      "detail": "橘底白肚，最上镜的一只",
-      "hex": "F2A65A",
-      "accentHex": "FFF1E0",
-      "minGrowth": 100
+      "detail": "样板猫的默认配色，橘底奶油白肚",
+      "hex": "EC9440",
+      "accentHex": "FFF7EE",
+      "minGrowth": 0
     },
     {
       "id": "fur.tuxedo",

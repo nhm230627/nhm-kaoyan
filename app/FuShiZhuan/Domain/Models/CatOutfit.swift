@@ -83,7 +83,7 @@ struct CatOutfit: Codable, Equatable {  // 猫当前穿什么
     var chosen: [String: String]  // 槽位原始值 -> 配件 id
 
     static let `default` = CatOutfit(chosen: [  // 默认：奶白猫 + 学士帽
-        OutfitSlot.fur.rawValue: "fur.cream",  // 默认奶白毛
+        OutfitSlot.fur.rawValue: "fur.orange",  // 默认橘猫，与样板一致
         OutfitSlot.hat.rawValue: "hat.graduate"  // 默认戴学士帽，贴考研主题
     ])  // 默认值结束
 
