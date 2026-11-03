@@ -8,7 +8,9 @@ struct PaperPlayView: View {  // 试卷作答页
     @Environment(\.dismiss) private var dismiss  // 返回
 
     let paper: Paper  // 当前试卷
+    var revealEach = false  // 作答模式：true = 做一题看一题（样板 page-quiz）
 
+    @State private var startedAt = Date()  // 开考时间，用于计时
     @State private var index = 0  // 当前第几题
     @State private var answers: [String: Set<Int>] = [:]  // 题号到已选的映射
     @State private var submitted = false  // 是否已交卷
@@ -75,6 +77,11 @@ struct PaperPlayView: View {  // 试卷作答页
                 Text(verbatim: submitted ? "试卷复盘" : "\(answeredCount)/\(items.count)")  // 进度或标题
                     .font(AppFont.bodyStrong)  // 加粗
             }  // 工具栏项结束
+            ToolbarItem(placement: .topBarTrailing) {  // 右侧
+                if !submitted {  // 交卷后停表
+                    timerView  // 已用时间
+                }  // 分支结束
+            }  // 工具栏项结束
         }  // 工具栏结束
         .confirmationDialog(  // 交卷确认
             "确定交卷？",  // 标题
@@ -114,6 +121,9 @@ struct PaperPlayView: View {  // 试卷作答页
                             optionRow(item: item, offset: offset, text: text)  // 选项行
                         }  // 遍历结束
                     }  // 排列结束
+                    if revealEach, let picked = answers[item.question.id], !picked.isEmpty {  // 做一题看一题
+                        revealBlock(item.question, picked: picked)  // 立刻给对错与解析
+                    }  // 分支结束
                 }  // 排列结束
                 .padding(Metrics.pagePadding)  // 内边距
                 .padding(.bottom, Space.xxl)  // 底部留白
@@ -148,7 +158,9 @@ struct PaperPlayView: View {  // 试卷作答页
 
     private func optionRow(item: Item, offset: Int, text: String) -> some View {  // 单个选项
         let picked = (answers[item.question.id] ?? []).contains(offset)  // 是否选中
+        let locked = revealEach && !(answers[item.question.id] ?? []).isEmpty  // 揭示模式下已选则锁定
         return Button {  // 点击选择
+            guard !locked else { return }  // 锁定后不再改
             var set = answers[item.question.id] ?? []  // 当前已选
             if set.contains(offset) { set.remove(offset) } else { set.insert(offset) }  // 切换
             answers[item.question.id] = set  // 写回
@@ -301,6 +313,48 @@ struct PaperPlayView: View {  // 试卷作答页
             }  // 排列结束
         }  // 卡片结束
     }  // reviewRow 结束
+
+    private var timerView: some View {  // 已用时间（对齐样板 run-timer）
+        TimelineView(.periodic(from: startedAt, by: 1)) { context in  // 每秒刷新
+            Text(verbatim: elapsedText(context.date))  // 格式化时长
+                .font(AppFont.captionStrong)  // 小字加粗
+                .monospacedDigit()  // 等宽数字，跳动时不抖
+                .foregroundStyle(Color.textSecondary)  // 次要色
+        }  // 时间线结束
+    }  // timerView 结束
+
+    private func elapsedText(_ now: Date) -> String {  // 秒数转 mm:ss
+        let total = max(0, Int(now.timeIntervalSince(startedAt)))  // 已过秒数
+        return String(format: "%02d:%02d", total / 60, total % 60)  // 补零输出
+    }  // elapsedText 结束
+
+    private func revealBlock(_ question: Question, picked: Set<Int>) -> some View {  // 即时揭示块
+        let correct = question.isCorrect(picked)  // 是否答对
+        return VStack(alignment: .leading, spacing: Space.xxs) {  // 纵向排列
+            HStack(spacing: Space.xxs) {  // 结论行
+                Image(systemName: correct ? "checkmark.circle.fill" : "xmark.circle.fill")  // 图标
+                    .foregroundStyle(correct ? Color.appOK : Color.appErr)  // 对绿错红
+                Text(correct ? "答对了" : "答错了")  // 结论
+                    .font(AppFont.captionStrong)  // 小字加粗
+                    .foregroundStyle(correct ? Color.appOK : Color.appErr)  // 同色
+            }  // 排列结束
+            if !correct {  // 答错给正确答案
+                Text(verbatim: "正确答案：\(question.answerText)")  // 正确选项
+                    .font(AppFont.caption)  // 小字
+                    .foregroundStyle(Color.appBrand)  // 品牌色
+            }  // 分支结束
+            Text(question.explain)  // 解析
+                .font(AppFont.caption)  // 小字
+                .foregroundStyle(Color.textSecondary)  // 次要色
+                .fixedSize(horizontal: false, vertical: true)  // 允许换行
+        }  // 排列结束
+        .padding(Space.s)  // 内边距
+        .frame(maxWidth: .infinity, alignment: .leading)  // 撑满左对齐
+        .background(  // 背景
+            RoundedRectangle(cornerRadius: Radius.chip, style: .continuous)  // 圆角
+                .fill((correct ? Color.appOK : Color.appErr).opacity(0.08))  // 淡色底
+        )  // 背景结束
+    }  // revealBlock 结束
 
     private func pickedText(_ picked: Set<Int>) -> String {  // 用户答案文本
         guard !picked.isEmpty else { return "未作答" }  // 没答
