@@ -149,8 +149,8 @@ private final class PlazaWorld {  // 广场世界
         mePet.scale = scaleAt(mePet.y, height: h)  // 透视
         list.append(mePet)  // 加进来
 
-        let cols = 4  // 四列
-        let rows = 3  // 三行
+        let cols = 3  // 三列（列少一点，名字才不会挤在一起）
+        let rows = 4  // 四行
         let top = horizon + 56  // 最远一排
         let bottom = h - 70  // 最近一排
         let cellW = (w - 40) / Double(cols)  // 格宽
@@ -158,8 +158,8 @@ private final class PlazaWorld {  // 广场世界
         for (i, var b) in Self.bots.enumerated() {  // 逐个摆位
             let cc = i % cols  // 第几列
             let rr = (i / cols) % rows  // 第几行
-            let jitterX = Double.random(in: -0.21...0.21) * cellW * 2  // 横向抖动
-            let jitterY = Double.random(in: -0.17...0.17) * cellH * 2  // 纵向抖动
+            let jitterX = Double.random(in: -0.13...0.13) * cellW * 2  // 横向抖动（收窄，避免名字重叠）
+            let jitterY = Double.random(in: -0.12...0.12) * cellH * 2  // 纵向抖动（收窄）
             b.x = min(w - 24, max(24, 20 + cellW * (Double(cc) + 0.5) + jitterX))  // 落位
             b.y = min(bottom, max(top, top + cellH * (Double(rr) + 0.5) + jitterY))  // 落位
             b.tx = b.x  // 目标同点
