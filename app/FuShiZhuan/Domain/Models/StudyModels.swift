@@ -10,6 +10,12 @@ struct Topic: Codable, Identifiable, Hashable {  // 知识板块
     let id: String  // 板块 id
     let name: String  // 板块名
     let desc: String  // 板块说明
+    var direction: String?  // 所属方向（tax / finance / management），旧数据没有就按税务算
+
+    var directionValue: StudyDirection {  // 方向枚举
+        guard let direction, let value = StudyDirection(rawValue: direction) else { return .tax }  // 缺省税务
+        return value  // 解析成功就用它
+    }  // 属性结束
 }  // Topic 结束
 
 // MARK: - 题目                                                        // 分节：题目

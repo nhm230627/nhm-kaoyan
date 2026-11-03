@@ -1,0 +1,130 @@
+{
+  "meta": {
+    "version": "1.0",
+    "note": "试卷只存题目 id 引用，题目本体在 questions.json。kind=real 为历年真题（需用户导入自有合法来源），kind=mock 为按考纲自编的模拟卷。"
+  },
+  "papers": [
+    {
+      "id": "paper.tax.mockA",
+      "title": "税务专项 · 自编模拟卷 A",
+      "kind": "mock",
+      "direction": "tax",
+      "year": 2026,
+      "subject": "税法（一）（二）综合",
+      "minutes": 60,
+      "totalScore": 100,
+      "sourceNote": "按考试大纲与现行税法原理自编，非官方真题；不涉及易变的具体税率与扣除标准。",
+      "sections": [
+        {
+          "title": "一、税制与征管基础",
+          "questionIDs": [
+            "q01",
+            "q02",
+            "q03",
+            "q04",
+            "q05",
+            "q28",
+            "q29",
+            "q30"
+          ]
+        },
+        {
+          "title": "二、流转税与所得税",
+          "questionIDs": [
+            "q10",
+            "q11",
+            "q12",
+            "q13",
+            "q19",
+            "q20",
+            "q21",
+            "q22"
+          ]
+        },
+        {
+          "title": "三、综合运用",
+          "questionIDs": [
+            "q06",
+            "q07",
+            "q14",
+            "q15",
+            "q23",
+            "q24",
+            "q31",
+            "q32"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "paper.fin.mockA",
+      "title": "金融专项 · 自编模拟卷 A",
+      "kind": "mock",
+      "direction": "finance",
+      "year": 2026,
+      "subject": "金融学综合",
+      "minutes": 50,
+      "totalScore": 80,
+      "sourceNote": "按金融硕士考试大纲自编，覆盖货币银行与公司理财两大块。",
+      "sections": [
+        {
+          "title": "一、货币银行",
+          "questionIDs": [
+            "q37",
+            "q38",
+            "q39",
+            "q40",
+            "q41",
+            "q42"
+          ]
+        },
+        {
+          "title": "二、公司理财",
+          "questionIDs": [
+            "q47",
+            "q48",
+            "q49",
+            "q50",
+            "q51",
+            "q52"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "paper.mgmt.mockA",
+      "title": "经管专项 · 自编模拟卷 A",
+      "kind": "mock",
+      "direction": "management",
+      "year": 2026,
+      "subject": "管理学与经济学基础",
+      "minutes": 50,
+      "totalScore": 80,
+      "sourceNote": "按管理学与经济学基础考试大纲自编，侧重经典理论辨析。",
+      "sections": [
+        {
+          "title": "一、管理学原理",
+          "questionIDs": [
+            "q57",
+            "q58",
+            "q59",
+            "q60",
+            "q61",
+            "q62"
+          ]
+        },
+        {
+          "title": "二、经济学基础",
+          "questionIDs": [
+            "q67",
+            "q68",
+            "q69",
+            "q70",
+            "q71",
+            "q72"
+          ]
+        }
+      ]
+    }
+  ]
+}

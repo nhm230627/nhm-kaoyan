@@ -38,9 +38,9 @@ struct CompanionHomeView: View {  // 伙伴页
     private var statusCard: some View {  // 状态卡
         Card {  // 卡片
             VStack(spacing: Space.m) {  // 纵向排列
-                ZStack(alignment: .bottom) {  // 叠放：3D 宠物 + 阶段标签
+                ZStack(alignment: .topLeading) {  // 叠放：3D 猫 + 阶段标签
                     PetSceneView(stage: app.stage, outfit: app.outfit, jumpToken: jumpToken, flipToken: flipToken)  // 3D 形象（带当前穿戴）
-                        .frame(height: 200)  // 固定高度，别撑满整页
+                        .frame(height: 240)  // 固定高度，别撑满整页
                         .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))  // 圆角裁切
                     Text(app.stage.title)  // 阶段名
                         .font(AppFont.captionStrong)  // 小字加粗
@@ -48,7 +48,7 @@ struct CompanionHomeView: View {  // 伙伴页
                         .padding(.horizontal, Space.s)  // 左右内边距
                         .padding(.vertical, Space.xxs)  // 上下内边距
                         .background(.ultraThinMaterial, in: Capsule())  // 毛玻璃底
-                        .padding(.bottom, Space.xs)  // 距底
+                        .padding(Space.s)  // 距左上角
                 }  // 叠放结束
 
                 Text(app.pet.statusText)  // 状态文案

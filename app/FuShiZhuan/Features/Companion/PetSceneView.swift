@@ -17,11 +17,11 @@ enum CatPalette {  // 猫的固定用色（毛色不在这里，由配件表给�
     static let innerEar = UIColor(hex: "F7C6CC")  // 内耳：浅粉
     static let paw = UIColor(hex: "F7C6CC")  // 肉垫：粉
     static let whisker = UIColor(hex: "9AA3B2")  // 胡须：灰
-    static let ground = UIColor(hex: "D9DEE8")  // 地台：浅灰
+    static let ground = UIColor(hex: "C9D0DC")  // 地台：浅灰
 }  // CatPalette 结束
 
 enum CatMetrics {  // 尺寸
-    static let petScale: Float = 0.72  // 整只缩放
+    static let petScale: Float = 0.95  // 整只缩放
     static let bodyRadius: Float = 0.26  // 身体半径
     static let headRadius: Float = 0.24  // 头半径
     static let headY: Float = 0.66  // 头心高度
@@ -190,8 +190,8 @@ enum PetSceneBuilder {  // 猫建模器
     /// 放一台固定相机：略高于猫、正前方 1.5 米
     static func installCamera(on view: ARView) {  // 装相机
         let camera = PerspectiveCamera()  // 相机实体
-        camera.camera.fieldOfViewInDegrees = 45  // 视角
-        let holder = AnchorEntity(world: [0, 0.60, 1.5])  // 相机位置
+        camera.camera.fieldOfViewInDegrees = 42  // 视角
+        let holder = AnchorEntity(world: [0, 0.62, 1.32])  // 相机位置
         holder.addChild(camera)  // 挂上相机
         view.scene.addAnchor(holder)  // 加入场景
     }  // installCamera 结束
@@ -224,7 +224,7 @@ enum PetSceneBuilder {  // 猫建模器
         root.addChild(tail(color: bodyColor))  // 尾巴
         root.addChild(wearables(stage: stage, outfit: outfit))  // 可换的配件
 
-        let ground = ModelEntity(mesh: .generateCylinder(height: 0.01, radius: 0.40),  // 地台
+        let ground = ModelEntity(mesh: .generateCylinder(height: 0.012, radius: 0.46),  // 地台
                                  materials: [material(CatPalette.ground)])  // 灰色
         ground.position = [0, 0.005, 0]  // 贴地
         root.addChild(ground)  // 挂上

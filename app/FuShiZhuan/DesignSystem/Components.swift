@@ -51,6 +51,7 @@ struct PrimaryButton: View {  // 主按钮
 struct GhostButton: View {  // 次级按钮
     let title: String  // 文字
     var systemImage: String? = nil  // 图标
+    var enabled: Bool = true  // 是否可用
     let action: () -> Void  // 回调
 
     var body: some View {  // 视图主体
@@ -69,6 +70,8 @@ struct GhostButton: View {  // 次级按钮
                     .stroke(Color.appBrand.opacity(0.35), lineWidth: 1)  // 描边
             )  // 背景结束
         }  // 按钮结束
+        .disabled(!enabled)  // 不可用时禁用点击
+        .opacity(enabled ? 1 : 0.4)  // 不可用时变淡
         .accessibilityLabel(title)  // 无障碍标签
     }  // body 结束
 }  // GhostButton 结束

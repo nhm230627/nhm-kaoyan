@@ -40,15 +40,111 @@ struct QuizHomeView: View {  // 刷题首页
         ScrollView {  // 可滚动
             VStack(spacing: Space.l) {  // 纵向排列
                 summary  // 顶部统计
-                wrongBookEntry  // 错题本入口
-                ForEach(chapters) { chapter in  // 遍历章节
-                    chapterCard(chapter)  // 章节卡
-                }  // 遍历结束
+                paperEntry  // 板块一：历年真题训练
+                mixedEntry  // 板块二：综合训练
+                wrongBookEntry  // 板块三：错题本
+                topicSection  // 板块四：知识点模块训练
             }  // 排列结束
             .padding(Metrics.pagePadding)  // 内边距
             .padding(.bottom, Space.xxl)  // 底部留白
         }  // 滚动结束
     }  // content 结束
+
+    // MARK: - 板块入口                                                // 分节：入口
+
+    private var paperEntry: some View {  // 历年真题训练
+        NavigationLink {  // 进试卷列表
+            PaperListView(initialKind: .real)  // 默认停在真题分类
+        } label: {  // 行外观
+            entryRow(  // 通用入口行
+                icon: "doc.text.fill",  // 试卷图标
+                title: "历年真题训练",  // 标题
+                detail: "整套试卷，按大题顺序作答，交卷后统一判分",  // 说明
+                badge: "\(PaperCatalog.shared.papers(kind: .real).count) 套",  // 套数
+                tint: .appOK  // 绿色
+            )  // 行内容
+        }  // 链接结束
+        .buttonStyle(.plain)  // 不用默认高亮
+        .accessibilityLabel("历年真题训练")  // 朗读
+    }  // paperEntry 结束
+
+    private var mixedEntry: some View {  // 综合训练
+        NavigationLink {  // 进综合卷
+            PaperPlayView(paper: mixedPaper)  // 现场抽题组成一套
+        } label: {  // 行外观
+            entryRow(  // 通用入口行
+                icon: "square.stack.3d.up.fill",  // 叠层图标
+                title: "综合训练",  // 标题
+                detail: "三个方向随机抽 20 题，模拟考场节奏",  // 说明
+                badge: "20 题",  // 题量
+                tint: .appViolet  // 紫色
+            )  // 行内容
+        }  // 链接结束
+        .buttonStyle(.plain)  // 不用默认高亮
+        .accessibilityLabel("综合训练，随机 20 题")  // 朗读
+    }  // mixedEntry 结束
+
+    private var mixedPaper: Paper {  // 现场组一套综合卷
+        let pool = app.bank?.questions.shuffled().prefix(20) ?? []  // 随机抽 20 题
+        return Paper(  // 构造试卷
+            id: "paper.mixed",  // 固定 id
+            title: "综合训练",  // 标题
+            kind: .mock,  // 归为自编
+            direction: .tax,  // 方向占位（题库跨方向）
+            year: Calendar.current.component(.year, from: Date()),  // 当年
+            subject: "税务 / 金融 / 经管 混合",  // 科目
+            minutes: 20,  // 建议时长
+            totalScore: 40,  // 满分
+            sourceNote: "从当前题库随机抽题组成，每次进来题目可能不同；全部按考纲自编。",  // 来源
+            sections: [PaperSection(title: "综合练习", questionIDs: pool.map { $0.id })]  // 单一大题
+        )  // 构造结束
+    }  // mixedPaper 结束
+
+    private func entryRow(  // 通用板块入口行
+        icon: String,  // 图标
+        title: String,  // 标题
+        detail: String,  // 说明
+        badge: String,  // 右侧标记
+        tint: Color  // 主题色
+    ) -> some View {  // 返回视图
+        Card {  // 卡片
+            HStack(spacing: Space.m) {  // 横向排列
+                ZStack {  // 圆底图标
+                    Circle().fill(tint.opacity(0.12)).frame(width: 36, height: 36)  // 淡色圆
+                    Image(systemName: icon).font(.system(size: 15)).foregroundStyle(tint)  // 图标
+                }  // 叠放结束
+                VStack(alignment: .leading, spacing: 2) {  // 文字区
+                    Text(title).font(AppFont.bodyStrong)  // 标题
+                    Text(detail).font(AppFont.caption).foregroundStyle(Color.textSecondary)  // 说明
+                        .fixedSize(horizontal: false, vertical: true)  // 允许换行
+                }  // 文字区结束
+                Spacer(minLength: 0)  // 撑开
+                Text(verbatim: badge).font(AppFont.captionStrong).foregroundStyle(tint)  // 右侧标记
+                Image(systemName: "chevron.right")  // 箭头
+                    .font(.system(size: 11, weight: .semibold))  // 小箭头
+                    .foregroundStyle(Color.textTertiary)  // 弱化色
+            }  // 排列结束
+            .contentShape(Rectangle())  // 整行可点
+        }  // 卡片结束
+    }  // entryRow 结束
+
+    private var topicSection: some View {  // 知识点模块训练
+        VStack(alignment: .leading, spacing: Space.m) {  // 纵向排列
+            HStack {  // 区块标题
+                Text("知识点模块训练").font(AppFont.section)  // 标题
+                Spacer()  // 撑开
+                Text(verbatim: "\(chapters.count) 个板块")  // 板块数
+                    .font(AppFont.caption)  // 小字
+                    .foregroundStyle(Color.textTertiary)  // 弱化色
+            }  // 排列结束
+            Text("按单个知识点逐关突破，每关 3 题，答错立刻拆解。")  // 说明
+                .font(AppFont.caption)  // 小字
+                .foregroundStyle(Color.textSecondary)  // 次要色
+            ForEach(chapters) { chapter in  // 遍历章节
+                chapterCard(chapter)  // 章节卡
+            }  // 遍历结束
+        }  // 排列结束
+    }  // topicSection 结束
 
     private var summary: some View {  // 顶部统计卡
         Card {  // 卡片
