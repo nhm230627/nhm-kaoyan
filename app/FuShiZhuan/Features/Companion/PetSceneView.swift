@@ -21,7 +21,7 @@ enum CatPalette {  // 猫的固定用色（毛色不在这里，由配件表给�
 }  // CatPalette 结束
 
 enum CatMetrics {  // 尺寸
-    static let petScale: Float = 0.95  // 整只缩放
+    static let petScale: Float = 0.78  // 整只缩放
     static let bodyRadius: Float = 0.26  // 身体半径
     static let headRadius: Float = 0.24  // 头半径
     static let headY: Float = 0.66  // 头心高度
@@ -191,7 +191,7 @@ enum PetSceneBuilder {  // 猫建模器
     static func installCamera(on view: ARView) {  // 装相机
         let camera = PerspectiveCamera()  // 相机实体
         camera.camera.fieldOfViewInDegrees = 42  // 视角
-        let holder = AnchorEntity(world: [0, 0.62, 1.32])  // 相机位置
+        let holder = AnchorEntity(world: [0, 0.58, 1.52])  // 相机位置
         holder.addChild(camera)  // 挂上相机
         view.scene.addAnchor(holder)  // 加入场景
     }  // installCamera 结束
@@ -305,14 +305,17 @@ enum PetSceneBuilder {  // 猫建模器
     static func tail(color: UIColor) -> Entity {  // 尾巴（绕到身前，坐姿猫常见）
         let pivot = Entity()  // 尾巴根部节点，摆动转它
         pivot.name = CatMetrics.tailName  // 起名方便查找
-        pivot.position = [0.16, 0.09, -0.10]  // 身侧偏后
-        var radius: Float = 0.055  // 起始粗细
-        for i in 0..<6 {  // 六段串成弧线
+        pivot.position = [0.17, 0.08, -0.13]  // 身体右后下方
+        var radius: Float = 0.056  // 起始粗细
+        for i in 0..<7 {  // 七段串成弧线
             let seg = sphere(radius: radius, color: color)  // 一段
             let t = Float(i)  // 段序号
-            seg.position = [0.02 * t, 0.012 * t * t, 0.055 + 0.05 * t]  // 向前上方卷
+            let x = 0.015 * t  // 向右偏
+            let y = 0.035 * t + 0.006 * t * t  // 向上卷，末端更翘
+            let z = -0.05 * t  // 向后伸
+            seg.position = [x, y, z]  // 摆到弧线上
             pivot.addChild(seg)  // 挂上
-            radius *= 0.86  // 越末端越细
+            radius *= 0.88  // 越末端越细
         }  // 循环结束
         return pivot  // 返回尾巴根
     }  // tail 结束
@@ -342,7 +345,7 @@ enum PetSceneBuilder {  // 猫建模器
 
     static func hatEntity(_ item: OutfitItem, stage: PetStage) -> Entity {  // 帽子
         let group = Entity()  // 帽子整体
-        group.position = [0, 0.845, 0]  // 头顶
+        group.position = [0, 0.905, 0]  // 头顶（要高于头的顶点 0.90，否则陷进去）
         let main = UIColor(hex: item.hex)  // 主色
         let accent = UIColor(hex: item.accent)  // 点缀色
 
@@ -350,7 +353,7 @@ enum PetSceneBuilder {  // 猫建模器
             let crown = ModelEntity(mesh: .generateCylinder(height: 0.06, radius: 0.135),  // 帽围
                                     materials: [material(main)])  // 深色
             group.addChild(crown)  // 挂上
-            let board = ModelEntity(mesh: .generateBox(width: 0.30, height: 0.016, depth: 0.30, cornerRadius: 0.004),  // 帽板
+            let board = ModelEntity(mesh: .generateBox(width: 0.34, height: 0.016, depth: 0.34, cornerRadius: 0.004),  // 帽板
                                     materials: [material(main)])  // 深色
             board.position = [0, 0.04, 0]  // 帽围上方
             group.addChild(board)  // 挂上
