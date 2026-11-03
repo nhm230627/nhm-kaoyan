@@ -405,6 +405,13 @@ final class AppState {  // 全局状态类
         store.save(data)  // 马上写
     }  // 方法结束
 
+    func exportJSON() -> Data? {  // 导出当前内存里的全部数据
+        let encoder = JSONEncoder()  // 建编码器
+        encoder.dateEncodingStrategy = .iso8601  // 与落盘格式保持一致
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]  // 好读且稳定
+        return try? encoder.encode(data)  // 编码失败就返回空
+    }  // 方法结束
+
     func resetAll() {  // 重置全部本地数据
         store.reset()  // 删文件
         data = .fresh()  // 回到全新档案

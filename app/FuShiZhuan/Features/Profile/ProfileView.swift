@@ -2,6 +2,18 @@
 //  所有数字都能溯源到今天做了什么，不出现无来源的分数                   // 页面约束
 
 import SwiftUI  // 界面框架
+import UniformTypeIdentifiers  // 导出文件要声明类型
+
+struct ExportDocument: Transferable {  // 可分享的数据文件
+    let data: Data  // 文件内容
+
+    static var transferRepresentation: some TransferRepresentation {  // 告诉系统怎么分享
+        DataRepresentation(exportedContentType: .json) { item in  // 按 JSON 类型导出
+            item.data  // 内容原样给出去
+        }  // 导出定义结束
+        .suggestedFileName("fushizhuan-data.json")  // 默认文件名
+    }  // 传输定义结束
+}  // ExportDocument 结束
 
 struct ProfileView: View {  // 我的页
     @Environment(AppState.self) private var app  // 全局状态
@@ -226,6 +238,17 @@ struct ProfileView: View {  // 我的页
                 Text("学习记录只存在这台设备上（appstate.json），不上传服务器。")  // 隐私说明
                     .font(AppFont.caption)  // 小字
                     .foregroundStyle(Color.textSecondary)  // 次要色
+                if let doc = exportPayload {  // 有数据才给导出入口
+                    ShareLink(item: doc) {  // 系统分享面板
+                        HStack(spacing: Space.xs) {  // 横向排列
+                            Image(systemName: "square.and.arrow.up")  // 导出图标
+                                .font(.system(size: 13))  // 图标大小
+                            Text("导出我的数据（JSON）")  // 按钮文字
+                                .font(AppFont.captionStrong)  // 小字加粗
+                        }  // 排列结束
+                        .foregroundStyle(Color.appBrand)  // 品牌色
+                    }  // 分享链接结束
+                }  // 分支结束
                 Button("重置本地数据", role: .destructive) {  // 重置按钮
                     showResetConfirm = true  // 弹确认
                 }  // 按钮结束
@@ -233,6 +256,11 @@ struct ProfileView: View {  // 我的页
             }  // 排列结束
         }  // 卡片结束
     }  // dataCard 结束
+
+    private var exportPayload: ExportDocument? {  // 打包成可分享文件
+        guard let data = app.exportJSON() else { return nil }  // 编码失败就不显示入口
+        return ExportDocument(data: data)  // 交给 ShareLink
+    }  // 属性结束
 
     private var aboutCard: some View {  // 关于区
         VStack(alignment: .leading, spacing: Space.xxs) {  // 纵向排列
