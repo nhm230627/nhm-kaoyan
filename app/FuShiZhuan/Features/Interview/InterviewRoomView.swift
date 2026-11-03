@@ -17,23 +17,30 @@ struct InterviewRoomView: View {                                      // 面试�
 
     var body: some View {                                            // 视图主体
         ScrollView {                                                 // 可滚动
-            VStack(spacing: Space.l) {                               // 纵向排列
-                statusBar                                            // 顶部状态
-                mentorSeats                                          // 导师席
-                if engine.isFinished {                               // 已结束
-                    resultSection                                    // 结果区
-                } else {                                             // 进行中
-                    questionCard                                     // 问题卡
-                    if engine.session.state == .paused {             // 暂停中
+            VStack(spacing: 0) {                                     // 纵向排列
+                if !engine.isFinished {                              // 进行中才显示考场
+                    ExamHallScene(roomName: app.currentTrack.room,   // 面试间名
+                                  currentSpeaker: engine.currentSpeaker, // 当前发言人
+                                  stepNumber: engine.stepNumber,     // 第几问
+                                  totalSteps: engine.totalSteps,     // 总问数
+                                  remainingSeconds: engine.session.remainingSeconds, // 剩余秒
+                                  question: engine.currentQuestion,  // 当前问题
+                                  isBusy: engine.isBusy)             // 是否请求中
+                        .frame(height: 380)                          // 舞台高度
+                }                                                    // 分支结束
+                VStack(spacing: Space.l) {                           // 下方内容
+                    if engine.isFinished {                           // 已结束
+                        resultSection                                // 结果区
+                    } else if engine.session.state == .paused {      // 暂停中
                         pausedCard                                   // 只给继续入口
                     } else {                                         // 正常作答
                         answerEditor                                 // 作答框
                         actionRow                                    // 操作按钮
                     }                                                // 分支结束
-                }                                                    // 分支结束
+                }                                                    // 排列结束
+                .padding(Metrics.pagePadding)                        // 内边距
+                .padding(.bottom, Space.xxl)                         // 底部留白
             }                                                        // 排列结束
-            .padding(Metrics.pagePadding)                            // 内边距
-            .padding(.bottom, Space.xxl)                             // 底部留白
         }                                                            // 滚动结束
         .background(Color.appBG)                                     // 底色
         .navigationTitle("模拟面试")                                  // 标题
