@@ -21,6 +21,7 @@ struct AppSnapshot: Codable, Equatable {  // 持久化单位
     var lastCheckInDate: Date?  // 最后打卡时间
     var streakDays: Int  // 连续打卡天数
     var outfit: CatOutfit = .default  // 猫当前穿戴（有默认值，旧快照能直接解码）
+    var diy: [Question] = []  // 我的题库（自己录的题，有默认值，旧快照能直接解码）
 
     static let currentVersion = 1  // 当前结构版本
 
@@ -54,6 +55,7 @@ struct AppSnapshot: Codable, Equatable {  // 持久化单位
         lastCheckInDate = try c.decodeIfPresent(Date.self, forKey: .lastCheckInDate)  // 可为空
         streakDays = try c.decodeIfPresent(Int.self, forKey: .streakDays) ?? 0  // 缺省 0
         outfit = try c.decodeIfPresent(CatOutfit.self, forKey: .outfit) ?? .default  // 缺省默认穿戴
+        diy = try c.decodeIfPresent([Question].self, forKey: .diy) ?? []  // 缺省空自建题库
     }  // 解码结束
 
     init(  // 全参构造器
@@ -231,6 +233,24 @@ final class AppState {  // 全局状态类
         data = snap  // 写回
         scheduleSave()  // 落盘
     }  // 方法结束
+
+    // MARK: - 我的题库                                                // 分节：自建题库
+
+    var diyQuestions: [Question] { data.diy }  // 自建题目（只读）
+
+    func addDiy(_ question: Question) {  // 加一道自建题
+        var snap = data  // 拷一份
+        snap.diy.insert(question, at: 0)  // 新的排最前
+        data = snap  // 写回
+        scheduleSave()  // 落盘
+    }  // addDiy 结束
+
+    func removeDiy(id: String) {  // 删一道自建题
+        var snap = data  // 拷一份
+        snap.diy.removeAll { $0.id == id }  // 删掉同 id 的
+        data = snap  // 写回
+        scheduleSave()  // 落盘
+    }  // removeDiy 结束
 
     // MARK: - 闯关                                                    // 分节：闯关
 

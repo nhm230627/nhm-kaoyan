@@ -260,6 +260,42 @@ struct QuizHomeView: View {  // 刷题首页
         run = RunConfig(pool: filtered, size: size, revealEach: revealEach)  // 交给作答页自己抽题
     }  // beginQuiz 结束
 
+    private func smartPaper() {  // AI 智能组卷（样板 quiz.js smartPaper：按错题知识点频次抽题，纯本地算法）
+        let bank = app.bank?.questions ?? []  // 全库题目
+        let wrongs = app.data.wrongs  // 错题本
+        guard !bank.isEmpty else {  // 题库没加载
+            show("题库还没加载好，稍后再试")  // 如实说
+            return  // 不进入
+        }  // 分支结束
+        guard !wrongs.isEmpty else {  // 还没有错题
+            show("还没有错题，先随便练一组")  // 与样板提示一致
+            run = RunConfig(pool: bank, size: size, revealEach: revealEach)  // 直接练全库
+            return  // 进去了就返回
+        }  // 分支结束
+
+        let byID = Dictionary(uniqueKeysWithValues: bank.map { ($0.id, $0) })  // 题库索引
+        var counts: [String: Int] = [:]  // 各知识点错了多少
+        for wrong in wrongs {  // 逐条错题
+            guard let q = byID[wrong.questionID] else { continue }  // 找到原题
+            counts[q.topic, default: 0] += 1  // 该知识点 +1
+        }  // 循环结束
+
+        let top = counts.sorted { $0.value > $1.value }.map(\.key)  // 错得多的排前面
+        guard !top.isEmpty else {  // 错题和题库对不上
+            show("错题和题库对不上，先练全库")  // 说清原因
+            run = RunConfig(pool: bank, size: size, revealEach: revealEach)  // 练全库
+            return  // 进去了就返回
+        }  // 分支结束
+
+        let weak = bank.filter { top.contains($0.topic) }  // 薄弱板块的题
+        show("已按薄弱点组卷：\(top.map(topicName).joined(separator: "、"))")  // 与样板提示一致
+        run = RunConfig(pool: weak.isEmpty ? bank : weak, size: size, revealEach: revealEach)  // 开练
+    }  // smartPaper 结束
+
+    private func topicName(_ id: String) -> String {  // 知识点 id 转中文名
+        topics.first { $0.id == id }?.name ?? id  // 找不到就显示 id
+    }  // topicName 结束
+
     private var typeTitle: String {  // 题型中文名
         switch pickedType {  // 按值分支
         case "single": "单项选择"  // 单选
@@ -299,21 +335,20 @@ struct QuizHomeView: View {  // 刷题首页
                     }  // 链接结束
                     .buttonStyle(.plain)  // 不用默认高亮
                     Divider().padding(.leading, 44)  // 分隔线
-                    Button {  // AI 智能组卷（未开发）
-                        show("AI 智能组卷还没做，先用「开始练习」按薄弱点手动筛")  // 如实说
+                    Button {  // AI 智能组卷（本地算法，不调大模型，与样板 smartPaper 一致）
+                        smartPaper()  // 按错题知识点频次组卷
                     } label: {  // 行外观
                         toolRow(icon: "wand.and.stars", title: "AI 智能组卷",  // 图标与标题
-                                trailing: "按薄弱点生成", badge: "待开发")  // 右侧标注未开发
+                                trailing: "按薄弱点生成")  // 右侧说明
                     }  // 按钮结束
                     .buttonStyle(.plain)  // 不用默认高亮
                     Divider().padding(.leading, 44)  // 分隔线
-                    Button {  // 我的题库（未开发）
-                        show("自建题库还没做，先把内置题库刷完")  // 如实说
+                    NavigationLink {  // 我的题库
+                        DiyBankView()  // 自建题库（录题 + 列表 + 删除）
                     } label: {  // 行外观
                         toolRow(icon: "square.and.pencil", title: "我的题库",  // 图标与标题
-                                trailing: "0 道自建", badge: "待开发")  // 右侧标注未开发
-                    }  // 按钮结束
-                    .buttonStyle(.plain)  // 不用默认高亮
+                                trailing: "\(app.diyQuestions.count) 道自建")  // 右侧显示自建数
+                    }  // 链接结束
                 }  // 排列结束
             }  // 卡片结束
         }  // 排列结束

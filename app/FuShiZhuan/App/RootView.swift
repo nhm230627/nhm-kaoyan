@@ -65,6 +65,7 @@ struct RootView: View {  // 根视图
         case result  // 练习结果（样板 page-result）
         case sortmap  // 关卡地图
         case sortplay  // 分拣关卡
+        case diy  // 我的题库
 
         var id: String { rawValue }  // 用原始值当 id
     }  // Shot 结束
@@ -145,6 +146,8 @@ struct RootView: View {  // 根视图
             ShotResultHost()  // 造一份结果数据
         case .sortmap:  // 关卡地图
             LevelMapView()  // 四章十二关
+        case .diy:  // 我的题库
+            DiyBankView()  // 录题页
         case .sortplay:  // 分拣关卡
             if let level = SortCatalog.level(SortCatalog.order.first ?? "") {  // 第一关
                 SortGameView(level: level)  // 直接开玩
