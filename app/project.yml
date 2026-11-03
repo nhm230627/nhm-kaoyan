@@ -73,15 +73,36 @@ targets:
         # 只用了系统 HTTPS 加密，不属于需要提交出口合规证明的情形
         ITSAppUsesNonExemptEncryption: false
 
+  # 单元测试包。
+  # 为什么要它：本机没有 Xcode，只能靠 CI 验证。只跑 build 只能证明「能编译」，
+  # 跑 test 才能证明「逻辑对」——权益额度、饥饿结算、离线评分、状态机、存档往返。
+  # 测试同样跑在 GitHub 免费的 macOS 机器上，不额外花钱。
+  FuShiZhuanTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: FuShiZhuanTests
+        excludes:
+          - "**/.DS_Store"
+    dependencies:
+      - target: FuShiZhuan          # 依赖主 target，XcodeGen 会自动配好 TEST_HOST 与 BUNDLE_LOADER
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fushizhuan.app.tests
+        GENERATE_INFOPLIST_FILE: YES   # 测试包不需要自定义 plist，让 Xcode 自己生成
+
 schemes:
   FuShiZhuan:
     build:
       targets:
         FuShiZhuan: all
+        FuShiZhuanTests: [test]     # 只在跑测试时才编译测试包，正常构建不受影响
     run:
       config: Debug
     test:
       config: Debug
+      targets:
+        - FuShiZhuanTests           # 声明测试目标，xcodebuild test 才知道要跑谁
     profile:
       config: Release
     analyze:

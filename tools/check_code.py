@@ -117,10 +117,12 @@ def report(title, files):
 def main():
     """入口：跑 iOS 与服务端两组检查。 // 退出码非 0 表示有问题"""
     swift = walk('D:/APP/app/FuShiZhuan', SWIFT_EXTS)  # iOS 源码
+    tests = walk('D:/APP/app/FuShiZhuanTests', SWIFT_EXTS)  # 单元测试也适用同一条注释规则
     js = walk('D:/APP/server', JS_EXTS)  # 服务端源码
     js = [p for p in js if 'node_modules' not in p]  # 排除依赖
     total_bad = report('iOS（Swift）注释覆盖率 + 括号配平', swift)  # 第一组
-    total_bad += report('BFF（Node）注释覆盖率 + 括号配平', js)  # 第二组
+    total_bad += report('iOS 单元测试（Swift）注释覆盖率 + 括号配平', tests)  # 第二组
+    total_bad += report('BFF（Node）注释覆盖率 + 括号配平', js)  # 第三组
     sys.exit(0 if total_bad == 0 else 1)  # 返回退出码
 
 

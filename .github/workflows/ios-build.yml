@@ -39,3 +39,13 @@ jobs:
 
       - name: 编译  # 核心步骤：只验证代码能不能过编译
         run: xcodebuild -project FuShiZhuan.xcodeproj -scheme FuShiZhuan -sdk iphonesimulator -configuration Debug -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO SWIFT_COMPILATION_MODE=wholemodule build  # wholemodule 让整个模块一次编译完，所有文件的错误一次全报出来，避免改一批暴露一批；CODE_SIGNING_ALLOWED=NO 跳过签名
+
+      - name: 挑一个可用的 iPhone 模拟器  # test 动作必须指定具体设备，generic destination 跑不了测试
+        id: pick
+        run: |
+          UDID=$(xcrun simctl list devices available --json | python3 -c "import json,sys;d=json.load(sys.stdin)['devices'];print([x['udid'] for k in sorted(d, reverse=True) for x in d[k] if x['name'].startswith('iPhone')][0])")  # 取最新运行时里的第一台 iPhone
+          echo "选中的模拟器 UDID: $UDID"  # 打出来方便排查
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"  # 传给后面的步骤
+
+      - name: 跑单元测试  # 只跑 build 只能证明"能编译"，跑 test 才能证明"逻辑对"
+        run: xcodebuild test -project FuShiZhuan.xcodeproj -scheme FuShiZhuan -destination "id=${{ steps.pick.outputs.udid }}" CODE_SIGNING_ALLOWED=NO  # 目标设备由上一步动态挑，避免写死机型名导致找不到模拟器

@@ -7,7 +7,11 @@ import re  # 正则
 import sys  # 退出码
 
 ROOT = 'D:/APP/app/FuShiZhuan'  # 源码根目录
-SWIFT = sorted(glob.glob(os.path.join(ROOT, '**', '*.swift'), recursive=True))  # 全部 Swift 文件
+TEST_ROOT = 'D:/APP/app/FuShiZhuanTests'  # 单元测试根目录，和源码适用同一条参数标签规则
+SWIFT = sorted(  # 合并两处的全部 Swift 文件
+    glob.glob(os.path.join(ROOT, '**', '*.swift'), recursive=True)  # 源码
+    + glob.glob(os.path.join(TEST_ROOT, '**', '*.swift'), recursive=True)  # 测试
+)  # 合并结束
 
 
 def strip_strings(text):
