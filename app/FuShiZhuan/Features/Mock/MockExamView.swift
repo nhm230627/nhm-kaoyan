@@ -63,7 +63,7 @@ struct MockExamView: View {  // 院校模考页
             }  // 排列结束
             .padding(.horizontal, Metrics.pagePadding)  // 左右内边距
             .padding(.top, 8)  // 顶部留白
-            .padding(.bottom, Space.xxl)  // 底部留白
+            .padding(.bottom, 96)  // 底部留白：悬浮 TabBar 会压住最后两行
         }  // 滚动结束
         .background(Color.appBG)  // 页面底色
         .navigationTitle("模考板块")  // 照样板标题

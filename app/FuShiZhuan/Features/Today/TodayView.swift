@@ -25,7 +25,7 @@ struct TodayView: View {  // 首页
                     weakTopics  // 薄弱点
                 }  // 分支结束
             }  // 排列结束
-            .padding(.bottom, Space.xxl)  // 底部留白
+            .padding(.bottom, 96)  // 底部留白：悬浮 TabBar 不占安全区，必须手动让开
         }  // 滚动结束
         .background(Color.appBG)  // 页面底色
         .toolbar(.hidden, for: .navigationBar)  // 隐藏系统导航栏，标题由 PageHeader 自己画

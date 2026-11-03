@@ -23,7 +23,7 @@ struct InterviewHomeView: View {  // 面试首页
                 startButton  // 开始按钮
             }  // 排列结束
             .padding(Metrics.pagePadding)  // 内边距
-            .padding(.bottom, Space.xxl)  // 底部留白
+            .padding(.bottom, 96)  // 底部留白：悬浮 TabBar 会压住开始按钮
         }  // 滚动结束
         .background(Color.appBG)  // 底色
         .navigationTitle("模拟面试")  // 标题

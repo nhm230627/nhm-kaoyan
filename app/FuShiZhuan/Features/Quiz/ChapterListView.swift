@@ -21,7 +21,7 @@ struct ChapterListView: View {  // 章节关卡页
                 }  // 遍历结束
             }  // 排列结束
             .padding(Metrics.pagePadding)  // 内边距
-            .padding(.bottom, Space.xxl)  // 底部留白
+            .padding(.bottom, 96)  // 底部留白：悬浮 TabBar 不占安全区，必须手动让开
         }  // 滚动结束
         .background(Color.appBG)  // 底色
         .navigationTitle("闯关模式")  // 标题

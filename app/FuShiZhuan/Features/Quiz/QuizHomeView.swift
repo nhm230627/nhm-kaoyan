@@ -10,7 +10,7 @@ struct QuizHomeView: View {  // 刷题首页
 
     @State private var pickedTopics: Set<String> = []  // 已选知识点，空 = 全部
     @State private var pickedType = "all"  // 题型筛选，all/single/multi/judge
-    @State private var size = 20  // 每组题量
+    @State private var size = 15  // 每组题量（样板默认 15，不是 20）
     @State private var revealEach = false  // 作答模式：false = 交卷后统一看
     @State private var run: RunConfig?  // 组好的练习（走样板 page-run 链路）
     @State private var hint: String?  // 轻提示
@@ -64,7 +64,7 @@ struct QuizHomeView: View {  // 刷题首页
                 toolGroup  // 工具
             }  // 排列结束
             .padding(Metrics.pagePadding)  // 内边距
-            .padding(.bottom, Space.xxl)  // 底部留白
+            .padding(.bottom, 96)  // 底部留白：iOS 26 的悬浮 TabBar 不占安全区，要手动让开
         }  // 滚动结束
     }  // content 结束
 

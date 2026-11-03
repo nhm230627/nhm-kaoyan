@@ -23,7 +23,7 @@ struct WorldMapView: View {  // 学习地图
                 spotSection  // 地点列表
             }  // 排列结束
             .padding(Metrics.pagePadding)  // 内边距
-            .padding(.bottom, Space.xxl)  // 底部留白
+            .padding(.bottom, 96)  // 底部留白：悬浮 TabBar 不占安全区，必须手动让开
         }  // 滚动结束
         .background(Color.appBG)  // 底色
         .navigationTitle("学习地图")  // 标题
