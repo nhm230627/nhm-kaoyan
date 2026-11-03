@@ -250,6 +250,7 @@ struct RitualView: View {  // 拨穗礼成证书页
         )  // 背景结束
         .shadow(color: Color(hex: 0x503C14).opacity(0.28), radius: 22, y: 14)  // 柔和投影
         .padding(.horizontal, 18)  // 左右留白
+        .accessibilityElement(children: .combine)  // 证书整体朗读
     }  // certCard 结束
 
     private var certLine: Text {  // 授予学位行

@@ -26,6 +26,7 @@ struct QuizResultView: View {  // 练习结果页
 
     private var rightCount: Int { items.filter(\.ok).count }  // 答对题数
     private var wrongCount: Int { items.count - rightCount }  // 答错题数
+    private var growthGain: Int { rightCount * GrowthReason.answerCorrect.delta }  // 本组成长增量，与 recordAnswer 同口径
 
     private var score: Int {  // 百分制得分（与样板一致）
         guard !items.isEmpty else { return 0 }  // 没题就是 0
@@ -54,22 +55,32 @@ struct QuizResultView: View {  // 练习结果页
     }  // body 结束
 
     private var hero: some View {  // 渐变结果卡（样板 .result-hero）
-        HStack(spacing: Space.m) {  // 左分数右三栏
-            VStack(spacing: 2) {  // 得分
-                Text(verbatim: "\(score)")  // 大号分数
-                    .font(.system(size: 46, weight: .bold, design: .rounded))  // 圆体大数字
-                Text("得分")  // 单位说明
-                    .font(.system(size: 11))  // 小字
-                    .opacity(0.85)  // 略透明
-            }  // 得分结束
-            .frame(minWidth: 78)  // 固定宽度占位
+        VStack(spacing: 10) {  // 上明细下成长
+            HStack(spacing: Space.m) {  // 左分数右三栏
+                VStack(spacing: 2) {  // 得分
+                    Text(verbatim: "\(score)")  // 大号分数
+                        .font(.system(size: 46, weight: .bold, design: .rounded))  // 圆体大数字
+                    Text("得分")  // 单位说明
+                        .font(.system(size: 11))  // 小字
+                        .opacity(0.85)  // 略透明
+                }  // 得分结束
+                .frame(minWidth: 78)  // 固定宽度占位
 
-            HStack(spacing: Space.xs) {  // 三栏明细
-                metaCell(value: "\(rightCount)", title: "答对")  // 答对
-                metaCell(value: "\(wrongCount)", title: "答错")  // 答错
-                metaCell(value: timeText, title: "用时")  // 用时
-            }  // 明细结束
-            .frame(maxWidth: .infinity)  // 撑满剩余宽度
+                HStack(spacing: Space.xs) {  // 三栏明细
+                    metaCell(value: "\(rightCount)", title: "答对")  // 答对
+                    metaCell(value: "\(wrongCount)", title: "答错")  // 答错
+                    metaCell(value: timeText, title: "用时")  // 用时
+                }  // 明细结束
+                .frame(maxWidth: .infinity)  // 撑满剩余宽度
+            }  // 排列结束
+            HStack(spacing: 5) {  // 成长增量行
+                Image(systemName: "sparkles")  // 成长图标
+                Text(verbatim: "本次成长 +\(growthGain)")  // 增量
+                Text(verbatim: "· 已计入伙伴页")  // 来源说明
+                    .opacity(0.8)  // 弱化
+            }  // 成长行结束
+            .font(.system(size: 11, weight: .semibold))  // 小字
+            .frame(maxWidth: .infinity, alignment: .leading)  // 左对齐
         }  // 排列结束
         .foregroundStyle(.white)  // 白字
         .padding(18)  // 与样板 padding 一致
@@ -78,6 +89,7 @@ struct QuizResultView: View {  // 练习结果页
                            startPoint: .topLeading, endPoint: .bottomTrailing)  // 左上到右下
         )  // 背景结束
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))  // 圆角 20
+        .accessibilityElement(children: .combine)  // 整卡合并朗读
     }  // hero 结束
 
     private func metaCell(value: String, title: String) -> some View {  // 一栏明细
