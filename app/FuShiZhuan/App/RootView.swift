@@ -36,8 +36,22 @@ enum AppTab: String, CaseIterable, Identifiable {  // Tab 枚举
 
 struct RootView: View {  // 根视图
     @Environment(AppState.self) private var app  // 注入全局状态
-    @State private var tab: AppTab = .today  // 当前 Tab
+    @State private var tab: AppTab = RootView.initialTab  // 当前 Tab（可用启动参数指定，见下）
     @State private var didTick = false  // 冷启动只结算一次
+
+    /// 截图用：允许 CI 通过启动参数直接落到某个 Tab。
+    /// 为什么要它：模拟器里没人点按钮，`simctl` 也点不了 UI。
+    /// 加一个 `-startTab quiz` 这样的启动参数，就能让 App 启动即停在该页，
+    /// 逐个 Tab 各截一张图，不需要写一整套 XCUITest。
+    /// 线上运行时没有这个参数，永远返回 .today，行为与以前完全一致。
+    static var initialTab: AppTab {  // 解析启动参数
+        let args = ProcessInfo.processInfo.arguments  // 命令行参数
+        if let i = args.firstIndex(of: "-startTab"), args.count > i + 1,  // 找到参数且后面确实有值
+           let picked = AppTab(rawValue: args[i + 1]) {  // 值是合法的 Tab 名
+            return picked  // 用指定的 Tab
+        }  // 分支结束
+        return .today  // 默认落在今日页
+    }  // initialTab 结束
 
     var body: some View {  // 视图主体
         TabView(selection: $tab) {  // 五 Tab 容器
