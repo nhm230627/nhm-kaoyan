@@ -12,7 +12,7 @@ struct QuizHomeView: View {  // 刷题首页
     @State private var pickedType = "all"  // 题型筛选，all/single/multi/judge
     @State private var size = 20  // 每组题量
     @State private var revealEach = false  // 作答模式：false = 交卷后统一看
-    @State private var session: Paper?  // 组好的练习题
+    @State private var run: RunConfig?  // 组好的练习（走样板 page-run 链路）
     @State private var hint: String?  // 轻提示
 
     private var topics: [Topic] { app.bank?.topics ?? [] }  // 全部知识点
@@ -31,9 +31,9 @@ struct QuizHomeView: View {  // 刷题首页
         }  // 分组结束
         .background(Color.appBG)  // 底色
         .navigationTitle("刷题闯关")  // 标题
-        .fullScreenCover(item: $session) { paper in  // 开始练习
+        .fullScreenCover(item: $run) { cfg in  // 开始练习
             NavigationStack {  // 套导航栈才有标题栏
-                PaperPlayView(paper: paper, revealEach: revealEach)  // 组卷答题
+                QuizRunView(pool: cfg.pool, size: cfg.size, revealEach: cfg.revealEach)  // 样板 page-run
             }  // 栈结束
         }  // 覆盖层结束
         .overlay(alignment: .bottom) {  // 底部提示
@@ -254,24 +254,11 @@ struct QuizHomeView: View {  // 刷题首页
     }  // 属性结束
 
     private func beginQuiz() {  // 组卷开练
-        let pool = filtered.shuffled()  // 打乱
-        guard !pool.isEmpty else {  // 一题都没有
+        guard !filtered.isEmpty else {  // 一题都没有
             show(pickedType == "all" ? "当前筛选下没有题目，换个知识点试试" : "题库里还没有「\(typeTitle)」类的题")  // 说清原因
             return  // 不进入
         }  // 分支结束
-        let picked = Array(pool.prefix(size))  // 取够题量
-        session = Paper(  // 现场组一套练习
-            id: "paper.practice",  // 固定 id
-            title: "练习 · \(picked.count) 题",  // 标题
-            kind: .mock,  // 归为自编
-            direction: .tax,  // 方向占位
-            year: Calendar.current.component(.year, from: Date()),  // 当年
-            subject: subjectText,  // 科目描述
-            minutes: max(5, picked.count),  // 每题约一分钟
-            totalScore: picked.count * 2,  // 每题 2 分
-            sourceNote: "按当前筛选条件组卷；题目全部按考纲自编，非官方真题。",  // 来源
-            sections: [PaperSection(title: "练习", questionIDs: picked.map { $0.id })]  // 单一大题
-        )  // 构造结束
+        run = RunConfig(pool: filtered, size: size, revealEach: revealEach)  // 交给作答页自己抽题
     }  // beginQuiz 结束
 
     private var typeTitle: String {  // 题型中文名
@@ -281,10 +268,6 @@ struct QuizHomeView: View {  // 刷题首页
         case "judge": "判断题"  // 判断
         default: "全部"  // 全部
         }  // 分支结束
-    }  // 属性结束
-
-    private var subjectText: String {  // 科目描述
-        pickedTopics.isEmpty ? "全部知识点" : "已选 \(pickedTopics.count) 个知识点"  // 两种情况
     }  // 属性结束
 
     // MARK: - 工具                                                    // 分节：工具
@@ -377,3 +360,10 @@ struct QuizHomeView: View {  // 刷题首页
         }  // 任务结束
     }  // show 结束
 }  // QuizHomeView 结束
+
+struct RunConfig: Identifiable {  // 一次练习的配置（交给 QuizRunView 自己抽题）
+    let id = UUID()  // 每次开始练习都是新的一次
+    let pool: [Question]  // 按筛选条件得到的题池
+    let size: Int  // 每组题量
+    let revealEach: Bool  // 作答模式：每题即时看还是交卷后统一看
+}  // RunConfig 结束
