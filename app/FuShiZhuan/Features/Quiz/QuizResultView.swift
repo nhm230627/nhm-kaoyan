@@ -172,6 +172,11 @@ struct QuizResultView: View {  // 练习结果页
                 .font(.system(size: 11.5))  // 与样板 .rv-exp 一致
                 .foregroundStyle(Color.textSecondary)  // 次要色
                 .fixedSize(horizontal: false, vertical: true)  // 允许换行
+
+            Text("来源：\(item.question.source)")  // 来源标注，方便核对是真题回忆还是考纲重构
+                .font(.system(size: 10))  // 更小字
+                .foregroundStyle(Color.textTertiary)  // 弱化色
+                .fixedSize(horizontal: false, vertical: true)  // 允许换行
         }  // 排列结束
         .padding(13)  // 与样板 .rv-item padding 一致
         .frame(maxWidth: .infinity, alignment: .leading)  // 撑满左对齐

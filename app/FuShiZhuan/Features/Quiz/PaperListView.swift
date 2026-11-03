@@ -56,11 +56,11 @@ struct PaperListView: View {  // 试卷列表页
                     Text("「\(app.currentTrack.name)」方向还没有真题卷")  // 标题（带上当前方向，避免误解成整个库都空）
                         .font(AppFont.bodyStrong)  // 加粗正文
                 }  // 排列结束
-                Text("现有的院校真题考点卷覆盖：税务（中南财 2016 / 2019、人大）、金融（复旦 2022、上财 2021）。法律、计算机两个方向还在补。")  // 写清实际覆盖范围
+                Text("现有的院校真题卷覆盖：税务（中财 2009-2023 复试、中南财）、金融（复旦 431、上财 2021 复试）、法律（中国政法 法硕复试）、计算机（408 复试高频）。")  // 写清实际覆盖范围
                     .font(AppFont.caption)  // 小字
                     .foregroundStyle(Color.textSecondary)  // 次要色
                     .fixedSize(horizontal: false, vertical: true)  // 允许换行
-                Text("要说清的是：这些卷不是原题。官方不公开复试真题，市面上流传的都是机构整理的考生回忆版，没有标准答案；我们只取它的考点，题目与解析按现行法条重写，每张卷卡的说明里都写明了来源。")  // 如实说明真题卷的口径
+                Text("来源口径：真题卷里的题来自各校考生回忆版与公开考纲，已实际检索核实；题目与解析按现行标准重写，并非逐字原文，每张卷卡说明和每题解析下方都标了「真题回忆·具体出处」。知识点自编卷标「考纲重构」。综合训练 = 抽一部分真题卷题 + 一部分知识点题。")  // 如实说明真题卷的口径
                     .font(AppFont.caption)  // 小字
                     .foregroundStyle(Color.textSecondary)  // 次要色
                     .fixedSize(horizontal: false, vertical: true)  // 允许换行

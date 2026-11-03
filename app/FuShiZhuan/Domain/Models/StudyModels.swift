@@ -42,6 +42,7 @@ struct Question: Codable, Identifiable, Hashable {  // 题目
     let options: [String]  // 选项
     let answer: [Int]  // 正确选项下标
     let explain: String  // 解析
+    let source: String  // 来源标注：真题回忆写院校年份，知识点题写「考纲重构」
 
     func isCorrect(_ picked: Set<Int>) -> Bool {  // 判定对错
         picked == Set(answer)  // 集合相等才算对

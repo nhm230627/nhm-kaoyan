@@ -11,6 +11,8 @@ enum StudyDirection: String, Codable, CaseIterable, Identifiable {  // 备考方
     case tax  // 税务
     case finance  // 金融
     case management  // 经管
+    case law  // 法律
+    case cs  // 计算机
 
     var id: String { rawValue }  // 用原始值当 id
 
@@ -19,6 +21,8 @@ enum StudyDirection: String, Codable, CaseIterable, Identifiable {  // 备考方
         case .tax: "税务"  // 税务
         case .finance: "金融"  // 金融
         case .management: "经管"  // 经管
+        case .law: "法律"  // 法律
+        case .cs: "计算机"  // 计算机
         }  // 分支结束
     }  // title 结束
 }  // StudyDirection 结束
@@ -26,7 +30,7 @@ enum StudyDirection: String, Codable, CaseIterable, Identifiable {  // 备考方
 // MARK: - 试卷种类                                                    // 分节：种类
 
 enum PaperKind: String, Codable {  // 试卷来源
-    case real  // 历年真题（只在用户自己导入后才有）
+    case real  // 院校真题/回忆版（题面与解析按现行考纲重写，来源写进 sourceNote）
     case mock  // 按考纲自编的模拟卷
 
     var title: String {  // 种类名
@@ -74,6 +78,8 @@ struct Paper: Codable, Identifiable, Hashable {  // 一整套试卷
         case .tax: "tax"  // 税务
         case .finance: "fin"  // 金融
         case .management: "mgmt"  // 经管（Track 里暂无此方向，仅兼容旧数据）
+        case .law: "law"  // 法律
+        case .cs: "cs"  // 计算机
         }  // 分支结束
     }  // trackID 结束
 }  // Paper 结束
