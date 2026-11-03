@@ -125,6 +125,8 @@ final class AppState {  // 全局状态类
     var profile: PrepProfile { data.profile }  // 档案快捷方式
     var pet: Pet { data.pet }  // 宠物快捷方式
     var growth: Int { data.growth }  // 成长值快捷方式
+
+    var streakDays: Int { data.streakDays }  // 连续打卡天数（只读，广场等处展示用）
     var entitlement: Entitlement { data.entitlement }  // 权益快捷方式
     var stage: PetStage { PetStage.stage(for: data.growth) }  // 由成长值推阶段
     var outfit: CatOutfit { data.outfit }  // 猫当前穿戴快捷方式
