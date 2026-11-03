@@ -61,6 +61,8 @@ struct RootView: View {  // 根视图
         case papers  // 试卷列表
         case paper  // 整套试卷作答
         case wrongbook  // 错题本
+        case run  // 练习作答（样板 page-run）
+        case result  // 练习结果（样板 page-result）
 
         var id: String { rawValue }  // 用原始值当 id
     }  // Shot 结束
@@ -135,6 +137,46 @@ struct RootView: View {  // 根视图
             }  // 分支结束
         case .wrongbook:  // 错题本
             WrongBookView()  // 错题本页
+        case .run:  // 练习作答
+            ShotRunHost()  // 等题库加载好再建
+        case .result:  // 练习结果
+            ShotResultHost()  // 造一份结果数据
         }  // 分支结束
     }  // shotBody 结束
 }  // RootView 结束
+
+// MARK: - 截图专用宿主                                                 // 分节：截图宿主
+
+private struct ShotRunHost: View {  // 等题库就绪再建作答页
+    @Environment(AppState.self) private var app  // 观察题库
+
+    var body: some View {  // 视图主体
+        if let bank = app.bank, !bank.questions.isEmpty {  // 题库已好
+            QuizRunView(pool: bank.questions, size: 15, revealEach: true)  // 造一组练习（即时看模式更能看清解析块）
+        } else {  // 还没好
+            LoadingState(text: "题库加载中…")  // 转圈
+        }  // 分支结束
+    }  // body 结束
+}  // ShotRunHost 结束
+
+private struct ShotResultHost: View {  // 截结果页
+    @Environment(AppState.self) private var app  // 观察题库
+
+    private var items: [QuizResultItem] {  // 造假数据：三题里两错一对
+        guard let bank = app.bank, bank.questions.count >= 3 else { return [] }  // 题库不够
+        return bank.questions.prefix(3).enumerated().map { offset, q in  // 取前三题
+            let ok = offset == 1  // 第二题算答对
+            let picked: Set<Int> = ok ? Set(q.answer) : [0]  // 对的选正确答案，错的选 A
+            return QuizResultItem(question: q, picked: picked, ok: ok)  // 组装
+        }  // 映射结束
+    }  // items 结束
+
+    var body: some View {  // 视图主体
+        if items.isEmpty {  // 题库没好
+            LoadingState(text: "题库加载中…")  // 转圈
+        } else {  // 有数据
+            QuizResultView(items: items, seconds: 372, revealInstant: false,  // 6 分 12 秒
+                           unanswered: 1, onAgain: {}, onClose: {})  // 回调留空，只截图
+        }  // 分支结束
+    }  // body 结束
+}  // ShotResultHost 结束
