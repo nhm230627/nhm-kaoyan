@@ -393,14 +393,59 @@ struct RoundedCorner: Shape {  // 只圆指定角
 
 // MARK: - 未开放模块的说明页                                            // 分节：占位
 
-struct PlazaPlaceholderView: View {  // 广场（还没做）
+struct PlazaPlaceholderView: View {  // 广场（画布还没做，公告板已能用）
+    @Environment(AppState.self) private var app  // 全局状态，用来显示帖子数
+
     var body: some View {  // 视图主体
-        EmptyState(icon: "bubble.left.and.bubble.right",  // 图标
-                   title: "广场还没做",  // 标题
-                   message: "多只宠物同场、随机游走、组队刷副本属于阶段 6，需真实他人数据，暂未接入。")  // 说明
-            .background(Color.appBG)  // 底色
-            .navigationTitle("广场")  // 标题
-            .navigationBarTitleDisplayMode(.inline)  // 内联
+        ScrollView {  // 可滚动
+            VStack(spacing: Space.l) {  // 纵向排列
+                VStack(alignment: .leading, spacing: Space.xs) {  // 说明区
+                    Text("广场画布还没做").font(AppFont.section)  // 标题
+                    Text("多只宠物同场、随机游走、组队刷副本属于阶段 6，需真实他人数据，暂未接入。")  // 说明
+                        .font(AppFont.caption)  // 小字
+                        .foregroundStyle(Color.textSecondary)  // 次要色
+                        .fixedSize(horizontal: false, vertical: true)  // 允许换行
+                }  // 说明区结束
+                .frame(maxWidth: .infinity, alignment: .leading)  // 左对齐
+                .padding(Space.l)  // 内边距
+                .background(  // 底
+                    RoundedRectangle(cornerRadius: Radius.card, style: .continuous).fill(Color.appCard)  // 白卡
+                )  // 背景结束
+
+                NavigationLink {  // 论坛公告板（样板里广场的 board 就是进社区）
+                    CommunityView()  // 研友论坛
+                } label: {  // 入口外观
+                    HStack(spacing: Space.m) {  // 横向排列
+                        ZStack {  // 图标底
+                            Circle().fill(Color.appBrand.opacity(0.12)).frame(width: 40, height: 40)  // 淡蓝圆
+                            Image(systemName: "doc.text.fill")  // 公告板图标
+                                .font(.system(size: 16))  // 图标大小
+                                .foregroundStyle(Color.appBrand)  // 蓝色
+                        }  // 叠放结束
+                        VStack(alignment: .leading, spacing: 2) {  // 文字区
+                            Text("论坛公告板").font(AppFont.bodyStrong)  // 主标题
+                            Text("研友论坛 · 已收录 \(app.communityAllPosts.count) 篇")  // 副标题带真实条数
+                                .font(AppFont.caption)  // 小字
+                                .foregroundStyle(Color.textSecondary)  // 次要色
+                        }  // 文字区结束
+                        Spacer()  // 撑开
+                        Image(systemName: "chevron.right")  // 右箭头
+                            .font(.system(size: 13, weight: .semibold))  // 小箭头
+                            .foregroundStyle(Color.textTertiary)  // 弱化色
+                    }  // 排列结束
+                    .padding(Space.l)  // 内边距
+                    .background(  // 底
+                        RoundedRectangle(cornerRadius: Radius.card, style: .continuous).fill(Color.appCard)  // 白卡
+                    )  // 背景结束
+                }  // 链接结束
+                .buttonStyle(.plain)  // 去掉系统高亮
+            }  // 排列结束
+            .padding(Metrics.pagePadding)  // 内边距
+            .padding(.bottom, 96)  // 底部留白：悬浮 TabBar 不占安全区
+        }  // 滚动结束
+        .background(Color.appBG)  // 底色
+        .navigationTitle("广场")  // 标题
+        .navigationBarTitleDisplayMode(.inline)  // 内联
     }  // body 结束
 }  // PlazaPlaceholderView 结束
 

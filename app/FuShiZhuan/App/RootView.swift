@@ -68,6 +68,8 @@ struct RootView: View {  // 根视图
         case diy  // 我的题库
         case mock  // 院校模考
         case tracksheet  // 考试方向选择层
+        case community  // 研友论坛（样板 page-community）
+        case post  // 帖子详情（样板 page-post）
 
         var id: String { rawValue }  // 用原始值当 id
     }  // Shot 结束
@@ -154,6 +156,14 @@ struct RootView: View {  // 根视图
             MockExamView()  // 通用卷 + 48 所院校分卷
         case .tracksheet:  // 方向选择层
             TrackPickerSheet()  // 直接铺满整屏截（正常是从胶囊弹出的 sheet）
+        case .community:  // 研友论坛
+            CommunityView()  // 帖子流
+        case .post:  // 帖子详情
+            if let first = CommunitySeed.posts.first {  // 拿第一条种子帖
+                PostDetailView(post: first)  // 直接看详情
+            } else {  // 数据没了（不该发生）
+                EmptyState(icon: "doc.text", title: "帖子不存在", message: "Community.swift 里的种子帖没读到。")  // 空态
+            }  // 分支结束
         case .sortplay:  // 分拣关卡
             if let level = SortCatalog.level(SortCatalog.order.first ?? "") {  // 第一关
                 SortGameView(level: level)  // 直接开玩

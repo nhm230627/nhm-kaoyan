@@ -25,6 +25,9 @@ struct AppSnapshot: Codable, Equatable {  // 持久化单位
     var track: String = "tax"  // 当前考试方向 id（有默认值，旧快照能直接解码）
     var todayCompanion: Int = 0  // 今日陪伴分钟数（有默认值，旧快照能直接解码）
     var companionDate: String = ""  // 上面这个数属于哪一天，跨天清零
+    var communityPosts: [CommunityPost] = []  // 我在研友论坛发的帖子（有默认值，旧快照能直接解码）
+    var communityLikes: [String] = []  // 我点过赞的帖子 id（有默认值，旧快照能直接解码）
+    var communitySeedComments: [String: [PostComment]] = [:]  // 种子帖上我加的评论，键是帖子 id
 
     static let currentVersion = 1  // 当前结构版本
 
@@ -62,6 +65,9 @@ struct AppSnapshot: Codable, Equatable {  // 持久化单位
         track = try c.decodeIfPresent(String.self, forKey: .track) ?? "tax"  // 缺省税务方向
         todayCompanion = try c.decodeIfPresent(Int.self, forKey: .todayCompanion) ?? 0  // 缺省 0 分钟
         companionDate = try c.decodeIfPresent(String.self, forKey: .companionDate) ?? ""  // 缺省空日期
+        communityPosts = try c.decodeIfPresent([CommunityPost].self, forKey: .communityPosts) ?? []  // 缺省无自建帖
+        communityLikes = try c.decodeIfPresent([String].self, forKey: .communityLikes) ?? []  // 缺省没点过赞
+        communitySeedComments = try c.decodeIfPresent([String: [PostComment]].self, forKey: .communitySeedComments) ?? [:]  // 缺省空
     }  // 解码结束
 
     init(  // 全参构造器
@@ -397,6 +403,102 @@ final class AppState {  // 全局状态类
         snap.pet.claimed = true  // 标记已认领
         data = snap  // 写回
         scheduleSave()  // 落盘
+    }  // 方法结束
+
+    // MARK: - 研友论坛                                                // 分节：论坛
+
+    /// 全部帖子：我自己发的排在最前（新的在上），种子帖在后。
+    /// 顺序与样板 community.js 的 allPosts() 完全一致：先是 myPosts 倒序，再是 SEED。
+    var communityAllPosts: [CommunityPost] {  // 帖子流
+        Array(data.communityPosts.reversed()) + CommunitySeed.posts.map { attachSeedComments($0) }  // 我的在上，种子在下
+    }  // 属性结束
+
+    private func attachSeedComments(_ post: CommunityPost) -> CommunityPost {  // 给种子帖挂上我加的评论
+        guard let extra = data.communitySeedComments[post.id], !extra.isEmpty else { return post }  // 没有就原样返回
+        var copy = post  // 拷一份改
+        copy.comments = post.comments + extra  // 追加在后面
+        return copy  // 返回合并结果
+    }  // 方法结束
+
+    func communityLiked(_ id: String) -> Bool {  // 这条我点过赞没
+        data.communityLikes.contains(id)  // 查 id 列表
+    }  // 方法结束
+
+    func communityLikeCount(_ post: CommunityPost) -> Int {  // 展示用点赞数
+        post.likes + (communityLiked(post.id) ? 1 : 0)  // 基础数加上我这一票
+    }  // 方法结束
+
+    func toggleCommunityLike(_ id: String) {  // 点赞 / 取消点赞
+        var snap = data  // 拷一份改
+        if let idx = snap.communityLikes.firstIndex(of: id) {  // 已经点过
+            snap.communityLikes.remove(at: idx)  // 取消，不加回报（样板也是只有点赞时给）
+        } else {  // 还没点
+            snap.communityLikes.append(id)  // 记上这一票
+            rewardCommunity(&snap, minutes: 1)  // 样板 reward('community', 1)
+        }  // 分支结束
+        data = snap  // 写回
+        scheduleSave()  // 落盘
+    }  // 方法结束
+
+    @discardableResult  // 返回值可忽略
+    func publishCommunityPost(text: String, category: PostCategory) -> Bool {  // 发帖
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)  // 去掉首尾空白
+        guard trimmed.count >= 5 else { return false }  // 样板规则：少于 5 个字不发
+        let post = CommunityPost(  // 组装新帖
+            id: "my_\(Int(Date().timeIntervalSince1970 * 1000))",  // 时间戳当 id
+            author: "我",  // 作者就是本人
+            cat: category,  // 选中的分类
+            time: "刚刚",  // 样板写「刚刚」
+            likes: 0,  // 零赞起步
+            text: trimmed,  // 正文
+            comments: [],  // 还没人评论
+            topHex: 0x2B54E8,  // 蓝
+            bottomHex: 0x7C4DFF,  // 紫（样板 myPosts 用的就是这组）
+            isMine: true  // 标记是我发的
+        )  // 组装结束
+        var snap = data  // 拷一份改
+        snap.communityPosts.append(post)  // 追加到我的帖子列表
+        rewardCommunity(&snap, minutes: 5)  // 样板 reward('community', 5)
+        data = snap  // 写回
+        scheduleSave()  // 落盘
+        return true  // 表示发成功
+    }  // 方法结束
+
+    @discardableResult  // 返回值可忽略
+    func addCommunityComment(_ text: String, to post: CommunityPost) -> Bool {  // 发一条评论
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)  // 去首尾空白
+        guard !trimmed.isEmpty else { return false }  // 空评论不发
+        let comment = PostComment(  // 组装评论
+            id: "c_\(Int(Date().timeIntervalSince1970 * 1000))",  // 时间戳当 id
+            author: "我",  // 作者是本人
+            text: trimmed,  // 正文
+            time: "刚刚"  // 样板写「刚刚」
+        )  // 组装结束
+        var snap = data  // 拷一份改
+        if let idx = snap.communityPosts.firstIndex(where: { $0.id == post.id }) {  // 是我自己发的帖
+            snap.communityPosts[idx].comments.append(comment)  // 直接追加进帖子
+        } else {  // 是种子帖
+            var bucket = snap.communitySeedComments[post.id] ?? []  // 取已有评论
+            bucket.append(comment)  // 追加
+            snap.communitySeedComments[post.id] = bucket  // 写回字典
+        }  // 分支结束
+        rewardCommunity(&snap, minutes: 2)  // 样板 reward('community', 2)
+        data = snap  // 写回
+        scheduleSave()  // 落盘
+        return true  // 表示发成功
+    }  // 方法结束
+
+    /// 论坛动作对宠物的回报，口径逐条照样板 store.js 的 reward('community', n)：
+    /// 好感 +1、体力 -1、今日陪伴分钟数 +n。上限 100、下限 0 也与样板一致。
+    private func rewardCommunity(_ snap: inout AppSnapshot, minutes: Int) {  // 论坛回报
+        snap.pet.affinity = min(100, snap.pet.affinity + 1)  // 好感 +1，封顶 100
+        snap.pet.energy = max(0, snap.pet.energy - 1)  // 体力 -1，最低 0
+        let today = Self.dayKey(Date())  // 今天的日期串
+        if snap.companionDate != today {  // 跨天了
+            snap.companionDate = today  // 换成今天
+            snap.todayCompanion = 0  // 清零重记
+        }  // 分支结束
+        snap.todayCompanion += minutes  // 累加今日陪伴分钟
     }  // 方法结束
 
     // MARK: - 打卡                                                    // 分节：打卡
