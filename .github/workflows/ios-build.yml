@@ -79,12 +79,25 @@ jobs:
           APP="build/Build/Products/Debug-iphonesimulator/FuShiZhuan.app"  # 编译产物的固定路径
           mkdir -p shots  # 截图输出目录
           xcrun simctl boot "$UDID" || true  # 已在运行会报错，忽略
-          xcrun simctl bootstatus "$UDID" -b || true  # 等到完全启动，避免装不上
+          # 原来用 `simctl bootstatus -b` 死等，实测一句话吃掉 5 分钟（2026-11-04 run 77：
+          # 截图步骤 6 分半里约 5 分钟都在等它）。改成自己轮询，最多等 90 秒，够了就往下走。
+          for i in $(seq 1 90); do  # 每秒看一次状态
+            if xcrun simctl list devices | grep -F "$UDID" | grep -q Booted; then  # 已启动就不再等
+              echo "模拟器已启动，等了 ${i} 秒"  # 打出来方便对比耗时
+              break  # 跳出轮询
+            fi
+            sleep 1  # 等一秒再看
+          done
+          sleep 3  # 给 SpringBoard 一点时间，紧接着安装不容易失败
           if [ ! -d "$APP" ]; then  # 产物不存在说明编译就没成
             echo "产物不存在：$APP" | tee shots/FAILED.txt  # 记下来
             exit 0  # 不判失败：编译步骤已经红过了，这里再红只会掩盖真正原因
           fi
-          xcrun simctl install "$UDID" "$APP"  # 装到模拟器
+          for try in 1 2 3; do  # 刚启动时安装偶发失败，重试三次
+            xcrun simctl install "$UDID" "$APP" && break  # 成功就跳出
+            echo "安装第 $try 次失败，重试"  # 失败留痕
+            sleep 5  # 等一会儿再试
+          done  # 重试结束
           ONLY="${{ inputs.only }}"  # 快车道开关：留空即全量
           TABS="today quiz interview companion profile"  # 五个 Tab
           PAGES="avatar papers paper wrongbook run result sortmap sortplay diy mock tracksheet community post room ritual duel plaza world roam"  # 子页面
