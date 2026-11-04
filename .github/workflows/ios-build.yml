@@ -100,7 +100,7 @@ jobs:
           done  # 重试结束
           ONLY="${{ inputs.only }}"  # 快车道开关：留空即全量
           TABS="today quiz interview companion profile"  # 五个 Tab
-          PAGES="avatar papers paper wrongbook run result sortmap sortplay diy mock tracksheet community post room ritual duel plaza world roam shop"  # 子页面（含商店）
+          PAGES="avatar papers paper wrongbook run result sortmap sortplay diy mock tracksheet community post room ritual duel plaza world roam shop aichat"  # 子页面（含商店与 AI 学伴）
           ROOMS="lib diner market plaza"  # 漫游四间房
           if [ -n "$ONLY" ]; then  # 指定了就只截这些，把单轮压到 8 分钟内
             TABS=""; PAGES=""; ROOMS=""  # 先清空，再按名单装填

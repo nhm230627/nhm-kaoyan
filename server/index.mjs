@@ -349,6 +349,16 @@ function buildCoachPrompt({ question, context }) {  // 拼学伴提示词
   ].join('\n')  // 拼成一段
 }  // buildCoachPrompt 结束
 
+// AI 学伴面板：多轮对话的系统提示词，逐字照抄样板 ai.js 的 SYSTEM
+const CHAT_SYSTEM = [  // 系统提示词数组
+  '你是「复试舱」的 AI 学伴，服务对象是准备税务专硕（MT）复试的考生。',  // 身份
+  '要求：',  // 要求列表
+  '1. 中文回答，先给结论再给理由，控制在 180 字以内，除非用户要求展开。',  // 长度
+  '2. 专业问题必须准确，涉及税法条文要说明税种与环节；不确定就直说「这点不确定」，不要编。',  // 禁止编造
+  '3. 语气像靠谱的学长，不说套话，不用「首先其次最后」这种模板。',  // 语气
+  '4. 如果是题目讲解，按「考点 → 为什么选它 → 易错点」三段讲。',  // 讲题结构
+].join('\n')  // 拼成一段
+
 // 讲题：把一道客观题讲透，不评价考生水平
 function buildExplainPrompt({ stem, options, answer, picked, explain }) {  // 拼讲题提示词
   const letters = ['A', 'B', 'C', 'D', 'E', 'F']  // 选项字母
@@ -411,6 +421,38 @@ async function callModel(prompt, { temperature = 0.7, json = true } = {}) {  // 
   }  // finally 结束
 }  // callModel 结束
 
+// 多轮对话：AI 学伴面板用，消息数组直接传给上游，不强制 JSON 输出
+async function callChat(messages, { temperature = 0.5 } = {}) {  // 多轮对话
+  const ctrl = new AbortController()  // 用于超时中断
+  const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS)  // 到点中断
+  try {  // 尝试请求
+    const resp = await fetch(UPSTREAM, {  // 发请求
+      method: 'POST',  // POST
+      signal: ctrl.signal,  // 绑定中断信号
+      headers: {  // 请求头
+        'content-type': 'application/json',  // JSON
+        authorization: `Bearer ${API_KEY}`,  // Key 只在这里出现
+      },  // 请求头结束
+      body: JSON.stringify({  // 请求体
+        model: MODEL,  // 模型
+        temperature,  // 随机度
+        max_tokens: 600,  // 与样板 maxTokens 一致
+        messages,  // 完整消息数组
+      }),  // 请求体结束
+    })  // fetch 结束
+    if (!resp.ok) {  // 上游报错
+      const text = await resp.text()  // 读错误体
+      throw new Error(`upstream ${resp.status}: ${text.slice(0, 200)}`)  // 抛出
+    }  // 报错分支结束
+    const data = await resp.json()  // 解析响应
+    const content = data?.choices?.[0]?.message?.content ?? ''  // 取正文
+    if (!content) throw new Error('empty completion')  // 空正文
+    return String(content)  // 返回纯文本
+  } finally {  // 无论如何清理
+    clearTimeout(timer)  // 清定时器
+  }  // finally 结束
+}  // callChat 结束
+
 // ---------- 业务校验 ----------
 
 // 校验 evidence 是否真出自考生回答：编造的维度直接作废
@@ -460,6 +502,7 @@ async function handle(req, res) {  // 主路由
       path !== '/v1/interview/evaluate' &&  // 非评分
       path !== '/v1/interview/summary' &&  // 非总结
       path !== '/v1/coach' &&  // 非学伴
+      path !== '/v1/chat' &&  // 非学伴多轮对话
       path !== '/v1/quiz/explain') {  // 非讲题
     return sendJSON(res, 404, { code: 'notFound', message: '接口不存在' })  // 404
   }  // 404 分支结束
@@ -533,6 +576,33 @@ async function handle(req, res) {  // 主路由
       })  // 响应结束
     }  // catch 结束
   }  // 讲题分支结束
+
+  // AI 学伴面板：多轮对话，不再包一层 JSON 输出，直接把消息数组交给上游
+  if (path === '/v1/chat') {  // 多轮分支
+    const raw = Array.isArray(body.messages) ? body.messages : []  // 只收数组
+    const history = raw.slice(-8).map((m) => ({  // 最多取最近 8 条，与样板 slice(-8) 一致
+      role: m && m.role === 'assistant' ? 'assistant' : 'user',  // 只允许两种角色，防注入 system
+      content: String((m && m.content) || '').trim().slice(0, 1200),  // 单条限长
+    })).filter((m) => m.content)  // 丢掉空消息
+    if (!history.length) {  // 没有内容就没有意义
+      return sendJSON(res, 400, { code: 'badRequest', message: 'messages 不能为空' })  // 400
+    }  // 分支结束
+    try {  // 尝试调模型
+      const reply = await callChat([{ role: 'system', content: CHAT_SYSTEM }, ...history], { temperature: 0.5 })  // 温度与样板一致
+      return sendJSON(res, 200, {  // 返回
+        requestId: randomUUID(),  // 请求 id
+        reply: reply.slice(0, 1500),  // 正文，限长
+      })  // 返回结束
+    } catch (err) {  // 调用失败
+      const msg = String(err?.message || err)  // 错误信息
+      const timeout = /abort/i.test(msg)  // 是否超时
+      return sendJSON(res, timeout ? 504 : 502, {  // 超时 504，其它 502
+        code: timeout ? 'timeout' : 'aiUnavailable',  // 错误码
+        message: msg.slice(0, 300),  // 截断
+        retriable: true,  // 允许重试
+      })  // 响应结束
+    }  // catch 结束
+  }  // 多轮分支结束
 
   const cacheKey = `${path}:${sessionId}:${turnIndex}`  // 幂等键
   const cached = idempotentGet(cacheKey)  // 查缓存

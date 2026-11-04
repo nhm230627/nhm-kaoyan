@@ -38,6 +38,7 @@ struct RootView: View {  // 根视图
     @Environment(AppState.self) private var app  // 注入全局状态
     @State private var tab: AppTab = RootView.initialTab  // 当前 Tab（可用启动参数指定，见下）
     @State private var shot: Shot? = RootView.initialShot  // 截图用：启动即弹开的子页面
+    @State private var showChat = false  // AI 学伴面板是否打开（全局浮标，样板 ai.js 同款入口）
     @State private var didTick = false  // 冷启动只结算一次
 
     /// 截图用：允许 CI 通过启动参数直接落到某个 Tab。
@@ -77,6 +78,7 @@ struct RootView: View {  // 根视图
         case world  // 3D 浮空岛地图（样板 page-map）
         case roam  // 岛内 3D 漫游（样板 page-roam）
         case shop  // 严选好物（样板 page-shop）
+        case aichat  // AI 学伴面板（样板 ai.js）
 
         var id: String { rawValue }  // 用原始值当 id
     }  // Shot 结束
@@ -120,6 +122,17 @@ struct RootView: View {  // 根视图
             .tag(AppTab.profile)  // 绑定值
         }  // TabView 结束
         .tint(Color.appBrand)  // 选中色
+        .overlay(alignment: .bottomTrailing) { chatFab }  // 全局 AI 学伴浮标，五个 Tab 都在
+        .sheet(isPresented: $showChat) {  // 面板以 sheet 呈现
+            NavigationStack {  // 套导航栈才有标题栏与关闭按钮
+                AIChatView()  // 对话面板
+                    .toolbar {  // 导航栏
+                        ToolbarItem(placement: .cancellationAction) {  // 左上
+                            Button("关闭") { showChat = false }  // 关掉面板
+                        }  // 按钮结束
+                    }  // 工具栏结束
+            }  // 栈结束
+        }  // sheet 结束
         .fullScreenCover(item: $shot) { target in  // 截图专用：直接盖到某个子页面
             NavigationStack {  // 套一层导航栈，才有标题栏
                 shotBody(target)  // 按名字给页面
@@ -135,6 +148,29 @@ struct RootView: View {  // 根视图
             app.flush()  // 立刻落盘防丢
         }  // 监听结束
     }  // body 结束
+
+    private var chatFab: some View {  // 全局 AI 学伴浮标
+        Button {  // 点开面板
+            showChat = true  // 打开
+        } label: {  // 外观
+            Image(systemName: "sparkles")  // 星火图标
+                .font(.system(size: 20, weight: .semibold))  // 大小
+                .foregroundStyle(.white)  // 白图标
+                .frame(width: 52, height: 52)  // 触控区大于 44，符合 HIG
+                .background(  // 渐变底
+                    LinearGradient(colors: [.appBrand, .appBrand2],  // 品牌两端色
+                                   startPoint: .topLeading,  // 左上
+                                   endPoint: .bottomTrailing)  // 右下
+                )  // 背景结束
+                .clipShape(Circle())  // 圆形
+                .shadow(color: Color.appBrand.opacity(0.35), radius: 10, y: 4)  // 轻投影
+        }  // 标签结束
+        .buttonStyle(.plain)  // 不用默认高亮
+        .padding(.trailing, Space.l)  // 右边距
+        .padding(.bottom, 92)  // 让开悬浮 TabBar
+        .accessibilityIdentifier("chat-fab")  // 便于 UI 测试
+        .accessibilityLabel("AI 学伴")  // 朗读名
+    }  // chatFab 结束
 
     @ViewBuilder  // 按名字返回对应子页面
     private func shotBody(_ target: Shot) -> some View {  // 截图用页面分发
@@ -191,6 +227,8 @@ struct RootView: View {  // 根视图
             RoamView(roomID: ShotRoamRoom.current)  // 默认进图书馆，可用启动参数换房间逐间截图
         case .shop:  // 严选好物
             ShopView()  // 商品网格 + 商家合作
+        case .aichat:  // AI 学伴面板
+            AIChatView()  // 空态提示 + 输入框
         }  // 分支结束
     }  // shotBody 结束
 }  // RootView 结束
