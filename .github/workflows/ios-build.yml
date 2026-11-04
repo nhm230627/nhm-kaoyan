@@ -27,7 +27,10 @@ jobs:
     #   limit needs to be increased」。所以排队/换池都是表象，根因是私有仓库的 Actions 额度。
     #   办法只有三个：仓库改 public（公开仓库的 Actions 全免费、不限分钟）、充值或调高 spending
     #   limit、等下个计费周期额度重置。代码本身没动过。
-    runs-on: macos-latest  # GitHub 提供的真实 macOS 机器（Apple Silicon）
+    #   2026-11-04 补充：仓库已转 public（额度问题解除），但 arm64 池连续两次 15 分钟排不到机器
+    #   （run 66/69 注解：jobs targeting macOS arm64 runners may experience longer queue times）。
+    #   换 macos-15-intel：公开仓库下不消耗额度、池子宽松；工程只要 Xcode 16（iOS 18 目标），够用。
+    runs-on: macos-15-intel  # Intel 池的 macOS 15，装 Xcode 16 系列
 
     defaults:
       run:
