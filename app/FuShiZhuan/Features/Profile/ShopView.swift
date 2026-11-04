@@ -74,7 +74,7 @@ struct ShopView: View {  // 商店页
                            startPoint: .topLeading,  // 左上
                            endPoint: .bottomTrailing)  // 右下
         )  // 背景结束
-        .clipShape(RoundedRectangle(cornerRadius: Metrics.card, style: .continuous))  // 圆角
+        .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))  // 圆角
         .cardShadow()  // 统一投影
     }  // banner 结束
 
