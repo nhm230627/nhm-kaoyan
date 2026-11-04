@@ -76,6 +76,7 @@ struct RootView: View {  // 根视图
         case plaza  // 广场画布（样板 page-plaza）
         case world  // 3D 浮空岛地图（样板 page-map）
         case roam  // 岛内 3D 漫游（样板 page-roam）
+        case shop  // 严选好物（样板 page-shop）
 
         var id: String { rawValue }  // 用原始值当 id
     }  // Shot 结束
@@ -188,6 +189,8 @@ struct RootView: View {  // 根视图
             WorldMapView()  // 三座岛，等一两秒让相机与建筑铺开
         case .roam:  // 岛内漫游
             RoamView(roomID: ShotRoamRoom.current)  // 默认进图书馆，可用启动参数换房间逐间截图
+        case .shop:  // 严选好物
+            ShopView()  // 商品网格 + 商家合作
         }  // 分支结束
     }  // shotBody 结束
 }  // RootView 结束

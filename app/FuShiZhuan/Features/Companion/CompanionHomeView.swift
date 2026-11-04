@@ -153,7 +153,7 @@ struct CompanionHomeView: View {  // 伙伴页
             .buttonStyle(.plain)  // 去掉系统样式
 
             NavigationLink {  // 严选好物（商店）
-                ShopPlaceholderView()  // 商店还没做，进去如实说明
+                ShopView()  // 真实商店页，对齐样板 page-shop
             } label: {  // 入口外观
                 entryRow(icon: "bag.fill",  // 购物袋
                          title: "严选好物",  // 主标题（样板原话）
@@ -395,16 +395,3 @@ struct RoundedCorner: Shape {  // 只圆指定角
         return Path(path.cgPath)  // 转成 SwiftUI 路径
     }  // path 结束
 }  // RoundedCorner 结束
-
-// MARK: - 未开放模块的说明页                                            // 分节：占位
-
-struct ShopPlaceholderView: View {  // 严选好物（还没做）
-    var body: some View {  // 视图主体
-        EmptyState(icon: "bag",  // 图标
-                   title: "严选好物还没做",  // 标题
-                   message: "商店模块你之前说先不着急，等要做时再排。")  // 说明
-            .background(Color.appBG)  // 底色
-            .navigationTitle("严选好物")  // 标题
-            .navigationBarTitleDisplayMode(.inline)  // 内联
-    }  // body 结束
-}  // ShopPlaceholderView 结束

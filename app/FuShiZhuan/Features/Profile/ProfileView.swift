@@ -117,6 +117,13 @@ struct ProfileView: View {  // 我的页
                 }  // 链接结束
                 .buttonStyle(.plain)  // 不用默认高亮
                 Divider()  // 分隔线
+                NavigationLink {  // 严选好物
+                    ShopView()  // 商店页
+                } label: {  // 行外观
+                    linkRow(icon: "bag.fill", title: "严选好物", detail: "备考资料 · 商家入驻中")  // 行内容
+                }  // 链接结束
+                .buttonStyle(.plain)  // 不用默认高亮
+                Divider()  // 分隔线
                 NavigationLink {  // 隐私与协议
                     LegalView()  // 隐私政策与用户协议
                 } label: {  // 行外观
