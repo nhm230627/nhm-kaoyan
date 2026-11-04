@@ -65,8 +65,8 @@ enum RoamBuilder {  // 房间建模器
         camera.camera.fieldOfViewInDegrees = 44  // 比样板 42 略广，窄屏才装得下整间房
         camera.camera.near = 0.1  // 样板近平面
         camera.camera.far = 60  // 样板远平面
-        let eye = SIMD3<Float>(0, 1.35, 5.0)  // 比样板更低更远
-        let target = SIMD3<Float>(0, 0.72, -1.4)  // 视线略微下压
+        let eye = SIMD3<Float>(0, 2.05, 5.6)  // 视觉改良：样板是 (0,1.6,4.6)，抬高并后撤，桌子不再糊住画面
+        let target = SIMD3<Float>(0, 0.55, -1.0)  // 视线再往下压一点，地板与家具的层次才出来
         let forward = simd_normalize(target - eye)  // 视线方向
         let holder = AnchorEntity(world: eye)  // 相机放在房间里
         holder.addChild(camera)  // 挂上

@@ -27,8 +27,8 @@ enum StarMapLayout {  // 样板布局常量，逐条照抄 game3d.js
     static let nodeX: [Float] = [-1.06, 0, 1.06]  // NODE_X 每岛三颗水晶的横向位置
     static let zStep: Float = -0.4  // Z_STEP 每往后一座稍微退远
     static let fov: Float = 46  // 样板 camera.fov
-    static let cameraY: Float = 1.0  // 样板 camera.position.y
-    static let look = SIMD3<Float>(0, -0.34, 0)  // 样板 camera.lookAt
+    static let cameraY: Float = 2.15  // 视觉改良：样板 1.0 几乎与顶层岛同高，四座岛被压成一摞扁盘；抬到 2.15 才有俯角看清水晶
+    static let look = SIMD3<Float>(0, -0.5, 0)  // 视觉改良：样板 (0,-0.34,0)，跟着相机一起下压，视线更居中
     static let fitHeight: Float = 4.95  // 样板 resize：纵向要装下 4.95
     static let fitWidth: Float = 4.4  // 样板 resize：横向要装下 4.4
     static let dragLimit: Float = 0.55  // 样板 clamp 的左右极限
