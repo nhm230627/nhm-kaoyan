@@ -33,6 +33,7 @@ enum StarMapLayout {  // 样板布局常量，逐条照抄 game3d.js
     static let fitWidth: Float = 4.4  // 样板 resize：横向要装下 4.4
     static let dragLimit: Float = 0.55  // 样板 clamp 的左右极限
     static let dragGain: Float = 0.0038  // 样板 dx 换算成弧度的系数
+    static let restAngle: Float = 0.30  // 视觉改良：样板正对着看（角度 0），四座岛叠成一摞横盘；默认斜 0.3 弧度能看出前後层次
 }  // StarMapLayout 结束
 
 enum StarCrystalState {  // 水晶三态，照样板 paint 的判断
@@ -129,7 +130,7 @@ enum StarMapBuilder {  // 星海建模器
         let r = StarMapLayout.islandR  // 半径
 
         let disc = ModelEntity(mesh: .generateCylinder(height: 0.2, radius: r),  // 盘体是薄圆柱
-                               materials: [material(UIColor(white: 1, alpha: 0.16), roughness: 0.2)])  // 半透明玻璃感
+                               materials: [material(tint.withAlphaComponent(0.22), roughness: 0.2)])  // 样板是白色 0.16 + 自发光；SimpleMaterial 没有自发光，用同色薄盘补出层次
         group.addChild(disc)  // 挂上
 
         for i in 0..<28 {  // 上沿发光圈：样板是 TorusGeometry，这里用 28 颗小球串出来
@@ -182,11 +183,15 @@ enum StarMapBuilder {  // 星海建模器
         let color = tintOf(state: state, tint: tint)  // 按状态取颜色
 
         let gem = Entity()  // 宝石本体（两块圆锥拼成八面体，样板用的是 Icosahedron）
-        let up = ModelEntity(mesh: .generateCone(height: 0.26, radius: 0.235), materials: [material(color, roughness: 0.22)])  // 上半锥
-        up.position = [0, 0.13, 0]  // 抬到赤道以上
+        let glowGem = ModelEntity(mesh: .generateSphere(radius: 0.3),  // 宝石外圈柔光：样板靠自发光，这里用半透明球壳假装
+                                  materials: [material(color.withAlphaComponent(0.18), roughness: 0.5)])  // 淡到只提亮边缘
+        glowGem.scale = [1, 1.15, 1]  // 稍微拉长，跟着八面体的轮廓
+        gem.addChild(glowGem)  // 挂上
+        let up = ModelEntity(mesh: .generateCone(height: 0.3, radius: 0.27), materials: [material(color, roughness: 0.22)])  // 上半锥
+        up.position = [0, 0.15, 0]  // 抬到赤道以上
         gem.addChild(up)  // 挂上
-        let down = ModelEntity(mesh: .generateCone(height: 0.26, radius: 0.235), materials: [material(color, roughness: 0.22)])  // 下半锥
-        down.position = [0, -0.13, 0]  // 落到赤道以下
+        let down = ModelEntity(mesh: .generateCone(height: 0.3, radius: 0.27), materials: [material(color, roughness: 0.22)])  // 下半锥
+        down.position = [0, -0.15, 0]  // 落到赤道以下
         down.orientation = simd_quatf(angle: .pi, axis: [1, 0, 0])  // 翻过来，锥尖朝下
         gem.addChild(down)  // 挂上
         group.addChild(gem)  // 挂上
@@ -340,7 +345,7 @@ struct StarMap3DView: UIViewRepresentable {  // 星海
         view.addGestureRecognizer(tap)  // 挂上
 
         if !animationsOff { context.coordinator.startTicking() }  // 省电模式下不动
-        StarMapCamera.place(on: holder, angle: 0, dist: 5.95, time: 0)  // 先摆一次，避免首帧在原点
+        StarMapCamera.place(on: holder, angle: StarMapLayout.restAngle, dist: 5.95, time: 0)  // 先摆一次，避免首帧在原点
         return view  // 返回
     }  // makeUIView 结束
 
@@ -364,8 +369,8 @@ struct StarMap3DView: UIViewRepresentable {  // 星海
         private var timer: Timer?  // 帧循环
         private var elapsed: Float = 0  // 已累计秒数
         private var distance: Float = 5.95  // 相机到原点的距离
-        private var rotY: Float = 0  // 当前角度
-        private var rotTarget: Float = 0  // 拖动目标角度
+        private var rotY: Float = StarMapLayout.restAngle  // 当前角度，默认斜一点看出层次
+        private var rotTarget: Float = StarMapLayout.restAngle  // 拖动目标角度
         private var panStart: Float = 0  // 按下时的角度
         private var dragged = false  // 这次手势是不是拖动
 

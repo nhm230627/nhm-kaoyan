@@ -437,7 +437,7 @@ struct RoamSceneView: UIViewRepresentable {  // 漫游视图
         anchor.addChild(root)  // 挂上
         let wrapper = Entity()  // 猫的移动容器（只改它，猫本体在里面做呼吸）
         wrapper.position = [0, 0, 1.15]  // 与样板 catWrap.position 一致
-        wrapper.orientation = simd_quatf(angle: .pi, axis: [0, 1, 0])  // 与样板 rotation.y = π 一致
+        wrapper.orientation = simd_quatf(angle: 0.42, axis: [0, 1, 0])  // 视觉改良：样板转 180° 只给背影、看着像个罐子；略侧身朝镜头才认得出是猫
         wrapper.scale = [RoamBuilder.catScale, RoamBuilder.catScale, RoamBuilder.catScale]  // 与样板 0.38 一致
         let cat = PetSceneBuilder.build(stage: stage, outfit: outfit)  // 复用伙伴页那只猫
         wrapper.addChild(cat)  // 挂进容器
