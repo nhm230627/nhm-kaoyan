@@ -152,5 +152,5 @@ jobs:
       #   先上传，最后再跑测试。再加 timeout-minutes 兜底：卡住最多 15 分钟就被杀掉，job 能收尾。
       - name: 跑单元测试  # 只跑 build 只能证明"能编译"，跑 test 才能证明"逻辑对"
         if: ${{ github.event_name == 'push' || inputs.tests }}  # 手动触发时可关掉，只看界面就更快
-        timeout-minutes: 8  # 模拟器偶发 hang（run 68 / 80 都卡过 10 分钟以上）；压到 8 分钟，图已先上传，不拖累验证节奏
+        timeout-minutes: 15  # 别压到 8 分钟：UI 测试实测要跑 8 分 16 秒（run 80：Executed 10 tests in 495.7s），压了就会误杀
         run: xcodebuild test -project FuShiZhuan.xcodeproj -scheme FuShiZhuan -destination "id=${{ steps.pick.outputs.udid }}" CODE_SIGNING_ALLOWED=NO  # 目标设备由上一步动态挑，避免写死机型名导致找不到模拟器
